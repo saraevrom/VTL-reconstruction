@@ -4,3 +4,4 @@ matplotlib
 pymc
 h5py
 numba
+astropy
