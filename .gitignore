@@ -1,0 +1,10 @@
+venv
+*.py[cod]
+*.json
+!settings-newseason.json
+!localization/*.json
+__pycache__/
+*.mat
+*.npy
+*.bak
+*.h5
