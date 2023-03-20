@@ -1,4 +1,8 @@
 {
   "app.title": "Реконструкция треков",
-  "tools.reconstruction": "Реконструкция"
+  "tools.reconstruction": "Реконструкция",
+  "reconstruction.btn.load": "Загрузить архив",
+  "reconstruction.btn.next": "Следующий трек",
+  "reconstruction.btn.prev": "Предыдущий трек",
+  "reconstruction.btn.reconstruct": "Реконструировать"
 }
