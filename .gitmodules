@@ -1,0 +1,3 @@
+[submodule "vtl_common"]
+	path = vtl_common
+	url = https://github.com/saraevrom/VTL-common.git

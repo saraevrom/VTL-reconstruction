@@ -3,3 +3,4 @@ scipy
 matplotlib
 pymc
 h5py
+numba
