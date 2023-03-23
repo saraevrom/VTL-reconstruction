@@ -1,20 +1,25 @@
-import vtl_common.parameters as parameters
+#!/usr/bin/env python3
 
+from fastprogress.fastprogress import force_console_behavior
+master_bar, progress_bar = force_console_behavior()
+
+import vtl_common.parameters as parameters
 parameters.load_settings()
+
+from vtl_common import localization
+import os.path as ospath
+localization.set_locale(parameters.LOCALE)
+localization.SEARCH_DIRS.append(ospath.join(ospath.dirname(ospath.abspath(__file__)),"localization"))
+parameters.localize_parameters_fields()
 
 
 import tkinter as tk
 from tkinter import ttk
-import os.path as ospath
-from vtl_common import localization
 from vtl_common.workspace_manager import Workspace
 from vtl_common.parameters import add_parameters_menu
 from vtl_common.localization import get_locale
 from tools import add_tools
 
-localization.set_locale(parameters.LOCALE)
-localization.SEARCH_DIRS.append(ospath.join(ospath.dirname(ospath.abspath(__file__)),"localization"))
-parameters.localize_parameters_fields()
 
 
 class App(tk.Tk):

@@ -4,5 +4,19 @@
   "reconstruction.btn.load": "Загрузить архив",
   "reconstruction.btn.next": "Следующий трек",
   "reconstruction.btn.prev": "Предыдущий трек",
-  "reconstruction.btn.reconstruct": "Реконструировать"
+  "reconstruction.btn.reconstruct": "Реконструировать",
+  "reconstruction.btn.trace": "Построить след",
+
+
+  "reconstruction.sample": "Сэмплирование",
+  "reconstruction.sample.draws": "Отрисованные образцы",
+  "reconstruction.sample.chains": "Цепи",
+  "reconstruction.sample.tune": "Подстроечные образцы",
+  "reconstruction.sample.random_seed": "Зерно генератора",
+  "reconstruction.sample.target_accept": "Коэффициент приемлемости",
+
+  "reconstruction_model": "Модель для реконструкции",
+  "reconstruction_model.linear": "Линейная",
+  "reconstruction_model.linear.threshold": "Порог",
+  "reconstruction_model.linear_alt": "Линейная (альтернативная)"
 }

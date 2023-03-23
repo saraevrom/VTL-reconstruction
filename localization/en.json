@@ -4,5 +4,20 @@
   "reconstruction.btn.load": "Load archive",
   "reconstruction.btn.next": "Next",
   "reconstruction.btn.prev": "Previous",
-  "reconstruction.btn.reconstruct": "Reconstruct"
+  "reconstruction.btn.reconstruct": "Reconstruct",
+  "reconstruction.btn.trace": "Plot trace",
+
+  "reconstruction.sample": "Sampling",
+  "reconstruction.sample.draws": "Draws",
+  "reconstruction.sample.chains": "Chains",
+  "reconstruction.sample.tune": "Tune",
+  "reconstruction.sample.random_seed": "Random seed",
+  "reconstruction.sample.target_accept": "Target accept",
+
+
+
+  "reconstruction_model": "Reconstruction model",
+  "reconstruction_model.linear": "Linear",
+  "reconstruction_model.linear.threshold": "Threshold",
+  "reconstruction_model.linear_alt": "Linear (alternative)"
 }

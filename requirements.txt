@@ -5,3 +5,5 @@ pymc
 h5py
 numba
 astropy
+pandas
+pandastable
