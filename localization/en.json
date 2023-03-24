@@ -6,6 +6,8 @@
   "reconstruction.btn.prev": "Previous",
   "reconstruction.btn.reconstruct": "Reconstruct",
   "reconstruction.btn.trace": "Plot trace",
+  "reconstruction.btn.save_traces": "Save traces",
+  "reconstruction.btn.save_df": "Save dataframe",
 
   "reconstruction.sample": "Sampling",
   "reconstruction.sample.draws": "Draws",
@@ -13,6 +15,7 @@
   "reconstruction.sample.tune": "Tune",
   "reconstruction.sample.random_seed": "Random seed",
   "reconstruction.sample.target_accept": "Target accept",
+  "reconstruction.sample.nuts_sampler": "NUTS sampler",
 
 
 

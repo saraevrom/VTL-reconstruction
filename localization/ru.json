@@ -6,6 +6,8 @@
   "reconstruction.btn.prev": "Предыдущий трек",
   "reconstruction.btn.reconstruct": "Реконструировать",
   "reconstruction.btn.trace": "Построить след",
+  "reconstruction.btn.save_traces": "Сохранить след",
+  "reconstruction.btn.save_df": "Сохранить таблицу",
 
 
   "reconstruction.sample": "Сэмплирование",
@@ -14,6 +16,7 @@
   "reconstruction.sample.tune": "Подстроечные образцы",
   "reconstruction.sample.random_seed": "Зерно генератора",
   "reconstruction.sample.target_accept": "Коэффициент приемлемости",
+  "reconstruction.sample.nuts_sampler": "Реализация NUTS",
 
   "reconstruction_model": "Модель для реконструкции",
   "reconstruction_model.linear": "Линейная",

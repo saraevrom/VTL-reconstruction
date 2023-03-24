@@ -21,6 +21,8 @@ from vtl_common.common_GUI.tk_forms import TkDictForm
 
 
 TRACKS_WORKSPACE = Workspace("tracks")
+TRACES_WORKSPACE = Workspace("traces")
+RECON_WORKSPACE = Workspace("reconstruction_results")
 # USED_MODEL = linear_track_model_alt
 
 STDEV_PREFIX = "σ_"
@@ -86,16 +88,17 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self.track_plotter.pack(fill="both", expand=True)
         self.control_panel = ButtonPanel(rpanel)
         self.control_panel.pack(side="top", fill="x")
-        self.control_panel.add_button(get_locale("reconstruction.btn.load"), self.on_load, 0)
+        self.control_panel.add_button(get_locale("reconstruction.btn.load"), self.on_load_archive, 0)
         self.control_panel.add_button(get_locale("reconstruction.btn.prev"), self.on_prev, 1)
         self.control_panel.add_button(get_locale("reconstruction.btn.next"), self.on_next, 1)
         self.control_panel.add_button(get_locale("reconstruction.btn.reconstruct"), self.on_reconstruct, 2)
         self.control_panel.add_button(get_locale("reconstruction.btn.trace"), self.on_traces, 3)
-
+        self.control_panel.add_button(get_locale("reconstruction.btn.save_traces"), self.on_save_traces, 4)
+        self.control_panel.add_button(get_locale("reconstruction.btn.save_df"), self.on_save_dataframe, 4)
 
         self.ctrl_form_parser = ControlForm()
         self.ctrl_form = TkDictForm(rpanel, self.ctrl_form_parser.get_configuration_root())
-        self.ctrl_form.pack(side="bottom", fill="both")
+        self.ctrl_form.pack(side="bottom", fill="both",expand=True)
 
         bottom_panel = tk.Frame(self)
         bottom_panel.pack(side="bottom", fill="x")
@@ -118,11 +121,11 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self._traces = []
 
     def on_traces(self):
-        for i, trace in enumerate(self._traces):
+        for i, (trace, label) in enumerate(self._traces):
             axs = az.plot_trace(trace).flatten()
             print(axs)
             fig = axs[0].get_figure()
-            fig.canvas.manager.set_window_title(f'Trace {i}')
+            fig.canvas.manager.set_window_title(f'Trace {label}')
             fig.show()
 
     def on_prev(self):
@@ -139,7 +142,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         xs = np.arange(self._loaded_data0.shape[0])
         return xs, self._loaded_data0
 
-    def on_load(self):
+    def on_load_archive(self):
         filename = TRACKS_WORKSPACE.askopenfilename(auto_formats=["zip"])
         if filename:
             if self.loaded_file:
@@ -150,6 +153,23 @@ class ReconstructorTool(ToolBase, PopupPlotable):
 
             self.pointer = 0
             self.show_event()
+
+    def on_save_traces(self):
+        return
+        # Way to save traces is unknown
+        if self._traces:
+            filename = TRACES_WORKSPACE.asksaveasfilename(auto_formats=["zip"])
+            if filename:
+                for trace, label in self._traces:
+                    pass
+
+    def on_save_dataframe(self):
+        filename = RECON_WORKSPACE.asksaveasfilename(auto_formats=["csv"])
+        if filename:
+            df:pd.DataFrame
+            df = self.result_table.model.df
+            df.to_csv(filename, sep=",")
+
 
     def show_event(self):
         if self.pointer < 0:
@@ -185,35 +205,30 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             src_file = self._filelist[self.pointer]
             self._traces.clear()
             dfs = []
-            keys = []
             if self._bottom_left:
                 print("RECONSTRUCTING BL")
                 trace, summary = reconstruct_event(src_file=src_file, pmt="BL", plot_data=self._loaded_data0[:, :8, :8],
                                           form_data=formdata)
-                self._traces.append(trace)
+                self._traces.append((trace, "BL"))
                 dfs.append(summary)
-                keys.append("BL")
             if self._bottom_right:
                 print("RECONSTRUCTING BR")
                 trace, summary = reconstruct_event(src_file=src_file, pmt="BR", plot_data=self._loaded_data0[:, 8:, :8],
                                           form_data=formdata)
-                self._traces.append(trace)
+                self._traces.append((trace, "BR"))
                 dfs.append(summary)
-                keys.append("BR")
             if self._top_left:
                 print("RECONSTRUCTING TL")
                 trace, summary = reconstruct_event(src_file=src_file, pmt="TL", plot_data=self._loaded_data0[:, :8, 8:],
                                           form_data=formdata)
-                self._traces.append(trace)
-                keys.append("TL")
+                self._traces.append((trace, "TL"))
                 dfs.append(summary)
             if self._top_right:
                 print("RECONSTRUCTING TR")
                 trace, summary = reconstruct_event(src_file=src_file, pmt="TR", plot_data=self._loaded_data0[:, 8:, 8:],
                                           form_data=formdata)
-                self._traces.append(trace)
+                self._traces.append((trace, "TR"))
                 dfs.append(summary)
-                keys.append("TR")
 
             df = pd.concat(dfs)
             #df = pd.DataFrame(data=data)

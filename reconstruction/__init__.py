@@ -1,5 +1,5 @@
 from .linear_track import LinearTrackModelForm, LinearTrackAltModelForm
-from vtl_common.common_GUI.tk_forms_assist import AlternatingNode, FormNode, IntNode, FloatNode, OptionNode
+from vtl_common.common_GUI.tk_forms_assist import AlternatingNode, FormNode, IntNode, FloatNode, OptionNode, ComboNode
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from vtl_common.localization import get_locale
 
@@ -13,12 +13,18 @@ class OptInt(OptionNode):
     DEFAULT_VALUE = None
     ITEM_TYPE = create_value_field(IntNode, "", 1)
 
+
+class NUTSSampler(ComboNode):
+    SELECTION_READONLY = True
+    VALUES = ["pymc", "nutpie", "blackjax", "numpyro"]
+
 SAMPLER_PARAMETERS = [
     (IntNode, "draws", 2000),
     (IntNode, "tune", 2000),
     (IntNode, "chains", 4),
     (IntNode, "random_seed", 5),
     (FloatNode, "target_accept", 0.95),
+    (NUTSSampler, "nuts_sampler", "pymc")
 ]
 
 
