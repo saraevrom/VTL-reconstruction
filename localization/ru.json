@@ -18,6 +18,11 @@
   "reconstruction.sample.target_accept": "Коэффициент приемлемости",
   "reconstruction.sample.nuts_sampler": "Реализация NUTS",
 
+  "reconstruction.form.cutter": "Вырезка",
+  "reconstruction.form.cutter.range": "Диапазон",
+  "reconstruction.form.cutter.start": "Начало",
+  "reconstruction.form.cutter.end": "Конец",
+
   "reconstruction_model": "Модель для реконструкции",
   "reconstruction_model.linear": "Линейная",
   "reconstruction_model.linear.threshold": "Порог",

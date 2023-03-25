@@ -198,6 +198,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self.ctrl_form_parser.parse_formdata(formdata)
         formdata = self.ctrl_form_parser.get_data()
         used_model = formdata["model"]
+        cutters = formdata["cutter"]
         if self.loaded_file:
             # re_model = used_model(self._loaded_data0)
             # data = create_records(*re_model.unobserved_RVs)
@@ -207,25 +208,29 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             dfs = []
             if self._bottom_left:
                 print("RECONSTRUCTING BL")
-                trace, summary = reconstruct_event(src_file=src_file, pmt="BL", plot_data=self._loaded_data0[:, :8, :8],
+                reco_data = cutters["bl"].cut(self._loaded_data0)
+                trace, summary = reconstruct_event(src_file=src_file, pmt="BL", plot_data=reco_data[:, :8, :8],
                                           form_data=formdata)
                 self._traces.append((trace, "BL"))
                 dfs.append(summary)
             if self._bottom_right:
                 print("RECONSTRUCTING BR")
-                trace, summary = reconstruct_event(src_file=src_file, pmt="BR", plot_data=self._loaded_data0[:, 8:, :8],
+                reco_data = cutters["br"].cut(self._loaded_data0)
+                trace, summary = reconstruct_event(src_file=src_file, pmt="BR", plot_data=reco_data[:, 8:, :8],
                                           form_data=formdata)
                 self._traces.append((trace, "BR"))
                 dfs.append(summary)
             if self._top_left:
                 print("RECONSTRUCTING TL")
-                trace, summary = reconstruct_event(src_file=src_file, pmt="TL", plot_data=self._loaded_data0[:, :8, 8:],
+                reco_data = cutters["tl"].cut(self._loaded_data0)
+                trace, summary = reconstruct_event(src_file=src_file, pmt="TL", plot_data=reco_data[:, :8, 8:],
                                           form_data=formdata)
                 self._traces.append((trace, "TL"))
                 dfs.append(summary)
             if self._top_right:
                 print("RECONSTRUCTING TR")
-                trace, summary = reconstruct_event(src_file=src_file, pmt="TR", plot_data=self._loaded_data0[:, 8:, 8:],
+                reco_data = cutters["tr"].cut(self._loaded_data0)
+                trace, summary = reconstruct_event(src_file=src_file, pmt="TR", plot_data=reco_data[:, 8:, 8:],
                                           form_data=formdata)
                 self._traces.append((trace, "TR"))
                 dfs.append(summary)

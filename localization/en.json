@@ -18,6 +18,10 @@
   "reconstruction.sample.nuts_sampler": "NUTS sampler",
 
 
+  "reconstruction.form.cutter": "Cutoff",
+  "reconstruction.form.cutter.range": "Range",
+  "reconstruction.form.cutter.start": "Start",
+  "reconstruction.form.cutter.end": "End",
 
   "reconstruction_model": "Reconstruction model",
   "reconstruction_model.linear": "Linear",
