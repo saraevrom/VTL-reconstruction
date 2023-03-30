@@ -1,6 +1,8 @@
 {
   "app.title": "Реконструкция треков",
   "tools.reconstruction": "Реконструкция",
+  "tools.orientation": "Ориентация",
+
   "reconstruction.btn.load": "Загрузить архив",
   "reconstruction.btn.next": "Следующий трек",
   "reconstruction.btn.prev": "Предыдущий трек",

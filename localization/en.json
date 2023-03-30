@@ -1,6 +1,9 @@
 {
   "app.title": "TULOMA-TRACKS: reconstruction",
   "tools.reconstruction": "Reconstruction",
+  "tools.orientation": "Orientation",
+
+
   "reconstruction.btn.load": "Load archive",
   "reconstruction.btn.next": "Next",
   "reconstruction.btn.prev": "Previous",
