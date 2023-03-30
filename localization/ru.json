@@ -26,5 +26,11 @@
   "reconstruction_model": "Модель для реконструкции",
   "reconstruction_model.linear": "Линейная",
   "reconstruction_model.linear.threshold": "Порог",
-  "reconstruction_model.linear_alt": "Линейная (альтернативная)"
+  "reconstruction_model.linear.minv": "Минимальная скорость [пикс/такт]",
+  "reconstruction_model.linear.maxv": "Максимальная скорость [пикс/такт]",
+
+  "reconstruction_model.linear_alt": "Линейная (альтернативная)",
+  "reconstruction_model.linear_alt.front_mul": "Множитель фронта",
+  "reconstruction_model.linear_alt.envelope": "Огибающая",
+  "reconstruction_model.linear_alt.discrete_time": "Дискретное время"
 }

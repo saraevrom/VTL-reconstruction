@@ -26,5 +26,11 @@
   "reconstruction_model": "Reconstruction model",
   "reconstruction_model.linear": "Linear",
   "reconstruction_model.linear.threshold": "Threshold",
-  "reconstruction_model.linear_alt": "Linear (alternative)"
+  "reconstruction_model.linear.minv": "Lower velocity [pix/t]",
+  "reconstruction_model.linear.maxv": "Upper velocity [pix/t]",
+
+  "reconstruction_model.linear_alt": "Linear (alternative)",
+  "reconstruction_model.linear_alt.front_mul": "Front multiplier",
+  "reconstruction_model.linear_alt.envelope": "Envelope",
+  "reconstruction_model.linear_alt.discrete_time": "Discrete time"
 }

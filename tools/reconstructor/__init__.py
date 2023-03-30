@@ -15,6 +15,9 @@ import pandas as pd
 import pymc as pm
 from vtl_common.parameters import NPROC
 import arviz as az
+import json
+# az.style.use(["arviz-white", "arviz-redish"])
+
 import matplotlib.pyplot as plt
 from .form import ControlForm
 from vtl_common.common_GUI.tk_forms import TkDictForm
@@ -40,11 +43,13 @@ def create_records(*args):
 def reconstruct_event(src_file, pmt, plot_data, form_data):
     used_model = form_data["model"]
     sampler_params = form_data["sampler"]
-    re_model = used_model(plot_data)
+    re_model = used_model(np.array(plot_data))
     chains = sampler_params["chains"]
     print("Got model")
     with re_model:
-        idata_0 = pm.sample(return_inferencedata=True, progressbar=True, cores=NPROC, **sampler_params)
+        print("Sampling")
+        idata_0 = pm.sample(return_inferencedata=True, progressbar=True,
+                            **sampler_params)
         # idata_0 = pm.sample(2000, chains=chains, tune=2000, random_seed=5, target_accept=0.95,
         #                     return_inferencedata=True, progressbar=True, cores=NPROC)
         # idata_0 = pm.sample(2000, chains=chains, tune=2000, random_seed=5,
@@ -125,6 +130,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             axs = az.plot_trace(trace).flatten()
             print(axs)
             fig = axs[0].get_figure()
+            fig.tight_layout()
             fig.canvas.manager.set_window_title(f'Trace {label}')
             fig.show()
 
@@ -195,6 +201,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
 
     def on_reconstruct(self):
         formdata = self.ctrl_form.get_values()
+        print("USED PARAMETERS:", json.dumps(formdata, indent=4, sort_keys=True))
         self.ctrl_form_parser.parse_formdata(formdata)
         formdata = self.ctrl_form_parser.get_data()
         used_model = formdata["model"]
@@ -207,41 +214,62 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             self._traces.clear()
             dfs = []
             if self._bottom_left:
-                print("RECONSTRUCTING BL")
-                reco_data = cutters["bl"].cut(self._loaded_data0)
-                trace, summary = reconstruct_event(src_file=src_file, pmt="BL", plot_data=reco_data[:, :8, :8],
-                                          form_data=formdata)
-                self._traces.append((trace, "BL"))
-                dfs.append(summary)
+                try:
+                    print("RECONSTRUCTING BL")
+                    reco_data = cutters["bl"].cut(self._loaded_data0)
+                    trace, summary = reconstruct_event(src_file=src_file, pmt="BL", plot_data=reco_data[:, :8, :8],
+                                              form_data=formdata)
+                    self._traces.append((trace, "BL"))
+                    dfs.append(summary)
+                except ValueError:
+                    print("Skipped")
+                except KeyboardInterrupt:
+                    print("Skipped")
             if self._bottom_right:
-                print("RECONSTRUCTING BR")
-                reco_data = cutters["br"].cut(self._loaded_data0)
-                trace, summary = reconstruct_event(src_file=src_file, pmt="BR", plot_data=reco_data[:, 8:, :8],
-                                          form_data=formdata)
-                self._traces.append((trace, "BR"))
-                dfs.append(summary)
-            if self._top_left:
-                print("RECONSTRUCTING TL")
-                reco_data = cutters["tl"].cut(self._loaded_data0)
-                trace, summary = reconstruct_event(src_file=src_file, pmt="TL", plot_data=reco_data[:, :8, 8:],
-                                          form_data=formdata)
-                self._traces.append((trace, "TL"))
-                dfs.append(summary)
-            if self._top_right:
-                print("RECONSTRUCTING TR")
-                reco_data = cutters["tr"].cut(self._loaded_data0)
-                trace, summary = reconstruct_event(src_file=src_file, pmt="TR", plot_data=reco_data[:, 8:, 8:],
-                                          form_data=formdata)
-                self._traces.append((trace, "TR"))
-                dfs.append(summary)
 
-            df = pd.concat(dfs)
-            #df = pd.DataFrame(data=data)
-            self.result_table.model.df = df
-            if not self._bottom_visible:
-                self.result_table.show()
-                self._bottom_visible = True
-            else:
-                self.result_table.redraw()
+                try:
+                    print("RECONSTRUCTING BR")
+                    reco_data = cutters["br"].cut(self._loaded_data0)
+                    trace, summary = reconstruct_event(src_file=src_file, pmt="BR", plot_data=reco_data[:, 8:, :8],
+                                              form_data=formdata)
+                    self._traces.append((trace, "BR"))
+                    dfs.append(summary)
+                except ValueError:
+                    print("Skipped")
+                except KeyboardInterrupt:
+                    print("Skipped")
+            if self._top_left:
+                try:
+                    print("RECONSTRUCTING TL")
+                    reco_data = cutters["tl"].cut(self._loaded_data0)
+                    trace, summary = reconstruct_event(src_file=src_file, pmt="TL", plot_data=reco_data[:, :8, 8:],
+                                              form_data=formdata)
+                    self._traces.append((trace, "TL"))
+                    dfs.append(summary)
+                except ValueError:
+                    print("Skipped")
+                except KeyboardInterrupt:
+                    print("Skipped")
+            if self._top_right:
+                try:
+                    print("RECONSTRUCTING TR")
+                    reco_data = cutters["tr"].cut(self._loaded_data0)
+                    trace, summary = reconstruct_event(src_file=src_file, pmt="TR", plot_data=reco_data[:, 8:, 8:],
+                                              form_data=formdata)
+                    self._traces.append((trace, "TR"))
+                    dfs.append(summary)
+                except ValueError:
+                    print("Skipped")
+                except KeyboardInterrupt:
+                    print("Skipped")
+            if dfs:
+                df = pd.concat(dfs)
+                #df = pd.DataFrame(data=data)
+                self.result_table.model.df = df
+                if not self._bottom_visible:
+                    self.result_table.show()
+                    self._bottom_visible = True
+                else:
+                    self.result_table.redraw()
 
 
