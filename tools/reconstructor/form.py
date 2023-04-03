@@ -1,5 +1,5 @@
 from reconstruction import ReconstructionForm
-from vtl_common.common_GUI.tk_forms_assist import FormNode, OptionNode, IntNode
+from vtl_common.common_GUI.tk_forms_assist import FormNode, OptionNode, IntNode, BoolNode
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from vtl_common.localization import get_locale
 from .cutters import RangeCutter, WholeCutter
@@ -33,3 +33,5 @@ class Cutter(FormNode):
 class ControlForm(ReconstructionForm):
     USE_SCROLLVIEW = True
     FIELD__cutter = Cutter
+    FIELD__split_chains = create_value_field(BoolNode, get_locale("reconstruction.form.split_chains"), True)
+    FIELD__overwrite = create_value_field(BoolNode, get_locale("reconstruction.form.overwrite"), False)

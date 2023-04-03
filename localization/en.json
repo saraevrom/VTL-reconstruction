@@ -10,7 +10,9 @@
   "reconstruction.btn.reconstruct": "Reconstruct",
   "reconstruction.btn.trace": "Plot trace",
   "reconstruction.btn.save_traces": "Save traces",
+  "reconstruction.btn.load_traces": "Load traces",
   "reconstruction.btn.save_df": "Save dataframe",
+  "reconstruction.btn.clear_traces": "Clear traces",
 
   "reconstruction.sample": "Sampling",
   "reconstruction.sample.draws": "Draws",
@@ -25,15 +27,21 @@
   "reconstruction.form.cutter.range": "Range",
   "reconstruction.form.cutter.start": "Start",
   "reconstruction.form.cutter.end": "End",
+  "reconstruction.form.split_chains": "Split chains",
+  "reconstruction.form.overwrite": "Overwrite sampling",
+
+
 
   "reconstruction_model": "Reconstruction model",
   "reconstruction_model.linear": "Linear",
   "reconstruction_model.linear.threshold": "Threshold",
   "reconstruction_model.linear.minv": "Lower velocity [pix/t]",
   "reconstruction_model.linear.maxv": "Upper velocity [pix/t]",
+  "reconstruction_model.linear.min_e": "Lower energy",
+  "reconstruction_model.linear.max_e": "Upper energy",
 
   "reconstruction_model.linear_alt": "Linear (alternative)",
-  "reconstruction_model.linear_alt.front_mul": "Front multiplier",
-  "reconstruction_model.linear_alt.envelope": "Envelope",
+  "reconstruction_model.linear_alt.front_mul": "Front steepness",
+  "reconstruction_model.linear_alt.envelope": "Profile",
   "reconstruction_model.linear_alt.discrete_time": "Discrete time"
 }

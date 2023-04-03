@@ -15,7 +15,7 @@ def find_track(track_data):
                 first = i
             last = i
         elif triggered:
-            if last==first:
+            if (last - first) < 20:
                 triggered = False
             else:
                 break
@@ -23,7 +23,11 @@ def find_track(track_data):
 
 
 def track_threshold(track_data, threshold):
-    tracks = track_data > threshold
+    print("THRESH =", threshold)
+    amplitudes = np.max(track_data, axis=0)
+    tracks_matrix = amplitudes > threshold
+
+    tracks = (track_data > threshold)
     tracks = np.logical_or.reduce(tracks, axis=(1, 2))
     # print(tracks)
     k_start, k_end = find_track(tracks)

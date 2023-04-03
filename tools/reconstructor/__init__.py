@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 import arviz
 
 from ..tool_base import ToolBase
@@ -16,11 +19,20 @@ import pymc as pm
 from vtl_common.parameters import NPROC
 import arviz as az
 import json
+import traceback
+from xarray import Dataset
+import io
+import zipfile
+import xarray as xr
+from .selection_dialog import SelectionDialog
 # az.style.use(["arviz-white", "arviz-redish"])
+
+from tkinter import messagebox
 
 import matplotlib.pyplot as plt
 from .form import ControlForm
 from vtl_common.common_GUI.tk_forms import TkDictForm
+az.rcParams["data.load"] = "eager"
 
 
 TRACKS_WORKSPACE = Workspace("tracks")
@@ -29,6 +41,9 @@ RECON_WORKSPACE = Workspace("reconstruction_results")
 # USED_MODEL = linear_track_model_alt
 
 STDEV_PREFIX = "σ_"
+
+def noext(x):
+    return  os.path.splitext(x)[0]
 
 def create_records(*args):
     res = dict()
@@ -40,44 +55,63 @@ def create_records(*args):
         res[STDEV_PREFIX+str(arg)] = []
     return res
 
-def reconstruct_event(src_file, pmt, plot_data, form_data):
+
+def find_trace_entry(traces, entry_name):
+    print("Finding trace", entry_name)
+    if entry_name in traces.keys():
+        print("FOUND")
+        return traces[entry_name]
+    print("NOT FOUND")
+    return None
+
+def reconstruct_event(form_data, measured_data):
     used_model = form_data["model"]
     sampler_params = form_data["sampler"]
-    re_model = used_model(np.array(plot_data))
-    chains = sampler_params["chains"]
-    print("Got model")
+
+    # some_matr = np.max(measured_data, axis=0)
+    # plt.matshow(some_matr)
+    # plt.title(f"To reconstruct:")
+    # plt.show()
+
+    re_model = used_model(np.array(measured_data))
     with re_model:
         print("Sampling")
         idata_0 = pm.sample(return_inferencedata=True, progressbar=True,
                             **sampler_params)
-        # idata_0 = pm.sample(2000, chains=chains, tune=2000, random_seed=5, target_accept=0.95,
-        #                     return_inferencedata=True, progressbar=True, cores=NPROC)
-        # idata_0 = pm.sample(2000, chains=chains, tune=2000, random_seed=5,
-        #                     return_inferencedata=True, progressbar=True, cores=NPROC)
-        #idata_0 = pm.sample(2000, chains=chains, tune=2000, random_seed=5,
-        #                      return_inferencedata=True, progressbar=True)
-    # for chain in range(chains):
-    #     data["SRC"].append(src_file)
-    #     data["PMT"].append(pmt)
-    #     data["Chain"].append(chain)
-    #     for arg in re_model.unobserved_RVs:
-    #         sarg = str(arg)
-    #         try:
-    #             data[sarg].append(np.mean(np.array(idata_0["posterior"][sarg][chain])))
-    #             data[STDEV_PREFIX+sarg].append(np.std(np.array(idata_0["posterior"][sarg][chain])))
-    #         except KeyError:
-    #             data[sarg].append("-")
-    #             data[STDEV_PREFIX + sarg].append("-")
-    summary = arviz.summary(idata_0)
-    # summary['parameter'] = summary.index
-    summary.insert(0,'parameter', summary.index)
-    summary = summary.reset_index(drop=True)
-    summary.insert(0, 'PMT', pmt)
-    summary.insert(0, 'SRC', src_file)
-    # summary["SRC"] = src_file
-    # summary["PMT"] = pmt
-    return idata_0, summary
+    return idata_0
 
+
+def render_event(idata_0, form_data):
+    split_chains = form_data["split_chains"]
+    sampler_params = form_data["sampler"]
+    #print(idata_0)
+    post: Dataset = idata_0.posterior
+    chains = sampler_params["chains"]
+    if split_chains:
+        summaries = []
+        for chain in range(chains):
+
+            chained = post.isel(chain=slice(chain, chain+1)) # Needed for summary
+            subsum = arviz.summary(chained)
+            subsum.insert(0, 'parameter', subsum.index)
+            subsum = subsum.reset_index(drop=True)
+            subsum.insert(0, 'chain', chain)
+            summaries.append(subsum)
+
+        whole_summary = pd.concat(summaries)
+        whole_summary = whole_summary.reset_index(drop=True)
+
+        # summary['parameter'] = summary.index
+    else:
+        print(post)
+        posterior_collapsed = post.median(dim="chain")
+        posterior_collapsed = posterior_collapsed.expand_dims(dim={"chain": 1})
+        whole_summary = az.summary(posterior_collapsed)
+        whole_summary.insert(0, 'parameter', whole_summary.index)
+        whole_summary = whole_summary.reset_index(drop=True)
+
+
+    return whole_summary
 
 class ReconstructorTool(ToolBase, PopupPlotable):
     TOOL_KEY = "tools.reconstruction"
@@ -85,7 +119,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
     def __init__(self, master):
         super().__init__(master)
 
-
+        self._formdata = None
         rpanel = tk.Frame(self)
         rpanel.pack(side="right", fill="y")
 
@@ -97,9 +131,11 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self.control_panel.add_button(get_locale("reconstruction.btn.prev"), self.on_prev, 1)
         self.control_panel.add_button(get_locale("reconstruction.btn.next"), self.on_next, 1)
         self.control_panel.add_button(get_locale("reconstruction.btn.reconstruct"), self.on_reconstruct, 2)
-        self.control_panel.add_button(get_locale("reconstruction.btn.trace"), self.on_traces, 3)
+        self.control_panel.add_button(get_locale("reconstruction.btn.trace"), self.on_plot_arviz_traces, 3)
         self.control_panel.add_button(get_locale("reconstruction.btn.save_traces"), self.on_save_traces, 4)
         self.control_panel.add_button(get_locale("reconstruction.btn.save_df"), self.on_save_dataframe, 4)
+        self.control_panel.add_button(get_locale("reconstruction.btn.load_traces"), self.on_load_traces, 5)
+        self.control_panel.add_button(get_locale("reconstruction.btn.clear_traces"), self.on_clear_traces, 6)
 
         self.ctrl_form_parser = ControlForm()
         self.ctrl_form = TkDictForm(rpanel, self.ctrl_form_parser.get_configuration_root())
@@ -123,16 +159,22 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self._top_left = False
         self._top_right = False
         self._bottom_visible = False
-        self._traces = []
+        self._traces = dict()
 
-    def on_traces(self):
-        for i, (trace, label) in enumerate(self._traces):
-            axs = az.plot_trace(trace).flatten()
-            print(axs)
-            fig = axs[0].get_figure()
-            fig.tight_layout()
-            fig.canvas.manager.set_window_title(f'Trace {label}')
-            fig.show()
+    def on_plot_arviz_traces(self):
+        options_to_select = self._traces.keys()
+        if options_to_select:
+            selector = SelectionDialog(self, options_to_select)
+            label = selector.result
+            if label:
+                trace = self._traces[label]
+                axs = az.plot_trace(trace).flatten()
+                print(axs)
+                fig = axs[0].get_figure()
+                fig.tight_layout()
+                fig.canvas.manager.set_window_title(f'Trace {label}')
+                fig.show()
+
 
     def on_prev(self):
         self.pointer -= 1
@@ -160,14 +202,43 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             self.pointer = 0
             self.show_event()
 
+
+
+    def on_load_traces(self):
+        self._update_formdata()
+        filename = TRACES_WORKSPACE.askopenfilename(auto_formats=["zip"])
+        if filename:
+            with zipfile.ZipFile(filename, "r", zipfile.ZIP_DEFLATED) as zipf:
+                namelist = zipf.namelist()
+                self._traces.clear()
+                for name in namelist:
+                    source_label = noext(name)
+                    number, temp_filename = tempfile.mkstemp(suffix=".h5")
+                    with open(temp_filename, "wb") as tmp_file:
+                        data = zipf.read(name)
+                        #print(data)
+                        tmp_file.write(data)
+                    self._traces[source_label] = az.from_netcdf(temp_filename, engine="h5netcdf")
+                    print(self._traces[source_label])
+                    os.remove(temp_filename)
+
+                self.render_traces()
+
     def on_save_traces(self):
-        return
-        # Way to save traces is unknown
         if self._traces:
             filename = TRACES_WORKSPACE.asksaveasfilename(auto_formats=["zip"])
             if filename:
-                for trace, label in self._traces:
-                    pass
+                with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as zipf:
+                    for label in self._traces.keys():
+                        trace = self._traces[label]
+                        trace_name = f"{label}.h5"
+                        print("Saving", trace_name)
+                        number, temp_filename = tempfile.mkstemp(prefix="saved_", suffix="_"+trace_name)
+                        trace.to_netcdf(temp_filename, engine="h5netcdf")
+                        print("Saved temporary as", temp_filename)
+                        zipf.write(temp_filename, trace_name)
+                        os.remove(temp_filename)
+
 
     def on_save_dataframe(self):
         filename = RECON_WORKSPACE.asksaveasfilename(auto_formats=["csv"])
@@ -199,77 +270,90 @@ class ReconstructorTool(ToolBase, PopupPlotable):
                 self._top_left = h5file.attrs["top_left"]
                 self._top_right = h5file.attrs["top_right"]
 
-    def on_reconstruct(self):
+    def _reconstruct_fill(self, pmt, i_slice, j_slice):
+        src_file = self._filelist[self.pointer]
+        upper_pmt = pmt.upper()
+        formdata = self._formdata
+        cutters = formdata["cutter"]
+        try:
+            print("RECONSTRUCTING", upper_pmt)
+            # reco_data = cutters[pmt].cut(self._loaded_data0)
+            # trace, summary = reconstruct_event_to_remove(self._traces, src_file=src_file, pmt=upper_pmt,
+            #                                    plot_data=reco_data[:, i_slice, j_slice],
+            #                                    form_data=formdata)
+            # output_dfs.append(summary)
+
+            trace_identifier = f"{noext(src_file)}_{pmt}"
+
+            trace = find_trace_entry(self._traces, trace_identifier)
+            if trace is None or formdata["overwrite"]:
+                reconstruction_data = cutters[pmt].cut(self._loaded_data0)
+                trace = reconstruct_event(formdata, reconstruction_data[:, i_slice, j_slice])
+                self._traces[trace_identifier] = trace
+
+            # summary = render_event(trace, formdata)
+            # summary.insert(0, 'PMT', pmt)
+            # summary.insert(0, 'SRC', src_file)
+            # self._buffer_dataframes.append(summary)
+
+        except ValueError as e:
+            print("Skipped")
+            print("Reason: ValueError:", e)
+            print("Traceback:")
+            print(traceback.format_exc())
+
+        except KeyboardInterrupt:
+            print("Skipped")
+
+
+    def on_clear_traces(self):
+        self._traces.clear()
+
+
+    def render_traces(self):
+        formdata = self._formdata
+        buffer_dataframes = []
+        for label in self._traces.keys():
+            trace = self._traces[label]
+            summary = render_event(trace, formdata)
+            summary.insert(0, 'SRC', label)
+            buffer_dataframes.append(summary)
+
+        if buffer_dataframes:
+            df = pd.concat(buffer_dataframes)
+            self.result_table.model.df = df
+            if not self._bottom_visible:
+                self.result_table.show()
+                self._bottom_visible = True
+            else:
+                self.result_table.redraw()
+
+
+    def _update_formdata(self):
         formdata = self.ctrl_form.get_values()
         print("USED PARAMETERS:", json.dumps(formdata, indent=4, sort_keys=True))
         self.ctrl_form_parser.parse_formdata(formdata)
-        formdata = self.ctrl_form_parser.get_data()
-        used_model = formdata["model"]
-        cutters = formdata["cutter"]
+        self._formdata = self.ctrl_form_parser.get_data()
+
+    def on_reconstruct(self):
+        self._update_formdata()
         if self.loaded_file:
             # re_model = used_model(self._loaded_data0)
             # data = create_records(*re_model.unobserved_RVs)
             # print("KEYS:", data.keys())
-            src_file = self._filelist[self.pointer]
-            self._traces.clear()
-            dfs = []
+
+
+
+            lower_slice = slice(None, 8)
+            upper_slice = slice(8, None)
+
             if self._bottom_left:
-                try:
-                    print("RECONSTRUCTING BL")
-                    reco_data = cutters["bl"].cut(self._loaded_data0)
-                    trace, summary = reconstruct_event(src_file=src_file, pmt="BL", plot_data=reco_data[:, :8, :8],
-                                              form_data=formdata)
-                    self._traces.append((trace, "BL"))
-                    dfs.append(summary)
-                except ValueError:
-                    print("Skipped")
-                except KeyboardInterrupt:
-                    print("Skipped")
+                self._reconstruct_fill("bl", lower_slice, lower_slice)
             if self._bottom_right:
-
-                try:
-                    print("RECONSTRUCTING BR")
-                    reco_data = cutters["br"].cut(self._loaded_data0)
-                    trace, summary = reconstruct_event(src_file=src_file, pmt="BR", plot_data=reco_data[:, 8:, :8],
-                                              form_data=formdata)
-                    self._traces.append((trace, "BR"))
-                    dfs.append(summary)
-                except ValueError:
-                    print("Skipped")
-                except KeyboardInterrupt:
-                    print("Skipped")
+                self._reconstruct_fill("br", upper_slice, lower_slice)
             if self._top_left:
-                try:
-                    print("RECONSTRUCTING TL")
-                    reco_data = cutters["tl"].cut(self._loaded_data0)
-                    trace, summary = reconstruct_event(src_file=src_file, pmt="TL", plot_data=reco_data[:, :8, 8:],
-                                              form_data=formdata)
-                    self._traces.append((trace, "TL"))
-                    dfs.append(summary)
-                except ValueError:
-                    print("Skipped")
-                except KeyboardInterrupt:
-                    print("Skipped")
+                self._reconstruct_fill("tl", lower_slice, upper_slice)
             if self._top_right:
-                try:
-                    print("RECONSTRUCTING TR")
-                    reco_data = cutters["tr"].cut(self._loaded_data0)
-                    trace, summary = reconstruct_event(src_file=src_file, pmt="TR", plot_data=reco_data[:, 8:, 8:],
-                                              form_data=formdata)
-                    self._traces.append((trace, "TR"))
-                    dfs.append(summary)
-                except ValueError:
-                    print("Skipped")
-                except KeyboardInterrupt:
-                    print("Skipped")
-            if dfs:
-                df = pd.concat(dfs)
-                #df = pd.DataFrame(data=data)
-                self.result_table.model.df = df
-                if not self._bottom_visible:
-                    self.result_table.show()
-                    self._bottom_visible = True
-                else:
-                    self.result_table.redraw()
+                self._reconstruct_fill("tr", upper_slice, upper_slice)
 
-
+            self.render_traces()

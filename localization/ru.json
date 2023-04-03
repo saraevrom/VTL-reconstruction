@@ -8,8 +8,10 @@
   "reconstruction.btn.prev": "Предыдущий трек",
   "reconstruction.btn.reconstruct": "Реконструировать",
   "reconstruction.btn.trace": "Построить след",
-  "reconstruction.btn.save_traces": "Сохранить след",
+  "reconstruction.btn.save_traces": "Сохранить следы",
+  "reconstruction.btn.load_traces": "Загрузить следы",
   "reconstruction.btn.save_df": "Сохранить таблицу",
+  "reconstruction.btn.clear_traces": "Очистить данные следов",
 
 
   "reconstruction.sample": "Сэмплирование",
@@ -24,15 +26,22 @@
   "reconstruction.form.cutter.range": "Диапазон",
   "reconstruction.form.cutter.start": "Начало",
   "reconstruction.form.cutter.end": "Конец",
+  "reconstruction.form.split_chains": "Разделение цепей",
+  "reconstruction.form.overwrite": "Перезаписать данные",
+
+  "reconstruction.dialog.rerun.title": "Перезапуск сэмплирования",
+  "reconstruction.dialog.rerun.message": "Найдены следы сэмплирования. Хотите их перезаписать?",
 
   "reconstruction_model": "Модель для реконструкции",
   "reconstruction_model.linear": "Линейная",
   "reconstruction_model.linear.threshold": "Порог",
   "reconstruction_model.linear.minv": "Минимальная скорость [пикс/такт]",
   "reconstruction_model.linear.maxv": "Максимальная скорость [пикс/такт]",
+  "reconstruction_model.linear.min_e": "Минимальная энергия",
+  "reconstruction_model.linear.max_e": "Максимальная энергия",
 
   "reconstruction_model.linear_alt": "Линейная (альтернативная)",
-  "reconstruction_model.linear_alt.front_mul": "Множитель фронта",
-  "reconstruction_model.linear_alt.envelope": "Огибающая",
+  "reconstruction_model.linear_alt.front_mul": "Крутизна фронта",
+  "reconstruction_model.linear_alt.envelope": "Профиль",
   "reconstruction_model.linear_alt.discrete_time": "Дискретное время"
 }
