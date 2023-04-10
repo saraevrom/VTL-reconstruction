@@ -45,5 +45,17 @@
   "reconstruction_model.linear_alt.envelope": "Профиль",
   "reconstruction_model.linear_alt.discrete_time": "Дискретное время",
 
+
+  "orientation.btn.load_data": "Загрузить файл с данными",
+  "orientation.form.use_ff": "Выравнивать пиксели",
+
+  "orientation.step": "Единица шага:",
+  "orientation.step.year": "Год",
+  "orientation.step.month": "Месяц",
+  "orientation.step.day": "День",
+  "orientation.step.hour": "Час",
+  "orientation.step.minute": "Минута",
+  "orientation.step.second": "Секунда",
+
   "app.parameters.MAX_STAR_MAGNITUDE": "Предел звёздной величины"
 }

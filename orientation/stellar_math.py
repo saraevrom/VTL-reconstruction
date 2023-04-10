@@ -120,7 +120,17 @@ def eci_to_ecef(x_eci, y_eci, z_eci, era):
 
 @nb.njit()
 def eci_to_ocef(x_eci, y_eci, z_eci, era, lat, lon):
-    x_0, y_0, z_0 = rotate_xy(x_eci, y_eci, z_eci, era - lon)  # longitude performs as ERA
+    '''
+    Transform direction from ECI to OCEF cartesian coordinates
+    :param x_eci: x coordinate in ECI
+    :param y_eci: y coordinate in ECI
+    :param z_eci: z coordinate in ECI
+    :param era: Earth rotation angle
+    :param lat: Latitude, radians
+    :param lon: Longitude, radians
+    :return:
+    '''
+    x_0, y_0, z_0 = rotate_xy(x_eci, y_eci, z_eci, - era - lon)  # longitude performs as ERA
     # Meridian is aligned
     return rotate_xz(x_0, y_0, z_0, -lat)
 

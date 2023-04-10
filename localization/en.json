@@ -45,6 +45,18 @@
   "reconstruction_model.linear_alt.envelope": "Profile",
   "reconstruction_model.linear_alt.discrete_time": "Discrete time",
 
+  "orientation.btn.load_data": "Load data file",
+  "orientation.form.use_ff": "Use flatfielding",
+
+  "orientation.step": "Step units:",
+  "orientation.step.year": "Year",
+  "orientation.step.month": "Month",
+  "orientation.step.day": "Day",
+  "orientation.step.hour": "Hour",
+  "orientation.step.minute": "Minute",
+  "orientation.step.second": "Second",
+
+
 
   "app.parameters.MAX_STAR_MAGNITUDE": "Star magnitude limit"
 }
