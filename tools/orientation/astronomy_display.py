@@ -2,10 +2,29 @@ from vtl_common.localized_GUI import Plotter
 import numpy as np
 from orientation.database_reader import get_database
 from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE, MAX_STAR_MAGNITUDE
-from orientation.stellar_math import unixtime_to_era, eci_to_ocef, ocef_to_altaz
+from vtl_common.parameters import HALF_PIXELS, PIXEL_SIZE, HALF_GAP_SIZE
+from orientation.stellar_math import unixtime_to_era, eci_to_ocef, ocef_to_altaz, detector_plane_to_ocef
+from orientation.stellar_math import rotate_yz, rotate_xz, rotate_xy
 
+DETECTOR_SPAN = HALF_PIXELS*PIXEL_SIZE+HALF_GAP_SIZE
 
 MIN_STAR_MAGNITUDE =-1.5
+
+
+def params_rotate(xs,ys,  params):
+    focus = params["FOCAL_DISTANCE"]
+    x_ocef, y_ocef, z_ocef = detector_plane_to_ocef(xs, ys, focus)
+    self_rotation = params["SELF_ROTATION"] * np.pi / 180
+    lat = params["VIEW_LATITUDE"]
+    lon = params["VIEW_LONGITUDE"]
+
+    x_ocef, y_ocef, z_ocef = rotate_yz(x_ocef, y_ocef, z_ocef, -self_rotation)
+    x_ocef, y_ocef, z_ocef = rotate_xz(x_ocef, y_ocef, z_ocef, lat * np.pi / 180)
+    x_ocef, y_ocef, z_ocef = rotate_xy(x_ocef, y_ocef, z_ocef, (lon - MAIN_LONGITUDE) * np.pi / 180)
+    x_ocef, y_ocef, z_ocef = rotate_xz(x_ocef, y_ocef, z_ocef, -MAIN_LATITUDE * np.pi / 180)
+    alt, az = ocef_to_altaz(x_ocef, y_ocef, z_ocef)
+    rs = 90 - alt * 180 / np.pi
+    return az, rs
 
 class SkyPlotter(Plotter):
     def __init__(self, master):
@@ -15,8 +34,11 @@ class SkyPlotter(Plotter):
         self.axes.set_xticklabels(["N","E","S","W"])
         self.axes.set_ylim(0, 90.0)
         self._stars = None
+        self._fov = None
+        self._xarrow = None
+        self._yarrow = None
         self._starnames = None
-        self._annot = self.axes.annotate("", xy=(0, 0), xytext=(20, 20), textcoords="offset points",
+        self._annot = self.axes.annotate("", xy=(0, 0), xytext=(-20, 20), textcoords="offset points",
                             bbox=dict(boxstyle="round", fc="w"),
                             arrowprops=dict(arrowstyle="->"))
         self._annot.set_visible(False)
@@ -72,3 +94,38 @@ class SkyPlotter(Plotter):
             offsets = np.vstack([az,90-180*alt/np.pi]).T
             self._stars.set_offsets(offsets)
         self.draw()
+
+    def draw_fov(self, params):
+        spanned_range = np.linspace(-DETECTOR_SPAN, DETECTOR_SPAN, 100)
+        constant_range = np.full(shape=(100,), fill_value=DETECTOR_SPAN)
+
+        dir_i_x = np.array([0.0, DETECTOR_SPAN])
+        dir_i_y = np.array([0.0, 0.0])
+
+        dir_j_x = np.array([0.0, 0.0])
+        dir_j_y = np.array([0.0, DETECTOR_SPAN])
+
+        xs = np.concatenate([constant_range, -spanned_range, -constant_range, spanned_range])
+        ys = np.concatenate([spanned_range, constant_range, -spanned_range, -constant_range])
+
+        az, rs = params_rotate(xs,ys,params)
+        if self._fov is None:
+            self._fov, = self.axes.plot(az, rs, "-", color="black")
+        else:
+            self._fov.set_xdata(az)
+            self._fov.set_ydata(rs)
+
+        azx, rsx = params_rotate(dir_i_x, dir_i_y, params)
+        if self._xarrow is None:
+            self._xarrow = self.axes.arrow(x=azx[0], y=rsx[0], dx=azx[1]-azx[0], dy=rsx[1]-rsx[0], color="red", width=0.1)
+        else:
+            self._xarrow.set_data(x=azx[0], y=rsx[0], dx=azx[1]-azx[0], dy=rsx[1]-rsx[0])
+
+        azy, rsy = params_rotate(dir_j_x, dir_j_y, params)
+        if self._yarrow is None:
+            self._yarrow = self.axes.arrow(x=azy[0], y=rsy[0], dx=azy[1]-azy[0], dy=rsy[1]-rsy[0], color="blue", width=0.1)
+        else:
+            self._yarrow.set_data(x=azy[0], y=rsy[0], dx=azy[1]-azy[0], dy=rsy[1]-rsy[0])
+        self.draw()
+
+

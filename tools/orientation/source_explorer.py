@@ -6,6 +6,7 @@ from vtl_common.workspace_manager import Workspace
 import h5py
 import numpy as np
 from vtl_common.common_flatfielding.models import FlatFieldingModel
+from .astronomy_display import DETECTOR_SPAN
 
 DATA_FILES_WORKSPACE = Workspace("merged_data")
 FF_WORKSPACE = Workspace("ff_calibration")
@@ -15,6 +16,8 @@ class SourceExplorer(tk.Frame):
         super().__init__(master)
         self.frame_plotter = GridPlotter(self)
         self.frame_plotter.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        self.frame_plotter.axes.arrow(x=0.0, y=0.0, dx=DETECTOR_SPAN, dy=0.0, color="red")
+        self.frame_plotter.axes.arrow(x=0.0, y=0.0, dx=0.0, dy=DETECTOR_SPAN, color="blue")
         self._loaded_file = None
         self._ffmodel = None
         self._index = 0

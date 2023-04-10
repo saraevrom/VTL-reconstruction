@@ -1,5 +1,5 @@
 {
-  "app.title": "TULOMA-TRACKS: reconstruction",
+  "app.title": "TULOMA-RECO",
   "tools.reconstruction": "Reconstruction",
   "tools.orientation": "Orientation",
 
@@ -47,6 +47,19 @@
 
   "orientation.btn.load_data": "Load data file",
   "orientation.form.use_ff": "Use flatfielding",
+
+  "orientation.parameter.VIEW_LATITUDE": "View latitude [°]",
+  "orientation.parameter.VIEW_LONGITUDE": "View longitude [°]",
+  "orientation.parameter.SELF_ROTATION": "Own rotation [°]",
+  "orientation.parameter.FOCAL_DISTANCE": "Focal distance [mm]",
+  "orientation.parameter.PSF": "PSF [mm]",
+  "orientation.parameter.MULTIPLIER": "Main Multiplier",
+
+  "orientation.selection.stars": "Stars",
+  "orientation.selection.stars.dialog.title": "Stars",
+  "orientation.selection.stars.dialog.prompt": "Enter desired star identifiers (Name, BayerFlamsteed, HIP, HR...)\nThey are visible while hovering on stars",
+  "orientation.selection.time": "Time",
+
 
   "orientation.step": "Step units:",
   "orientation.step.year": "Year",

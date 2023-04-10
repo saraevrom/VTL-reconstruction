@@ -49,6 +49,13 @@
   "orientation.btn.load_data": "Загрузить файл с данными",
   "orientation.form.use_ff": "Выравнивать пиксели",
 
+  "orientation.parameter.VIEW_LATITUDE": "Широта наблюдения [°]",
+  "orientation.parameter.VIEW_LONGITUDE": "Долгота наблюдения [°]",
+  "orientation.parameter.SELF_ROTATION": "Собственный поворот [°]",
+  "orientation.parameter.FOCAL_DISTANCE": "Фокусное расстояние [мм]",
+  "orientation.parameter.PSF": "PSF [мм]",
+  "orientation.parameter.MULTIPLIER": "Множитель",
+
   "orientation.step": "Единица шага:",
   "orientation.step.year": "Год",
   "orientation.step.month": "Месяц",
@@ -56,6 +63,11 @@
   "orientation.step.hour": "Час",
   "orientation.step.minute": "Минута",
   "orientation.step.second": "Секунда",
+
+  "orientation.selection.stars": "Звёзды",
+  "orientation.selection.stars.dialog.title": "Звёзды",
+  "orientation.selection.stars.dialog.prompt": "Введите идентификаторы желаемых звёзд (Имя, нотация Байера/Флемстида, HIP, HR...)\nПодойдут любые, что отображаются при наведении на зведу.",
+  "orientation.selection.time": "Время",
 
   "app.parameters.MAX_STAR_MAGNITUDE": "Предел звёздной величины"
 }

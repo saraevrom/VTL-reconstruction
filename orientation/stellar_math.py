@@ -150,6 +150,14 @@ def ocef_to_detector_plane(x_local, y_local, z_local, focal_distance):
     y_p = z_local*focal_distance/x_local
     return x_p, y_p, v
 
+
+def detector_plane_to_ocef(x_pdf, y_pdf, focal_distance):
+    x_ocef = np.ones(x_pdf.shape)
+    y_ocef = -x_pdf/focal_distance
+    z_ocef = y_pdf/focal_distance
+    norm = np.sqrt(x_ocef**2+y_ocef**2+z_ocef**2)
+    return x_ocef/norm, y_ocef/norm, z_ocef/norm
+
 @nb.njit()
 def ocef_to_altaz(x_local, y_local, z_local):
     '''

@@ -26,7 +26,7 @@ def name_a_star(row):
         else:
             return data[0]
     else:
-        return f"UNKNOWN (StarID {row['StarID']})"
+        return f"UNKNOWN (StarID {row['id']})"
 
 DATABASE = None
 
