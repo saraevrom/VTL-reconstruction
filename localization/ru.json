@@ -43,5 +43,7 @@
   "reconstruction_model.linear_alt": "Линейная (альтернативная)",
   "reconstruction_model.linear_alt.front_mul": "Крутизна фронта",
   "reconstruction_model.linear_alt.envelope": "Профиль",
-  "reconstruction_model.linear_alt.discrete_time": "Дискретное время"
+  "reconstruction_model.linear_alt.discrete_time": "Дискретное время",
+
+  "app.parameters.MAX_STAR_MAGNITUDE": "Предел звёздной величины"
 }

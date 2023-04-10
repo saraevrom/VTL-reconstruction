@@ -43,5 +43,8 @@
   "reconstruction_model.linear_alt": "Linear (alternative)",
   "reconstruction_model.linear_alt.front_mul": "Front steepness",
   "reconstruction_model.linear_alt.envelope": "Profile",
-  "reconstruction_model.linear_alt.discrete_time": "Discrete time"
+  "reconstruction_model.linear_alt.discrete_time": "Discrete time",
+
+
+  "app.parameters.MAX_STAR_MAGNITUDE": "Star magnitude limit"
 }

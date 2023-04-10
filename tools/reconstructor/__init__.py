@@ -64,6 +64,13 @@ def find_trace_entry(traces, entry_name):
     print("NOT FOUND")
     return None
 
+
+def get_track_attr(fp, attr):
+    if attr in fp.attrs.keys():
+        return fp.attrs[attr]
+    else:
+        return True
+
 def reconstruct_event(form_data, measured_data):
     used_model = form_data["model"]
     sampler_params = form_data["sampler"]
@@ -145,7 +152,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         bottom_panel.pack(side="bottom", fill="x")
 
         self.result_table = Table(bottom_panel)
-        #self.result_table.show()
+        self.result_table.show()
 
         PopupPlotable.__init__(self, self.track_plotter)
         self.loaded_file = None
@@ -158,7 +165,6 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self._bottom_right = False
         self._top_left = False
         self._top_right = False
-        self._bottom_visible = False
         self._traces = dict()
 
     def on_plot_arviz_traces(self):
@@ -265,10 +271,10 @@ class ReconstructorTool(ToolBase, PopupPlotable):
                 self.track_plotter.set_mask(h5file.attrs)
                 self.track_plotter.axes.set_title(filename)
                 self.track_plotter.draw()
-                self._bottom_left = h5file.attrs["bottom_left"]
-                self._bottom_right = h5file.attrs["bottom_right"]
-                self._top_left = h5file.attrs["top_left"]
-                self._top_right = h5file.attrs["top_right"]
+                self._bottom_left = get_track_attr(h5file, "bottom_left") # h5file.attrs["bottom_left"]
+                self._bottom_right = get_track_attr(h5file, "bottom_right") # h5file.attrs["bottom_right"]
+                self._top_left = get_track_attr(h5file, "top_left") # h5file.attrs["top_left"]
+                self._top_right = get_track_attr(h5file, "top_right") # h5file.attrs["top_right"]
 
     def _reconstruct_fill(self, pmt, i_slice, j_slice):
         src_file = self._filelist[self.pointer]
@@ -322,11 +328,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         if buffer_dataframes:
             df = pd.concat(buffer_dataframes)
             self.result_table.model.df = df
-            if not self._bottom_visible:
-                self.result_table.show()
-                self._bottom_visible = True
-            else:
-                self.result_table.redraw()
+            self.result_table.redraw()
 
 
     def _update_formdata(self):

@@ -3,7 +3,9 @@
 from fastprogress.fastprogress import force_console_behavior
 master_bar, progress_bar = force_console_behavior()
 
+from add_parameters import ADD_PARAMS
 import vtl_common.parameters as parameters
+parameters.add_parameters(*ADD_PARAMS)
 parameters.load_settings()
 
 from vtl_common import localization
