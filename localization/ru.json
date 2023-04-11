@@ -55,6 +55,7 @@
   "orientation.parameter.FOCAL_DISTANCE": "Фокусное расстояние [мм]",
   "orientation.parameter.PSF": "PSF [мм]",
   "orientation.parameter.MULTIPLIER": "Множитель",
+  "orientation.parameter.OFFSET": "Смещение сигнала",
 
   "orientation.step": "Единица шага:",
   "orientation.step.year": "Год",
@@ -68,6 +69,9 @@
   "orientation.selection.stars.dialog.title": "Звёзды",
   "orientation.selection.stars.dialog.prompt": "Введите идентификаторы желаемых звёзд (Имя, нотация Байера/Флемстида, HIP, HR...)\nПодойдут любые, что отображаются при наведении на зведу.",
   "orientation.selection.time": "Время",
+
+  "orientation.selection.time.start": "Начало",
+  "orientation.selection.time.end": "Конец",
 
   "app.parameters.MAX_STAR_MAGNITUDE": "Предел звёздной величины"
 }

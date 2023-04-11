@@ -54,11 +54,14 @@
   "orientation.parameter.FOCAL_DISTANCE": "Focal distance [mm]",
   "orientation.parameter.PSF": "PSF [mm]",
   "orientation.parameter.MULTIPLIER": "Main Multiplier",
+  "orientation.parameter.OFFSET": "Light Offset",
 
   "orientation.selection.stars": "Stars",
   "orientation.selection.stars.dialog.title": "Stars",
   "orientation.selection.stars.dialog.prompt": "Enter desired star identifiers (Name, BayerFlamsteed, HIP, HR...)\nThey are visible while hovering on stars",
   "orientation.selection.time": "Time",
+  "orientation.selection.time.start": "Start",
+  "orientation.selection.time.end": "End",
 
 
   "orientation.step": "Step units:",

@@ -20,6 +20,7 @@ class GUIList(tk.Frame):
         remove_btn.pack(side="right")
         remove_btn = tk.Button(button_panel, text="E", command=self.clear)
         remove_btn.pack(side="right")
+        self.on_list_changed = None
 
     def obtain_items(self):
         '''
@@ -37,11 +38,17 @@ class GUIList(tk.Frame):
 
     @staticmethod
     def modify_contents(container, new_item):
-        raise NotImplementedError("Cannot modify container")
+        if new_item not in container:
+            container.append(new_item)
+
+    def postprocess(self, container):
+        pass
 
     def clear(self):
         self._display_list.delete(0, tk.END)
         self._container.clear()
+        if self.on_list_changed:
+            self.on_list_changed()
 
     def redraw(self):
         self._display_list.delete(0, tk.END)
@@ -54,7 +61,12 @@ class GUIList(tk.Frame):
             return
         for item in got_item:
             self.modify_contents(self._container, item)
+        self.postprocess(self._container)
         self.redraw()
+        if self.on_list_changed:
+            self.on_list_changed()
+
+
 
     def on_remove(self):
         cur = self._display_list.curselection()
@@ -63,3 +75,5 @@ class GUIList(tk.Frame):
             for i in reversed(cur): #Reverse needed for extended deletion
                 self._container.pop(i)
                 self._display_list.delete(i)
+        if self.on_list_changed:
+            self.on_list_changed()

@@ -130,7 +130,7 @@ def eci_to_ocef(x_eci, y_eci, z_eci, era, lat, lon):
     :param lon: Longitude, radians
     :return:
     '''
-    x_0, y_0, z_0 = rotate_xy(x_eci, y_eci, z_eci, - era - lon)  # longitude performs as ERA
+    x_0, y_0, z_0 = rotate_xy(x_eci, y_eci, z_eci, - era - lon)  # longitude offsets ERA
     # Meridian is aligned
     return rotate_xz(x_0, y_0, z_0, -lat)
 

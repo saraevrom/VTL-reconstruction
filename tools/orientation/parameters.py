@@ -10,6 +10,7 @@ PARAM_LIST = [
     ["FOCAL_DISTANCE", FloatNode, 165.0],
     ["PSF", FloatNode, 0.25],
     ["MULTIPLIER", FloatNode, 1.0],
+    ["OFFSET", FloatNode, 0.0],
 ]
 
 

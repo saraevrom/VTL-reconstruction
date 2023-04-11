@@ -10,6 +10,7 @@ from vtl_common.common_GUI.button_panel import ButtonPanel
 from vtl_common.common_GUI.tk_forms import TkDictForm
 from vtl_common.localization import get_locale
 from .gui_lists import StarList, TimeList
+from .gui_lists.time_list import TimeRange
 
 class OrientationTool(ToolBase):
     TOOL_KEY = "tools.orientation"
@@ -29,6 +30,7 @@ class OrientationTool(ToolBase):
         self.sky_plotter.grid(row=0, column=2, sticky="nsew")
 
 
+        bottom_panel.columnconfigure(0, weight=1)
         bottom_panel.columnconfigure(1, weight=1)
         bottom_panel.columnconfigure(2, weight=1)
 
@@ -56,11 +58,13 @@ class OrientationTool(ToolBase):
         left_panel.grid(row=0, column=0, sticky="nsew")
 
         self.starlist = StarList(left_panel)
+        self.starlist.on_list_changed = self.on_stars_changed
         self.starlist.grid(row=0, column=0, sticky="nsew")
 
         self.time_list = TimeList(left_panel)
         self.time_list.grid(row=1, column=0, sticky="nsew")
 
+        left_panel.columnconfigure(0,weight=1)
         left_panel.rowconfigure(0,weight=1)
         left_panel.rowconfigure(1,weight=1)
 
@@ -68,11 +72,16 @@ class OrientationTool(ToolBase):
         self._sync_form()
         self.on_parameters_change()
 
+    def on_stars_changed(self):
+        self.source_explorer.set_stars(self.starlist.get_items())
+        self.on_form_commit()
 
     def on_load_file(self):
         if self.source_explorer.on_load_file():
             t_start, t_end = self.source_explorer.get_unixtime_interval()
             self.datetime_picker.set_limits(t_start, t_end)
+            self.time_list.clear()
+            self.time_list.limits = TimeRange.from_unixtime(t_start, t_end)
             self.on_form_commit()
 
     def _sync_form(self):
@@ -85,6 +94,7 @@ class OrientationTool(ToolBase):
         self.on_date_select()
 
     def on_date_select(self):
+        self.time_list.reference_time = self.datetime_picker.get_datetime()
         ut = self.datetime_picker.get_unixtime()
         self.sky_plotter.plot_stars(ut)
         self.source_explorer.set_unixtime(ut)
@@ -92,3 +102,5 @@ class OrientationTool(ToolBase):
     def on_parameters_change(self):
         params = self.parameters_form.get_values()
         self.sky_plotter.draw_fov(params)
+        self.source_explorer.set_orientation(params)
+        self.on_form_commit()

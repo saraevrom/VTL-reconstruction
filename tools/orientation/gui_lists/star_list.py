@@ -3,7 +3,9 @@ from orientation.database_reader import get_database, name_a_star
 import re
 from tkinter.simpledialog import askstring
 from vtl_common.localization import get_locale
-
+from orientation.stellar_math import eci_to_ocef, ocef_to_detector_plane, rotate_yz
+import numpy as np
+from orientation.database_reader import StarEntry
 
 def match_by_group(database, match, field):
     return database[database[field] == match.group()]
@@ -32,15 +34,8 @@ def get_ids(entries):
     return [item["id"] for item in entries]
 
 
-class StarEntry(object):
-    def __init__(self, record):
-        self.record = record
 
-    def __eq__(self, other):
-        return self.record["id"] == other.record["id"]
 
-    def name(self):
-        return name_a_star(self.record)
 
 class StarList(GUIList):
     def __init__(self, master):
@@ -81,7 +76,4 @@ class StarList(GUIList):
     def represent_item(item):
         return item.name()
 
-    @staticmethod
-    def modify_contents(container, new_item):
-        if new_item not in container:
-            container.append(new_item)
+

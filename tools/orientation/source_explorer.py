@@ -7,9 +7,85 @@ import h5py
 import numpy as np
 from vtl_common.common_flatfielding.models import FlatFieldingModel
 from .astronomy_display import DETECTOR_SPAN
+from .gui_lists.star_list import StarEntry
+import numba as nb
+from orientation.stellar_math import unixtime_to_era
+from orientation.database_reader import VEGA_LUM
+import matplotlib.pyplot as plt
 
 DATA_FILES_WORKSPACE = Workspace("merged_data")
 FF_WORKSPACE = Workspace("ff_calibration")
+
+
+@nb.njit()
+def binsearch(array):
+    n = array.shape[0]
+    start = array[0]
+    end = array[-1]
+    if start>=0 and end>=0:
+        if start<=end:
+            return 0
+        else:
+            return n-1
+    elif start<=0 and end<=0:
+        if start>=end:
+            return 0
+        else:
+            return n-1
+    else:
+        # Binary search itself
+        start_i = 0
+        end_i = n-1
+        middle_i = (start_i+end_i)//2
+        while start_i!=middle_i:
+            if array[middle_i] == 0:
+                return middle_i
+            if array[start_i]*array[middle_i]<0:
+                end_i = middle_i
+            elif array[end_i]*array[middle_i]<0:
+                start_i = middle_i
+            else:
+                raise RuntimeError("How did we get there?")
+            middle_i = (start_i + end_i) // 2
+        return middle_i
+
+class StarDot(object):
+    def __init__(self, star_entry: StarEntry):
+        self.star_entry = star_entry
+        self._circle = None
+        self._text = None
+
+    def draw_at(self, axes, params, unixtime):
+        era = unixtime_to_era(unixtime)
+        lum = self.star_entry.energy()*params["MULTIPLIER"]+params["OFFSET"]
+        x, y, visible = self.star_entry.position_on_plane(params, era)
+
+
+        radius = params["PSF"]*3
+
+        if self._circle is None:
+            if visible:
+                self._circle = plt.Circle((x, y), radius, color="yellow")
+                axes.add_patch(self._circle)
+        else:
+            self._circle.set_center((x,y))
+            self._circle.set_radius(radius)
+            self._circle.set_visible(visible)
+
+        if self._text is None:
+            if visible:
+                self._text = axes.text(x, y, self.star_entry.primary_name())
+        else:
+            self._text.set_position((x,y))
+            self._text.set_text(self.star_entry.primary_name())
+            self._text.set_visible(visible)
+    def __del__(self):
+        print()
+        if self._circle is not None:
+            self._circle.remove()
+        if self._text is not None:
+            self._text.remove()
+
 
 class SourceExplorer(tk.Frame):
     def __init__(self, master):
@@ -22,6 +98,13 @@ class SourceExplorer(tk.Frame):
         self._ffmodel = None
         self._index = 0
         self._unixtime = 0
+        self._stars = None
+        self._star_list = []
+        self._star_plot = None
+        self._orientation = None
+
+    def set_orientation(self, v):
+        self._orientation = v
 
     def get_unixtime_interval(self):
         if self._loaded_file:
@@ -62,10 +145,19 @@ class SourceExplorer(tk.Frame):
                 frame = self._ffmodel.apply(frame)
             self.frame_plotter.buffer_matrix = frame
             self.frame_plotter.update_matrix_plot(True)
-            self.frame_plotter.draw()
+        if self._orientation is not None and self._star_list:
+            for star in self._star_list:
+                star.draw_at(self.frame_plotter.axes, self._orientation, self._unixtime)
+        self.frame_plotter.draw()
 
     def get_frame_by_unixtime(self, unixtime):
         if self._loaded_file:
-            index = np.argmin(np.abs(self._ut0-unixtime))
+            #index = np.argmin(np.abs(self._ut0-unixtime))
+            seeking = self._ut0-unixtime
+            index = binsearch(seeking)
+            print("FOUND DIFF", seeking[index])
             return index, self._ut0[index]
-        return -1, 0.0
+        return -1, unixtime
+
+    def set_stars(self, new_list):
+        self._star_list = [StarDot(item) for item in new_list]
