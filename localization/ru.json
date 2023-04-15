@@ -69,7 +69,7 @@
   "orientation.parameter.VIEW_LONGITUDE": "Долгота наблюдения [°]",
   "orientation.parameter.SELF_ROTATION": "Собственный поворот [°]",
   "orientation.parameter.FOCAL_DISTANCE": "Фокусное расстояние [мм]",
-  "orientation.parameter.PSF": "PSF [мм]",
+  "orientation.parameter.PSF": "PSF [пикс]",
   "orientation.parameter.MULTIPLIER": "Множитель",
   "orientation.parameter.OFFSET": "Смещение сигнала",
 

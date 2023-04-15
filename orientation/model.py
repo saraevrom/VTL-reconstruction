@@ -69,14 +69,14 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         tune_lon = tuner["tune_lon"]
         tune_rot = tuner["tune_rot"]
         tune_f = tuner["tune_f"]
-        tune_psf = tuner["tune_psf"]*PIXEL_SIZE
+        tune_psf = tuner["tune_psf"]
         use_laplace = tuner["use_laplace"]
 
         view_latitude = tune_lat("lat", known_params["VIEW_LATITUDE"])
         view_longitude = tune_lon("lon", known_params["VIEW_LONGITUDE"])
         self_rotation = tune_rot("Ω", known_params["SELF_ROTATION"])
         focal_distance = tune_f("f", known_params["FOCAL_DISTANCE"])
-        psf = tune_psf("PSF", known_params["PSF"])
+        psf = tune_psf("PSF", known_params["PSF"])*PIXEL_SIZE
 
         # view_latitude = pm.TruncatedNormal("lat",
         #                                    lower=clamp_lat_min,

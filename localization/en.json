@@ -69,7 +69,7 @@
   "orientation.parameter.VIEW_LONGITUDE": "View longitude [°]",
   "orientation.parameter.SELF_ROTATION": "Own rotation [°]",
   "orientation.parameter.FOCAL_DISTANCE": "Focal distance [mm]",
-  "orientation.parameter.PSF": "PSF [mm]",
+  "orientation.parameter.PSF": "PSF [pix]",
   "orientation.parameter.MULTIPLIER": "Main Multiplier",
   "orientation.parameter.OFFSET": "Light Offset",
 
