@@ -21,6 +21,7 @@
   "reconstruction.sample.random_seed": "Зерно генератора",
   "reconstruction.sample.target_accept": "Коэффициент приемлемости",
   "reconstruction.sample.nuts_sampler": "Реализация NUTS",
+  "reconstruction.sample.init": "Инициализация",
 
   "reconstruction.form.cutter": "Вырезка",
   "reconstruction.form.cutter.range": "Диапазон",
@@ -28,6 +29,19 @@
   "reconstruction.form.cutter.end": "Конец",
   "reconstruction.form.split_chains": "Разделение цепей",
   "reconstruction.form.overwrite": "Перезаписать данные",
+
+  "orientation.form.tune": "Коррекция",
+  "orientation.form.tune.lat": "Широта",
+  "orientation.form.tune.lon": "Долгота",
+  "orientation.form.tune.rot": "Собственный поворот",
+  "orientation.form.tune.f": "Фокусное расстояние",
+  "orientation.form.tune.psf": "PSF",
+
+  "orientation.form.tune.use_laplace": "Распределение Лапласа",
+
+  "orientation.form.tune.range": "Диапазон",
+  "orientation.form.tune.range.min": "Мин",
+  "orientation.form.tune.range.max": "Макс",
 
   "reconstruction.dialog.rerun.title": "Перезапуск сэмплирования",
   "reconstruction.dialog.rerun.message": "Найдены следы сэмплирования. Хотите их перезаписать?",
@@ -47,6 +61,8 @@
 
 
   "orientation.btn.load_data": "Загрузить файл с данными",
+  "orientation.btn.align": "Выровнять",
+  "orientation.btn.accept": "Принять ориентацию",
   "orientation.form.use_ff": "Выравнивать пиксели",
 
   "orientation.parameter.VIEW_LATITUDE": "Широта наблюдения [°]",
@@ -72,6 +88,7 @@
 
   "orientation.selection.time.start": "Начало",
   "orientation.selection.time.end": "Конец",
+  "orientation.selection.time.stride": "Шаг",
 
   "app.parameters.MAX_STAR_MAGNITUDE": "Предел звёздной величины"
 }

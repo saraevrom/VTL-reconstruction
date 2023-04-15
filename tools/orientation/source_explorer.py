@@ -5,49 +5,23 @@ import tkinter as tk
 from vtl_common.workspace_manager import Workspace
 import h5py
 import numpy as np
+import numba as nb
+import matplotlib.pyplot as plt
 from vtl_common.common_flatfielding.models import FlatFieldingModel
 from .astronomy_display import DETECTOR_SPAN
 from .gui_lists.star_list import StarEntry
-import numba as nb
 from orientation.stellar_math import unixtime_to_era
 from orientation.database_reader import VEGA_LUM
-import matplotlib.pyplot as plt
+from vtl_common.parameters import PIXEL_SIZE
+from vtl_common.localized_GUI.signal_plotter import PopupPlotable
+
+from utils import binsearch_tgt
 
 DATA_FILES_WORKSPACE = Workspace("merged_data")
 FF_WORKSPACE = Workspace("ff_calibration")
 
 
-@nb.njit()
-def binsearch(array):
-    n = array.shape[0]
-    start = array[0]
-    end = array[-1]
-    if start>=0 and end>=0:
-        if start<=end:
-            return 0
-        else:
-            return n-1
-    elif start<=0 and end<=0:
-        if start>=end:
-            return 0
-        else:
-            return n-1
-    else:
-        # Binary search itself
-        start_i = 0
-        end_i = n-1
-        middle_i = (start_i+end_i)//2
-        while start_i!=middle_i:
-            if array[middle_i] == 0:
-                return middle_i
-            if array[start_i]*array[middle_i]<0:
-                end_i = middle_i
-            elif array[end_i]*array[middle_i]<0:
-                start_i = middle_i
-            else:
-                raise RuntimeError("How did we get there?")
-            middle_i = (start_i + end_i) // 2
-        return middle_i
+
 
 class StarDot(object):
     def __init__(self, star_entry: StarEntry):
@@ -61,7 +35,7 @@ class StarDot(object):
         x, y, visible = self.star_entry.position_on_plane(params, era)
 
 
-        radius = params["PSF"]*3
+        radius = params["PSF"]*PIXEL_SIZE
 
         if self._circle is None:
             if visible:
@@ -87,9 +61,9 @@ class StarDot(object):
             self._text.remove()
 
 
-class SourceExplorer(tk.Frame):
+class SourceExplorer(tk.Frame, PopupPlotable):
     def __init__(self, master):
-        super().__init__(master)
+        tk.Frame.__init__(self, master)
         self.frame_plotter = GridPlotter(self)
         self.frame_plotter.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
         self.frame_plotter.axes.arrow(x=0.0, y=0.0, dx=DETECTOR_SPAN, dy=0.0, color="red")
@@ -102,9 +76,18 @@ class SourceExplorer(tk.Frame):
         self._star_list = []
         self._star_plot = None
         self._orientation = None
+        self._intervals = None
+        PopupPlotable.__init__(self, self.frame_plotter)
+
+
+    def set_intervals(self,v):
+        self._intervals = v
 
     def set_orientation(self, v):
         self._orientation = v
+
+    def get_ffmodel(self):
+        return self._ffmodel
 
     def get_unixtime_interval(self):
         if self._loaded_file:
@@ -127,6 +110,10 @@ class SourceExplorer(tk.Frame):
                 self.frame_plotter.set_broken(self._ffmodel.broken_query())
             return True
         return False
+
+
+    def get_broken_pixels(self):
+        return self.frame_plotter.get_broken()
 
     def on_load_ff(self):
         filename = FF_WORKSPACE.askopenfilename(auto_formats=["h5"])
@@ -153,11 +140,34 @@ class SourceExplorer(tk.Frame):
     def get_frame_by_unixtime(self, unixtime):
         if self._loaded_file:
             #index = np.argmin(np.abs(self._ut0-unixtime))
-            seeking = self._ut0-unixtime
-            index = binsearch(seeking)
-            print("FOUND DIFF", seeking[index])
+            index = binsearch_tgt(self._ut0, unixtime)
+            #print("FOUND DIFF", index, self._ut0[index] - unixtime)
             return index, self._ut0[index]
         return -1, unixtime
 
+    def get_file(self):
+        return self._loaded_file
+
     def set_stars(self, new_list):
         self._star_list = [StarDot(item) for item in new_list]
+
+    def get_plot_data(self):
+        if self._loaded_file and self._intervals:
+            datafile = self._loaded_file
+            intervals = self._intervals
+            ut0 = np.array(datafile["UT0"])
+            times = []
+            observed = []
+            for interval in intervals:
+                ut_start, ut_end = interval.unixtime_intervals()
+                i_start = binsearch_tgt(ut0, ut_start)
+                i_end = binsearch_tgt(ut0, ut_end)
+                times.append(ut0[i_start:i_end:interval.stride])
+                observed.append(datafile["data0"][i_start:i_end:interval.stride])
+                print("INTERVAL SRC", interval.name())
+                print(f"INTERVAL {i_start} - {i_end}")
+            times = np.concatenate(times)
+            observed = np.concatenate(observed)
+            if self._ffmodel:
+                observed = self._ffmodel.apply(observed)
+            return times, observed

@@ -4,7 +4,7 @@ import pytensor.tensor as pt
 from vtl_common.common_GUI.tk_forms_assist import FormNode, FloatNode, ComboNode, BoolNode
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from vtl_common.localization import get_locale
-from .common import EnsquaredEnergyAvg, track_threshold
+from .common import ensquared_energy_avg, track_threshold
 
 def heaviside(x):
     return (pt.sgn(x) + 1) / 2
@@ -95,7 +95,7 @@ def linear_track_model_alt(track_points, front_mul_mean=10.0, envelope_data=None
             profile = envelope_func(ts, t1, t2)
         #envelope = (pt.math.switch(ts > t1, 0, 1) * pt.math.switch(ts < t2, 0, 1))
         profile = pt.expand_dims(profile, (1, 2))
-        mu = e0 * profile * EnsquaredEnergyAvg(x, y, u0x, u0y, sigma_psf, T)
+        mu = e0 * profile * ensquared_energy_avg(x, y, u0x, u0y, sigma_psf, T)
         A = pm.Normal('A', mu=mu, sigma=sigma0,
                        observed=track_points, shape=(T, 8, 8))
         # A = pm.Laplace('A', mu=mu, b=b0,

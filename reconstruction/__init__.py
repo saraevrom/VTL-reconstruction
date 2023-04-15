@@ -19,13 +19,30 @@ class NUTSSampler(ComboNode):
     SELECTION_READONLY = True
     VALUES = ["pymc", "nutpie", "blackjax", "numpyro"]
 
+class NUTSInit(ComboNode):
+    SELECTION_READONLY = True
+    VALUES = [
+              "auto",
+              "adapt_diag",
+              "jitter+adapt_diag",
+              "jitter+adapt_diag_grad",
+              "advi+adapt_diag",
+              "advi",
+              "advi_map",
+              "map",
+              "adapt_full",
+              "jitter+adapt_full",
+             ]
+
+
 SAMPLER_PARAMETERS = [
     (IntNode, "draws", 2000),
     (IntNode, "tune", 2000),
     (IntNode, "chains", 4),
     (IntNode, "random_seed", 5),
     (FloatNode, "target_accept", 0.95),
-    (NUTSSampler, "nuts_sampler", "pymc")
+    (NUTSSampler, "nuts_sampler", "pymc"),
+    (NUTSInit, "init", "auto"),
 ]
 
 

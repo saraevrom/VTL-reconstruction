@@ -40,12 +40,8 @@ Xp = np.arange(-3.5, 4.5, 1.)
 Yp = np.arange(-3.5, 4.5,  1.)
 
 # pytensor EnsquaredEnergy function
-def d_erf(dX, scale):
-    return pm.math.erf((dX + 0.5) / scale) - pm.math.erf((dX - 0.5) / scale)
-
-
-
-
+def d_erf(dX, scale, pixel_size=1.0):
+    return pm.math.erf((dX + 0.5*pixel_size) / scale) - pm.math.erf((dX - 0.5*pixel_size) / scale)
 
 @nb.njit()
 def track_delta_matrix(T):
@@ -66,16 +62,16 @@ def track_delta_matrix(T):
                 delta_y[k, i, j] = Yp[j]
     return delta_x, delta_y
 
-def EnsquaredEnergy(X, Y, sigmaPSF, T):
+def ensquared_energy(X, Y, sigmaPSF, T):
     scale = sigmaPSF * np.sqrt(2.)
     x0, y0 = track_delta_matrix(T)
     a = d_erf(x0-X, scale) * d_erf(y0-Y, scale)
     return 0.25 * a
 
 
-def EnsquaredEnergyAvg(X, Y, dX, dY, sigmaPSF, T):
-    return 0.2 * (EnsquaredEnergy(X, Y, sigmaPSF, T) +
-                  EnsquaredEnergy(X - 0.2 * dX, Y - 0.2 * dY, sigmaPSF, T) +
-                  EnsquaredEnergy(X - 0.4 * dX,Y - 0.4 * dY, sigmaPSF, T) +
-                  EnsquaredEnergy(X - 0.6 * dX, Y - 0.6 * dY, sigmaPSF, T) +
-                  EnsquaredEnergy(X - 0.8 * dX, Y - 0.8 * dY, sigmaPSF, T))
+def ensquared_energy_avg(X, Y, dX, dY, sigmaPSF, T):
+    return 0.2 * (ensquared_energy(X, Y, sigmaPSF, T) +
+                  ensquared_energy(X - 0.2 * dX, Y - 0.2 * dY, sigmaPSF, T) +
+                  ensquared_energy(X - 0.4 * dX, Y - 0.4 * dY, sigmaPSF, T) +
+                  ensquared_energy(X - 0.6 * dX, Y - 0.6 * dY, sigmaPSF, T) +
+                  ensquared_energy(X - 0.8 * dX, Y - 0.8 * dY, sigmaPSF, T))

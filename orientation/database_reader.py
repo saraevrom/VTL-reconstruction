@@ -5,6 +5,8 @@ from vtl_common.parameters import MAX_STAR_MAGNITUDE
 from .stellar_math import radec_to_eci
 import numpy as np
 from .stellar_math import eci_to_ocef, rotate_yz, ocef_to_detector_plane
+import pymc as pm
+import pytensor.tensor as pt
 
 
 def name_a_star(row, name_limit=3):
@@ -47,7 +49,7 @@ def get_database():
     return DATABASE
 
 VEGA_MAGNITUDE = 0.03
-VEGA_LUM = 2.54e-6
+VEGA_LUM = 2.54  #E-6
 
 class StarEntry(object):
     def __init__(self, record):
@@ -76,6 +78,7 @@ class StarEntry(object):
         x_ocef, y_ocef, z_ocef = eci_to_ocef(x_eci, y_eci, z_eci, era,
                                              lat=params["VIEW_LATITUDE"] * np.pi / 180,
                                              lon=params["VIEW_LONGITUDE"] * np.pi / 180)
-        x_ocef, y_ocef, z_ocef = rotate_yz(x_ocef, y_ocef, z_ocef, params["SELF_ROTATION"])
+        x_ocef, y_ocef, z_ocef = rotate_yz(x_ocef, y_ocef, z_ocef, params["SELF_ROTATION"] * np.pi / 180)
         x_pdf, y_pdf, visible = ocef_to_detector_plane(x_ocef, y_ocef, z_ocef, params["FOCAL_DISTANCE"])
         return x_pdf, y_pdf, visible
+

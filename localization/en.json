@@ -21,6 +21,7 @@
   "reconstruction.sample.random_seed": "Random seed",
   "reconstruction.sample.target_accept": "Target accept",
   "reconstruction.sample.nuts_sampler": "NUTS sampler",
+  "reconstruction.sample.init": "Init",
 
 
   "reconstruction.form.cutter": "Cutoff",
@@ -30,7 +31,19 @@
   "reconstruction.form.split_chains": "Split chains",
   "reconstruction.form.overwrite": "Overwrite sampling",
 
+  "orientation.form.tune": "Prior Tune",
+  "orientation.form.tune.lat": "View Latitude",
+  "orientation.form.tune.lon": "View Longitude",
+  "orientation.form.tune.rot": "Own rotation",
+  "orientation.form.tune.f": "Focal distance",
+  "orientation.form.tune.psf": "PSF",
 
+  "orientation.form.tune.use_laplace": "Use laplace distribution",
+
+
+  "orientation.form.tune.range": "Range",
+  "orientation.form.tune.range.min": "Min",
+  "orientation.form.tune.range.max": "Max",
 
   "reconstruction_model": "Reconstruction model",
   "reconstruction_model.linear": "Linear",
@@ -46,6 +59,10 @@
   "reconstruction_model.linear_alt.discrete_time": "Discrete time",
 
   "orientation.btn.load_data": "Load data file",
+  "orientation.btn.align": "Align",
+  "orientation.btn.Save": "Save",
+  "orientation.btn.Load": "Load",
+  "orientation.btn.accept": "Accept",
   "orientation.form.use_ff": "Use flatfielding",
 
   "orientation.parameter.VIEW_LATITUDE": "View latitude [°]",
@@ -62,6 +79,7 @@
   "orientation.selection.time": "Time",
   "orientation.selection.time.start": "Start",
   "orientation.selection.time.end": "End",
+  "orientation.selection.time.stride": "Stride",
 
 
   "orientation.step": "Step units:",

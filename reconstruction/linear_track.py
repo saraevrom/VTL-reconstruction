@@ -5,7 +5,7 @@ import numba as nb
 from vtl_common.common_GUI.tk_forms_assist import FormNode, FloatNode
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from vtl_common.localization import get_locale
-from .common import EnsquaredEnergyAvg, track_threshold
+from .common import ensquared_energy_avg, track_threshold
 
 
 def linear_track_model(track_points, threshold=6.0, minv=0.01, maxv = 0.45, min_e=0.0001, max_e=1.0):
@@ -32,7 +32,7 @@ def linear_track_model(track_points, threshold=6.0, minv=0.01, maxv = 0.45, min_
         X = pt.expand_dims(X,(1,2))
         Y = pt.expand_dims(Y,(1,2))
 
-        mu = e0 * EnsquaredEnergyAvg(X, Y, dX, dY, sigmaPSF, k_end-k_start)
+        mu = e0 * ensquared_energy_avg(X, Y, dX, dY, sigmaPSF, k_end - k_start)
         A = pm.Normal('A', mu=mu, sigma=sigma0,
                       observed=track_points[k_start:k_end], shape=(k_end - k_start, 8, 8))  # A = A[k,i,j]
     return model
