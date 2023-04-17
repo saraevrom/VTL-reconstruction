@@ -1,6 +1,7 @@
 import numpy as np
 import pymc as pm
 import pytensor.tensor as pt
+from scipy.special import erf
 
 from orientation.stellar_math import unixtime_to_era
 from reconstruction.common import d_erf
@@ -46,6 +47,7 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         print("INTERVAL SRC", interval.name())
         print(f"INTERVAL {i_start} - {i_end}")
     times = np.concatenate(times)
+    eras = unixtime_to_era(times)
     observed = np.concatenate(observed)
     if ffmodel is not None:
         observed = ffmodel.apply(observed)
@@ -71,6 +73,9 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         tune_f = tuner["tune_f"]
         tune_psf = tuner["tune_psf"]
         use_laplace = tuner["use_laplace"]
+        tune_a = tuner["tune_a"]
+        tune_b = tuner["tune_b"]
+        tune_b_auto_assume = tuner["tune_b_auto_assume"]
 
         view_latitude = tune_lat("lat", known_params["VIEW_LATITUDE"])
         view_longitude = tune_lon("lon", known_params["VIEW_LONGITUDE"])
@@ -78,44 +83,37 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         focal_distance = tune_f("f", known_params["FOCAL_DISTANCE"])
         psf = tune_psf("PSF", known_params["PSF"])*PIXEL_SIZE
 
-        # view_latitude = pm.TruncatedNormal("lat",
-        #                                    lower=clamp_lat_min,
-        #                                    upper = clamp_lat_max,
-        #                                    mu=known_params["VIEW_LATITUDE"],
-        #                                    sigma=tune_lat,
-        #                                    )
-        #
-        # view_longitude = pm.TruncatedNormal("lon",
-        #                                     lower=clamp_lon_min,
-        #                                     upper=clamp_lon_max,
-        #                                     mu=known_params["VIEW_LONGITUDE"],
-        #                                     sigma=tune_lon,
-        #                                     )
-
-        #self_rotation = pm.Normal("Ω", mu=known_params["SELF_ROTATION"], sigma=tuner["tune_rot"])
-
-        #focal_distance = pm.TruncatedNormal("f", lower=100, upper=200, mu=known_params["FOCAL_DISTANCE"], sigma=tuner["tune_f"])
-        # if tuner["fix_f"]:
-        #     focal_distance = tuner["tune_f"]
-        # else:
-        #     focal_distance = pm.Normal("f", mu=known_params["FOCAL_DISTANCE"], sigma=tuner["tune_f"])
-        #psf = pm.TruncatedNormal("PSF", lower=0.01*PIXEL_SIZE, upper=10.0*PIXEL_SIZE, mu=known_params["PSF"], sigma=10.0)
-        #psf = pm.Uniform("PSF", lower=0.01*PIXEL_SIZE, upper=10.0*PIXEL_SIZE)
-
-        off_mu = np.median(datafile["data0"])
-        off_sigma = np.mean((datafile["data0"] - off_mu) ** 2) ** 0.5
+        alive_matrix = np.logical_not(break_matrix)
+        off_mu = np.median(observed[alive_matrix])
+        off_sigma = np.mean((observed[alive_matrix] - off_mu) ** 2) ** 0.5
 
         max_energy = np.max([star.energy() for star in stars])
-        max_light = np.max(datafile["data0"] - off_mu)
+
+        max_value = np.max(observed[alive_matrix])
+        max_light = max_value - off_mu
+
+        #integral_mul = erf(1/(2**1.5*known_params["PSF"]))**2
+        #assumed_energy = max_light/integral_mul
 
         mul_mu = max_light/max_energy
 
         print("ASSUMPTIONS:")
-        print("OFF ~", off_mu)
-        print("MUL ~", mul_mu)
+        #print("MAX_VALUE", max_value)
+        #print("MAX_AMPL", max_light)
+        #print("PSF CORRECTION", integral_mul)
+        #print("MAX_ASSUMED_LIGHT", assumed_energy)
+        print("BASE", off_mu)
+        print("MUL ~", max_light, "/", max_energy, "=", mul_mu)
 
-        mul = pm.TruncatedNormal("A", mu=mul_mu, sigma=100.0, lower=0.0)
-        off = pm.Normal("B", sigma=off_sigma, mu=off_mu)
+        #mul = pm.TruncatedNormal("A", mu=mul_mu, sigma=tune_a_std, lower=0.0)
+        #mul = pm.HalfNormal("A", sigma=mul_mu*np.sqrt(np.pi/2))
+        mul = tune_a("A", known_params["MULTIPLIER"])
+        if tune_b_auto_assume:
+            print("OFFSET ~", off_mu, "±", off_sigma)
+            off = pm.Normal("B", sigma=off_sigma, mu=off_mu)
+        else:
+            print("OFFSET ~", known_params["OFFSET"])
+            off = tune_b("B", known_params["OFFSET"])
 
 
         # ["VIEW_LATITUDE", FloatNode, MAIN_LATITUDE],
@@ -132,11 +130,15 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
             star:StarEntry
             x_eci, y_eci, z_eci = star.get_eci()
             energy = star.energy()
-            x_ocef, y_ocef, z_ocef = eci_to_ocef_pt(x_eci, y_eci, z_eci, era,
+            x_ocef, y_ocef, z_ocef = eci_to_ocef_pt(x_eci, y_eci, z_eci, eras,
                                                     lat=view_latitude * np.pi / 180,
                                                     lon=view_longitude * np.pi / 180)
             x_ocef, y_ocef, z_ocef = rotate_yz_pt(x_ocef, y_ocef, z_ocef, self_rotation * np.pi / 180)
             x_pdf, y_pdf, v = ocef_to_detector_plane_pt(x_ocef, y_ocef, z_ocef, focal_distance)
+            x_pdf = pt.expand_dims(x_pdf, (1, 2))
+            y_pdf = pt.expand_dims(y_pdf, (1, 2))
+            v = pt.expand_dims(v, (1, 2))
+
             energy_dist = energy*v*ensquared_energy_full(x_mesh, y_mesh, x_pdf, y_pdf, psf)
             if modelled is None:
                 modelled = energy_dist

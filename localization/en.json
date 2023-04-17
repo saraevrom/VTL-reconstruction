@@ -36,6 +36,10 @@
   "orientation.form.tune.lon": "View Longitude",
   "orientation.form.tune.rot": "Own rotation",
   "orientation.form.tune.f": "Focal distance",
+  "orientation.form.tune.a": "Multiplier",
+  "orientation.form.tune.b": "Offset",
+  "orientation.form.tune.b_auto_assume": "Assume offset automatically",
+  "orientation.form.tune.dist": "Distribution",
   "orientation.form.tune.psf": "PSF",
 
   "orientation.form.tune.use_laplace": "Use laplace distribution",

@@ -49,7 +49,7 @@ def get_database():
     return DATABASE
 
 VEGA_MAGNITUDE = 0.03
-VEGA_LUM = 2.54  #E-6
+VEGA_LUM = 2.54  # ulx (micro lux)
 
 class StarEntry(object):
     def __init__(self, record):

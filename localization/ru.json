@@ -35,6 +35,10 @@
   "orientation.form.tune.lon": "Долгота",
   "orientation.form.tune.rot": "Собственный поворот",
   "orientation.form.tune.f": "Фокусное расстояние",
+  "orientation.form.tune.a": "Множитель",
+  "orientation.form.tune.b": "Смещение",
+  "orientation.form.tune.b_auto_assume": "Найти смещение из медианы",
+  "orientation.form.tune.dist": "Распределение",
   "orientation.form.tune.psf": "PSF",
 
   "orientation.form.tune.use_laplace": "Распределение Лапласа",
