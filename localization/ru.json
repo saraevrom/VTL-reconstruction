@@ -3,6 +3,12 @@
   "tools.reconstruction": "Реконструкция",
   "tools.orientation": "Ориентация",
 
+
+  "reconstruction.bl": "Нижний левый",
+  "reconstruction.br": "Нижний правый",
+  "reconstruction.tl": "Верхний левый",
+  "reconstruction.tr": "Верхний правый",
+
   "reconstruction.btn.load": "Загрузить архив",
   "reconstruction.btn.next": "Следующий трек",
   "reconstruction.btn.prev": "Предыдущий трек",

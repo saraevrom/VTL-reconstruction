@@ -67,9 +67,9 @@ def find_trace_entry(traces, entry_name):
 
 def get_track_attr(fp, attr):
     if attr in fp.attrs.keys():
-        return fp.attrs[attr]
+        return int(fp.attrs[attr])
     else:
-        return True
+        return 1
 
 def reconstruct_event(form_data, measured_data):
     used_model = form_data["model"]
@@ -120,6 +120,11 @@ def render_event(idata_0, form_data):
 
     return whole_summary
 
+
+def create_checkbox(parent, label_key, variable):
+    check = tk.Checkbutton(parent,text=get_locale(label_key), variable=variable, justify="left", anchor="w")
+    check.pack(side="bottom", fill="x")
+
 class ReconstructorTool(ToolBase, PopupPlotable):
     TOOL_KEY = "tools.reconstruction"
 
@@ -161,11 +166,21 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self._length = 0
         self._loaded_data0 = None
         self._loaded_ut0 = None
-        self._bottom_left = False
-        self._bottom_right = False
-        self._top_left = False
-        self._top_right = False
+        self._bottom_left = tk.IntVar(self)
+        self._bottom_left.trace("w", self.on_vars_change)
+        self._bottom_right = tk.IntVar(self)
+        self._bottom_right.trace("w", self.on_vars_change)
+        self._top_left = tk.IntVar(self)
+        self._top_left.trace("w", self.on_vars_change)
+        self._top_right = tk.IntVar(self)
+        self._top_right.trace("w", self.on_vars_change)
         self._traces = dict()
+        self._is_archive = False
+
+        create_checkbox(rpanel, "reconstruction.bl", self._bottom_left)
+        create_checkbox(rpanel, "reconstruction.br", self._bottom_right)
+        create_checkbox(rpanel, "reconstruction.tl", self._top_left)
+        create_checkbox(rpanel, "reconstruction.tr", self._top_right)
 
     def on_plot_arviz_traces(self):
         options_to_select = self._traces.keys()
@@ -197,15 +212,24 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         return xs, self._loaded_data0
 
     def on_load_archive(self):
-        filename = TRACKS_WORKSPACE.askopenfilename(auto_formats=["zip"])
+        filename = TRACKS_WORKSPACE.askopenfilename(auto_formats=["zip", "h5"])
         if filename:
             if self.loaded_file:
                 self.loaded_file.close()
-            self.loaded_file = zipfile.ZipFile(filename, "r")
-            self._filelist = self.loaded_file.namelist()
-            self._length = len(self._filelist)
-
-            self.pointer = 0
+            if filename.endswith(".zip"):
+                self.loaded_file = zipfile.ZipFile(filename, "r")
+                self._filelist = self.loaded_file.namelist()
+                self._length = len(self._filelist)
+                self._is_archive = True
+                self.pointer = 0
+            elif filename.endswith(".h5"):
+                self.loaded_file = h5py.File(filename, "r")
+                self._filelist = [os.path.basename(filename)]
+                self._length = 1
+                self._is_archive = False
+                self.pointer = 0
+            else:
+                raise RuntimeError("File extension must be .zip or .h5")
             self.show_event()
 
 
@@ -245,7 +269,6 @@ class ReconstructorTool(ToolBase, PopupPlotable):
                         zipf.write(temp_filename, trace_name)
                         os.remove(temp_filename)
 
-
     def on_save_dataframe(self):
         filename = RECON_WORKSPACE.asksaveasfilename(auto_formats=["csv"])
         if filename:
@@ -253,6 +276,32 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             df = self.result_table.model.df
             df.to_csv(filename, sep=",")
 
+    def update_track_locations(self):
+        self.track_plotter.set_mask_vars(bl=self._bottom_left,
+                                         br=self._bottom_right,
+                                         tl=self._top_left,
+                                         tr=self._top_right)
+
+    def on_vars_change(self, *args):
+        self.update_track_locations()
+        self.track_plotter.draw()
+
+
+    def _show_h5(self, h5file, filename):
+        self._loaded_data0 = h5file["data0"][:]
+        self._loaded_ut0 = h5file["UT0"][:]
+        flattened = np.max(self._loaded_data0, axis=0)
+
+        self._bottom_left.set(get_track_attr(h5file, "bottom_left"))  # h5file.attrs["bottom_left"]
+        self._bottom_right.set(get_track_attr(h5file, "bottom_right"))  # h5file.attrs["bottom_right"]
+        self._top_left.set(get_track_attr(h5file, "top_left"))  # h5file.attrs["top_left"]
+        self._top_right.set(get_track_attr(h5file, "top_right"))  # h5file.attrs["top_right"]
+
+        self.track_plotter.buffer_matrix = flattened
+        self.track_plotter.update_matrix_plot(True)
+        # self.update_track_locations()
+        self.track_plotter.axes.set_title(filename)
+        self.track_plotter.draw()
 
     def show_event(self):
         if self.pointer < 0:
@@ -261,20 +310,12 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             self.pointer = self._length-1
         filename = self._filelist[self.pointer]
         print("Loading", filename)
-        with self.loaded_file.open(filename) as fp:
-            with h5py.File(fp, "r") as h5file:
-                self._loaded_data0 = h5file["data0"][:]
-                self._loaded_ut0 = h5file["UT0"][:]
-                flattened = np.max(self._loaded_data0, axis=0)
-                self.track_plotter.buffer_matrix = flattened
-                self.track_plotter.update_matrix_plot(True)
-                self.track_plotter.set_mask(h5file.attrs)
-                self.track_plotter.axes.set_title(filename)
-                self.track_plotter.draw()
-                self._bottom_left = get_track_attr(h5file, "bottom_left") # h5file.attrs["bottom_left"]
-                self._bottom_right = get_track_attr(h5file, "bottom_right") # h5file.attrs["bottom_right"]
-                self._top_left = get_track_attr(h5file, "top_left") # h5file.attrs["top_left"]
-                self._top_right = get_track_attr(h5file, "top_right") # h5file.attrs["top_right"]
+        if self._is_archive:
+            with self.loaded_file.open(filename) as fp:
+                with h5py.File(fp, "r") as h5file:
+                    self._show_h5(h5file, filename)
+        else:
+            self._show_h5(self.loaded_file, filename)
 
     def _reconstruct_fill(self, pmt, i_slice, j_slice):
         src_file = self._filelist[self.pointer]
@@ -344,18 +385,16 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             # data = create_records(*re_model.unobserved_RVs)
             # print("KEYS:", data.keys())
 
-
-
             lower_slice = slice(None, 8)
             upper_slice = slice(8, None)
 
-            if self._bottom_left:
+            if self._bottom_left.get():
                 self._reconstruct_fill("bl", lower_slice, lower_slice)
-            if self._bottom_right:
+            if self._bottom_right.get():
                 self._reconstruct_fill("br", upper_slice, lower_slice)
-            if self._top_left:
+            if self._top_left.get():
                 self._reconstruct_fill("tl", lower_slice, upper_slice)
-            if self._top_right:
+            if self._top_right.get():
                 self._reconstruct_fill("tr", upper_slice, upper_slice)
 
             self.render_traces()

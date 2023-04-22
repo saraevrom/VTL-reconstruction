@@ -5,11 +5,13 @@ from matplotlib.patches import Rectangle
 
 SPAN = HALF_PIXELS*PIXEL_SIZE+HALF_GAP_SIZE
 
+
 def _set_mask(patch, value):
     if value:
         patch.set_alpha(0.0)
     else:
         patch.set_alpha(0.5)
+
 
 class HighlightingPlotter(GridPlotter):
     def __init__(self, master):
@@ -29,3 +31,9 @@ class HighlightingPlotter(GridPlotter):
         _set_mask(self.bottom_right, source["bottom_right"])
         _set_mask(self.top_left, source["top_left"])
         _set_mask(self.top_right, source["top_right"])
+
+    def set_mask_vars(self, bl, br, tl, tr):
+        _set_mask(self.bottom_left, bl.get())
+        _set_mask(self.bottom_right, br.get())
+        _set_mask(self.top_left, tl.get())
+        _set_mask(self.top_right, tr.get())

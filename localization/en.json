@@ -4,6 +4,11 @@
   "tools.orientation": "Orientation",
 
 
+  "reconstruction.bl": "Bottom left",
+  "reconstruction.br": "Bottom right",
+  "reconstruction.tl": "Top left",
+  "reconstruction.tr": "Top right",
+
   "reconstruction.btn.load": "Load archive",
   "reconstruction.btn.next": "Next",
   "reconstruction.btn.prev": "Previous",
