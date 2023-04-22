@@ -1,8 +1,9 @@
 from reconstruction import ReconstructionForm
-from vtl_common.common_GUI.tk_forms_assist import FormNode, OptionNode, IntNode, BoolNode
+from vtl_common.common_GUI.tk_forms_assist import FormNode, IntNode, BoolNode, AlternatingNode, LabelNode, FloatNode
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from vtl_common.localization import get_locale
-from .cutters import RangeCutter, WholeCutter
+from .cutters import RangeCutter, WholeCutter, ThresholdCutter
+
 
 class RangeSelect(FormNode):
     DISPLAY_NAME = get_locale("reconstruction.form.cutter.range")
@@ -13,22 +14,32 @@ class RangeSelect(FormNode):
         data = super().get_data()
         return RangeCutter(**data)
 
-class RangeOption(OptionNode):
-    ITEM_TYPE = RangeSelect
+
+class WholeSelect(LabelNode):
+    DISPLAY_NAME = "---"
 
     def get_data(self):
-        data = super().get_data()
-        if data is None:
-            return WholeCutter()
-        else:
-            return data
+        return WholeCutter()
+
+
+class ThreshSelect(FormNode):
+    FIELD__threshold = create_value_field(FloatNode, get_locale("reconstruction.form.cutter.threshold"), 3.5)
+
+
+class CutterSelection(AlternatingNode):
+    DISPLAY_NAME = get_locale("reconstruction.form.cutter.selection")
+    SEL__entire = WholeSelect
+    SEL__range = RangeSelect
+    SEL__threshold = ThreshSelect
+
 
 class Cutter(FormNode):
     DISPLAY_NAME = get_locale("reconstruction.form.cutter")
-    FIELD__bl = create_value_field(RangeOption, "BL", None)
-    FIELD__br = create_value_field(RangeOption, "BR", None)
-    FIELD__tl = create_value_field(RangeOption, "TL", None)
-    FIELD__tr = create_value_field(RangeOption, "TR", None)
+    FIELD__bl = create_value_field(CutterSelection, "BL", None)
+    FIELD__br = create_value_field(CutterSelection, "BR", None)
+    FIELD__tl = create_value_field(CutterSelection, "TL", None)
+    FIELD__tr = create_value_field(CutterSelection, "TR", None)
+
 
 class ControlForm(ReconstructionForm):
     USE_SCROLLVIEW = True

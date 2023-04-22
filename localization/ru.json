@@ -30,6 +30,8 @@
   "reconstruction.sample.init": "Инициализация",
 
   "reconstruction.form.cutter": "Вырезка",
+  "reconstruction.form.cutter.selection": "Тип вырезки",
+  "reconstruction.form.cutter.threshold": "Порог",
   "reconstruction.form.cutter.range": "Диапазон",
   "reconstruction.form.cutter.start": "Начало",
   "reconstruction.form.cutter.end": "Конец",

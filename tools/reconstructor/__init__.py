@@ -335,8 +335,9 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             trace = find_trace_entry(self._traces, trace_identifier)
             if trace is None or formdata["overwrite"]:
                 reconstruction_data = cutters[pmt].cut(self._loaded_data0)
-                trace = reconstruct_event(formdata, reconstruction_data[:, i_slice, j_slice])
-                self._traces[trace_identifier] = trace
+                if reconstruction_data is not None:
+                    trace = reconstruct_event(formdata, reconstruction_data[:, i_slice, j_slice])
+                    self._traces[trace_identifier] = trace
 
             # summary = render_event(trace, formdata)
             # summary.insert(0, 'PMT', pmt)

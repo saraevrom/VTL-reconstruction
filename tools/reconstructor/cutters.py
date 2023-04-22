@@ -1,4 +1,5 @@
-
+import numpy as np
+import numba as nb
 
 class Cutter(object):
     def cut(self, plot_data):
@@ -16,3 +17,33 @@ class RangeCutter(Cutter):
 
     def cut(self, plot_data):
         return plot_data[self.start: self.end]
+
+
+@nb.njit()
+def find_first_trigger(curve, thresh):
+    n = len(curve)
+    for i in range(n):
+        if curve[i] >= thresh:
+            return i
+    return n-1
+
+
+@nb.njit()
+def find_last_trigger(curve, thresh):
+    n = len(curve)
+    for i in range(n-1, -1, -1):
+        if curve[i] >= thresh:
+            return i
+    return 0
+
+
+class ThresholdCutter(Cutter):
+    def __init__(self, threshold):
+        self.threshold = threshold
+
+    def cut(self, plot_data):
+        lightcurve = np.sum(plot_data, axis=(1,2))
+        start = find_first_trigger(lightcurve, self.threshold)
+        end = find_last_trigger(lightcurve, self.threshold)
+        if end>start:
+            return lightcurve[start:end]

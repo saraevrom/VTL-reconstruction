@@ -30,7 +30,9 @@
 
 
   "reconstruction.form.cutter": "Cutoff",
+  "reconstruction.form.cutter.selection": "Cutter type",
   "reconstruction.form.cutter.range": "Range",
+  "reconstruction.form.cutter.threshold": "Threshold",
   "reconstruction.form.cutter.start": "Start",
   "reconstruction.form.cutter.end": "End",
   "reconstruction.form.split_chains": "Split chains",

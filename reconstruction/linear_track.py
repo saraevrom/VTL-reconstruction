@@ -8,9 +8,11 @@ from vtl_common.localization import get_locale
 from .common import ensquared_energy_avg, track_threshold
 
 
-def linear_track_model(track_points, threshold=6.0, minv=0.01, maxv = 0.45, min_e=0.0001, max_e=1.0):
+def linear_track_model(track_points, minv=0.01, maxv = 0.45, min_e=0.0001, max_e=1.0):
     with pm.Model() as model:
-        k_start, k_end = track_threshold(track_points, threshold)
+        #k_start, k_end = track_threshold(track_points, threshold)
+        k_start = 0
+        k_end = track_points.shape[0]
 
         x0 = pm.Uniform('X0', -4.5, 4.5)
         y0 = pm.Uniform('Y0', -4.5, 4.5)
@@ -41,7 +43,7 @@ def linear_track_model(track_points, threshold=6.0, minv=0.01, maxv = 0.45, min_
 class LinearTrackModelForm(FormNode):
     USE_SCROLLVIEW = False
     DISPLAY_NAME = get_locale("reconstruction_model.linear")
-    FIELD__threshold = create_value_field(FloatNode, get_locale("reconstruction_model.linear.threshold"), 6.0)
+    #FIELD__threshold = create_value_field(FloatNode, get_locale("reconstruction_model.linear.threshold"), 6.0)
     FIELD__minv = create_value_field(FloatNode, get_locale("reconstruction_model.linear.minv"), 0.01)
     FIELD__maxv = create_value_field(FloatNode, get_locale("reconstruction_model.linear.maxv"), 0.45)
     FIELD__min_e = create_value_field(FloatNode, get_locale("reconstruction_model.linear.min_e"), 10.0)

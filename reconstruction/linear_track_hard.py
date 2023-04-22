@@ -21,19 +21,11 @@ def lc_profile_invlogit(t, t1, t2, w):
 def lc_profile_sqrt(t, t1, t2, w):
     return sqrt_sigma(w*(t-t1)) * sqrt_sigma(w*(t2-t))
 
-
-
 def lc_profile_heaviside(t, t1, t2):
     return heaviside(t-t1)*heaviside(t2-t)
 
 
-
-
-
-
-def linear_track_model_alt(track_points, front_mul_mean=10.0, envelope_data=None, discrete_time=False, vmax=1.0,
-                           threshold=6.0):
-
+def linear_track_model_alt(track_points, front_mul_mean=10.0, envelope_data=None, discrete_time=False, vmax=1.0):
 
     if envelope_data is None:
         envelope_func = lc_profile_invlogit
@@ -41,9 +33,6 @@ def linear_track_model_alt(track_points, front_mul_mean=10.0, envelope_data=None
     else:
         envelope_func, envelope_uses_width = envelope_data
 
-    k_start, k_end = track_threshold(track_points, threshold)
-    k_sigma = (k_end - k_start)/10.0
-    k_sigma = max(k_sigma, 1.0)
 
     with pm.Model() as model:
         # image parameters
@@ -60,8 +49,10 @@ def linear_track_model_alt(track_points, front_mul_mean=10.0, envelope_data=None
             t1 = pm.DiscreteUniform('T1', 0, T)  # start time
             t2 = pm.DiscreteUniform('T2', t1, T)  # end time
         else:
-            t1 = pm.TruncatedNormal("T1", mu=k_start, sigma=k_sigma, lower=0.0, upper=1.0*T)
-            t2 = pm.TruncatedNormal("T2", mu=k_end, sigma=k_sigma, lower=t1, upper=1.0*T)
+            t1 = pm.Uniform('T1', 0, T)  # start time
+            t2 = pm.Uniform('T2', t1, T)  # end time
+            #t1 = pm.TruncatedNormal("T1", mu=k_start, sigma=k_sigma, lower=0.0, upper=1.0*T)
+            #t2 = pm.TruncatedNormal("T2", mu=k_end, sigma=k_sigma, lower=t1, upper=1.0*T)
 
         #max_distance = delta_t*vmax
 
