@@ -9,7 +9,9 @@
   "reconstruction.tl": "Top left",
   "reconstruction.tr": "Top right",
 
-  "reconstruction.btn.load": "Load archive",
+  "reconstruction.filetypes.data": "Data source",
+
+  "reconstruction.btn.load": "Load data",
   "reconstruction.btn.next": "Next",
   "reconstruction.btn.prev": "Previous",
   "reconstruction.btn.reconstruct": "Reconstruct",

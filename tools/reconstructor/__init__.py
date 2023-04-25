@@ -212,7 +212,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         return xs, self._loaded_data0
 
     def on_load_archive(self):
-        filename = TRACKS_WORKSPACE.askopenfilename(auto_formats=["zip", "h5"])
+        filename = TRACKS_WORKSPACE.askopenfilename(filetypes=[(get_locale("reconstruction.filetypes.data"), "*.zip *.h5")])
         if filename:
             if self.loaded_file:
                 self.loaded_file.close()

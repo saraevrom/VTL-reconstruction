@@ -9,7 +9,9 @@
   "reconstruction.tl": "Верхний левый",
   "reconstruction.tr": "Верхний правый",
 
-  "reconstruction.btn.load": "Загрузить архив",
+  "reconstruction.filetypes.data": "Данные",
+
+  "reconstruction.btn.load": "Загрузить данные",
   "reconstruction.btn.next": "Следующий трек",
   "reconstruction.btn.prev": "Предыдущий трек",
   "reconstruction.btn.reconstruct": "Реконструировать",
