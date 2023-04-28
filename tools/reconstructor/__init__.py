@@ -32,6 +32,8 @@ from tkinter import messagebox
 import matplotlib.pyplot as plt
 from .form import ControlForm
 from vtl_common.common_GUI.tk_forms import TkDictForm
+from vtl_common.parameters import HALF_GAP_SIZE, HALF_PIXELS, PIXEL_SIZE
+
 az.rcParams["data.load"] = "eager"
 
 
@@ -41,6 +43,15 @@ RECON_WORKSPACE = Workspace("reconstruction_results")
 # USED_MODEL = linear_track_model_alt
 
 STDEV_PREFIX = "σ_"
+
+
+MAIN_OFFSET = HALF_PIXELS*PIXEL_SIZE/2+HALF_GAP_SIZE
+OFFSETS = {
+    "bl": (-MAIN_OFFSET, -MAIN_OFFSET),
+    "br": (MAIN_OFFSET, -MAIN_OFFSET),
+    "tl": (-MAIN_OFFSET, MAIN_OFFSET),
+    "tr": (MAIN_OFFSET, MAIN_OFFSET)
+}
 
 def noext(x):
     return  os.path.splitext(x)[0]
@@ -72,7 +83,7 @@ def get_track_attr(fp, attr):
         return 1
 
 def reconstruct_event(form_data, measured_data):
-    used_model = form_data["model"]
+    used_model = form_data["model"][1]
     sampler_params = form_data["sampler"]
 
     # some_matr = np.max(measured_data, axis=0)
@@ -301,6 +312,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self.track_plotter.update_matrix_plot(True)
         # self.update_track_locations()
         self.track_plotter.axes.set_title(filename)
+
         self.track_plotter.draw()
 
     def show_event(self):
@@ -339,6 +351,8 @@ class ReconstructorTool(ToolBase, PopupPlotable):
                     trace = reconstruct_event(formdata, reconstruction_data[:, i_slice, j_slice])
                     self._traces[trace_identifier] = trace
 
+            model_wrapper = formdata["model"][0]
+            model_wrapper.reconstruction_overlay(plotter=self.track_plotter, i_trace=trace, offset=OFFSETS[pmt])
             # summary = render_event(trace, formdata)
             # summary.insert(0, 'PMT', pmt)
             # summary.insert(0, 'SRC', src_file)
@@ -388,6 +402,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
 
             lower_slice = slice(None, 8)
             upper_slice = slice(8, None)
+            self.track_plotter.clear_added_patches()
 
             if self._bottom_left.get():
                 self._reconstruct_fill("bl", lower_slice, lower_slice)
@@ -399,3 +414,4 @@ class ReconstructorTool(ToolBase, PopupPlotable):
                 self._reconstruct_fill("tr", upper_slice, upper_slice)
 
             self.render_traces()
+            self.track_plotter.draw()

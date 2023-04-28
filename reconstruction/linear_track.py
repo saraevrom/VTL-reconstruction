@@ -5,11 +5,28 @@ import pytensor.tensor as pt
 from .common import ensquared_energy_avg
 from .base_model import ReconstructionModelWrapper
 from .form_prototypes import FloatField
+from vtl_common.parameters import PIXEL_SIZE, HALF_PIXELS
+
+
+
+def rect_raycast(x0, y0, phi, edge):
+    dx = np.cos(phi)
+    dy = np.sin(phi)
+    if dx>0:
+        tx = (edge-x0)/dx
+    else:
+        tx = (-edge-x0)/dx
+    if dy > 0:
+        ty = (edge - y0) / dy
+    else:
+        ty = (-edge - y0) / dy
+    t = min(tx,ty)
+    return x0+t*dx, y0+t*dy
+
 
 class LinearTrackModel(ReconstructionModelWrapper):
-    '''
-    Static field inheriting FieldPrototype class will be passed to form and transformed automatically
-    '''
+
+    # Static field inheriting FieldPrototype class will be passed to form and transformed automatically
     # One more static field is already included in ReconstructionModelWrapper:
     # It gets transformed into pymc.<Distribution>. And it automatically adds error parameters (sigma, nu, etc...).
 
@@ -50,6 +67,23 @@ class LinearTrackModel(ReconstructionModelWrapper):
             A = self.final_distribution('A', mu=mu, sigma=sigma0,
                           observed=observed[k_start:k_end], shape=(k_end - k_start, 8, 8))  # A = A[k,i,j]
         return model
+
+    def reconstruction_overlay(self, plotter, i_trace, offset):
+        print("DRAW_CALL")
+        x_off, y_off = offset
+        post = i_trace.posterior
+        x0 = post["X0"].median()*PIXEL_SIZE
+        y0 = post["Y0"].median()*PIXEL_SIZE
+        r = post["SigmaPSF"].median()
+        phi = post["Phi0"].median()*np.pi/180
+        u0 = post["U0"].median()
+
+        x_start, y_start = rect_raycast(x0, y0, phi+np.pi, HALF_PIXELS/2*PIXEL_SIZE)
+        x_end, y_end = rect_raycast(x0, y0, phi, HALF_PIXELS/2*PIXEL_SIZE)
+        dx = x_end-x_start
+        dy = y_end-y_start
+
+        plotter.plot_arrow(x_start+x_off, y_start+y_off, dx, dy, color="red", width=r)
 
 
 LINEAR_TRACK = LinearTrackModel()

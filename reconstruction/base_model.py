@@ -5,10 +5,11 @@ from .form_prototypes import FinalDistributionField
 
 class ReconstructionModelWrapper(object):
     '''
-    Wraps model to create shared functionality
+    Wraps pymc model to create shared functionality.
+    Static field inheriting FieldPrototype class will be passed to form and transformed automatically
     '''
 
-    final_distribution = FinalDistributionField()
+    final_distribution = FinalDistributionField() # One common field
 
     @classmethod
     def get_static(cls):
@@ -27,7 +28,7 @@ class ReconstructionModelWrapper(object):
 
             def get_data(self_internal):
                 data = super().get_data()
-                return lambda x: self.get_model(x, data)
+                return self, lambda x: self.get_model(x, data)
 
         for key in statics.keys():
             if hasattr(statics[key], "generate"):
@@ -42,3 +43,6 @@ class ReconstructionModelWrapper(object):
 
     def get_pymc_model(self, observed):
         raise NotImplementedError("Cannot get model")
+
+    def reconstruction_overlay(self, plotter, i_trace, offset):
+        x_off, y_off = offset

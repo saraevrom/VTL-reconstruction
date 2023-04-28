@@ -7,6 +7,7 @@ from vtl_common.localization import get_locale
 from .common import ensquared_energy_avg, track_threshold
 from .base_model import ReconstructionModelWrapper
 from .form_prototypes import FloatField, PassthroughField, BoolField
+from vtl_common.parameters import PIXEL_SIZE, HALF_PIXELS
 
 def heaviside(x):
     return (pt.sgn(x) + 1) / 2
@@ -114,6 +115,22 @@ class LinearHardModel(ReconstructionModelWrapper):
             #                observed=track_points, shape=(T, 8, 8))
 
         return model
+
+    def reconstruction_overlay(self, plotter, i_trace, offset):
+        print("DRAW_CALL")
+        x_off, y_off = offset
+        post = i_trace.posterior
+
+        x_start = post["X1"].median*PIXEL_SIZE
+        x_end = post["X2"].median*PIXEL_SIZE
+        y_start = post["Y1"].median * PIXEL_SIZE
+        y_end = post["Y2"].median * PIXEL_SIZE
+        r = post["SigmaPSF"].median()
+
+        dx = x_end-x_start
+        dy = y_end-y_start
+
+        plotter.plot_arrow(x_start+x_off, y_start+y_off, dx, dy, color="red", width=r)
 
 
 LINEAR_HARD_MODEL = LinearHardModel()
