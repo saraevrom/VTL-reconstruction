@@ -31,6 +31,8 @@
   "reconstruction.sample.nuts_sampler": "Реализация NUTS",
   "reconstruction.sample.init": "Инициализация",
 
+  "reconstruction.form.distribution": "Распределение",
+
   "reconstruction.form.cutter": "Вырезка",
   "reconstruction.form.cutter.selection": "Тип вырезки",
   "reconstruction.form.cutter.threshold": "Порог",

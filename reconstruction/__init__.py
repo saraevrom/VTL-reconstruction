@@ -1,13 +1,13 @@
-from .linear_track import LinearTrackModelForm
-from .linear_track_hard import LinearTrackHardModelForm
+from .linear_track import LINEAR_TRACK
+from .linear_track_hard import LINEAR_HARD_MODEL
 from vtl_common.common_GUI.tk_forms_assist import AlternatingNode, FormNode, IntNode, FloatNode, OptionNode, ComboNode
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from vtl_common.localization import get_locale
 
 class ModelSelector(AlternatingNode):
     DISPLAY_NAME = get_locale("reconstruction_model")
-    SEL__linear = LinearTrackModelForm
-    SEL__linear_hard = LinearTrackHardModelForm
+    SEL__linear = LINEAR_TRACK.generate_subform()
+    SEL__linear_hard = LINEAR_HARD_MODEL.generate_subform()
 
 
 class OptInt(OptionNode):

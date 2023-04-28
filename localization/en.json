@@ -31,6 +31,8 @@
   "reconstruction.sample.init": "Init",
 
 
+  "reconstruction.form.distribution": "Distribution",
+
   "reconstruction.form.cutter": "Cutoff",
   "reconstruction.form.cutter.selection": "Cutter type",
   "reconstruction.form.cutter.range": "Range",
