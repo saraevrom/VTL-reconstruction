@@ -15,6 +15,7 @@
   "reconstruction.btn.next": "Next",
   "reconstruction.btn.prev": "Previous",
   "reconstruction.btn.reconstruct": "Reconstruct",
+  "reconstruction.btn.analyze": "Analyze",
   "reconstruction.btn.trace": "Plot trace",
   "reconstruction.btn.save_traces": "Save traces",
   "reconstruction.btn.load_traces": "Load traces",

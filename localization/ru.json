@@ -15,6 +15,7 @@
   "reconstruction.btn.next": "Следующий трек",
   "reconstruction.btn.prev": "Предыдущий трек",
   "reconstruction.btn.reconstruct": "Реконструировать",
+  "reconstruction.btn.analyze": "Анализировать",
   "reconstruction.btn.trace": "Построить след",
   "reconstruction.btn.save_traces": "Сохранить следы",
   "reconstruction.btn.load_traces": "Загрузить следы",

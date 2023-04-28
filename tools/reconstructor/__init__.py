@@ -154,11 +154,12 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self.control_panel.add_button(get_locale("reconstruction.btn.prev"), self.on_prev, 1)
         self.control_panel.add_button(get_locale("reconstruction.btn.next"), self.on_next, 1)
         self.control_panel.add_button(get_locale("reconstruction.btn.reconstruct"), self.on_reconstruct, 2)
+        self.control_panel.add_button(get_locale("reconstruction.btn.analyze"), self.on_analyze, 2)
         self.control_panel.add_button(get_locale("reconstruction.btn.trace"), self.on_plot_arviz_traces, 3)
         self.control_panel.add_button(get_locale("reconstruction.btn.save_traces"), self.on_save_traces, 4)
-        self.control_panel.add_button(get_locale("reconstruction.btn.save_df"), self.on_save_dataframe, 4)
-        self.control_panel.add_button(get_locale("reconstruction.btn.load_traces"), self.on_load_traces, 5)
-        self.control_panel.add_button(get_locale("reconstruction.btn.clear_traces"), self.on_clear_traces, 6)
+        self.control_panel.add_button(get_locale("reconstruction.btn.load_traces"), self.on_load_traces, 4)
+        self.control_panel.add_button(get_locale("reconstruction.btn.clear_traces"), self.on_clear_traces, 5)
+        self.control_panel.add_button(get_locale("reconstruction.btn.save_df"), self.on_save_dataframe, 6)
 
         self.ctrl_form_parser = ControlForm()
         self.ctrl_form = TkDictForm(rpanel, self.ctrl_form_parser.get_configuration_root())
@@ -187,6 +188,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self._top_right.trace("w", self.on_vars_change)
         self._traces = dict()
         self._is_archive = False
+        self.eager_reconstruction = False
 
         create_checkbox(rpanel, "reconstruction.bl", self._bottom_left)
         create_checkbox(rpanel, "reconstruction.br", self._bottom_right)
@@ -345,7 +347,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             trace_identifier = f"{noext(src_file)}_{pmt}"
 
             trace = find_trace_entry(self._traces, trace_identifier)
-            if trace is None or formdata["overwrite"]:
+            if trace is None or self.eager_reconstruction:
                 reconstruction_data = cutters[pmt].cut(self._loaded_data0)
                 if reconstruction_data is not None:
                     trace = reconstruct_event(formdata, reconstruction_data[:, i_slice, j_slice])
@@ -393,7 +395,16 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self.ctrl_form_parser.parse_formdata(formdata)
         self._formdata = self.ctrl_form_parser.get_data()
 
+
     def on_reconstruct(self):
+        self.eager_reconstruction = True
+        self.on_reconstruction_run()
+
+    def on_analyze(self):
+        self.eager_reconstruction = False
+        self.on_reconstruction_run()
+
+    def on_reconstruction_run(self):
         self._update_formdata()
         if self.loaded_file:
             # re_model = used_model(self._loaded_data0)
