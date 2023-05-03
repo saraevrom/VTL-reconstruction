@@ -50,7 +50,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
             u0 = pm.Uniform('U0', self.min_v, self.max_v)
             e0 = pm.Uniform('E0', self.min_e, self.max_e)
 
-            sigma0 = pm.HalfNormal('Sigma0', 1.)
+            #sigma0 = pm.HalfNormal('Sigma0', 1.)
             sigmaPSF = pm.HalfNormal('SigmaPSF', 1.)
 
             kk = np.arange(k_start, k_end)
@@ -64,7 +64,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
             Y = pt.expand_dims(Y, (1, 2))
 
             mu = e0 * ensquared_energy_avg(X, Y, dX, dY, sigmaPSF, k_end - k_start)
-            A = self.final_distribution('A', mu=mu, sigma=sigma0,
+            A = self.final_distribution('A', mu=mu,
                           observed=observed[k_start:k_end], shape=(k_end - k_start, 8, 8))  # A = A[k,i,j]
         return model
 

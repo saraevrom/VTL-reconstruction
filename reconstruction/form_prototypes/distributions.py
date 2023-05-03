@@ -16,8 +16,8 @@ def wrap_normal(*args, **kwargs):
     :param kwargs:
     :return:
     '''
-    sigma0 = pm.HalfNormal('sigma_0', 1.)
-    add_kwarg(kwargs,"sigma", sigma0)
+    sigma0 = pm.HalfNormal('Sigma0', 1.)
+    add_kwarg(kwargs, "sigma", sigma0)
     return pm.Normal(*args, **kwargs)
 
 
@@ -28,8 +28,8 @@ def wrap_student(*args, **kwargs):
         :param kwargs:
         :return:
         '''
-    sigma0 = pm.HalfNormal('sigma_0', 1.)
-    nu = pm.Exponential('nu', 1.)
+    sigma0 = pm.HalfNormal('Sigma0', 1.)
+    nu = pm.Exponential('nu', 0.2)
     add_kwarg(kwargs, "sigma", sigma0)
     add_kwarg(kwargs, "nu", nu)
     return pm.StudentT(*args, **kwargs)
