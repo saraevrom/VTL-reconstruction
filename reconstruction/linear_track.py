@@ -83,7 +83,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
         dx = x_end-x_start
         dy = y_end-y_start
 
-        plotter.plot_arrow(x_start+x_off, y_start+y_off, dx, dy, color="red", width=r)
+        plotter.plot_arrow(x_start+x_off, y_start+y_off, dx, dy, color="red", width=r, length_includes_head=True)
 
 
 LINEAR_TRACK = LinearTrackModel()
