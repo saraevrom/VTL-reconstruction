@@ -35,6 +35,8 @@ class LinearTrackModel(ReconstructionModelWrapper):
     max_v = FloatField(0.45)
     min_e = FloatField(10.0)
     max_e = FloatField(60.0)
+    min_phi = FloatField(-180)
+    max_phi = FloatField(180)
 
     def get_pymc_model(self,observed):
         with pm.Model() as model:
@@ -44,7 +46,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
 
             x0 = pm.Uniform('X0', -4.5, 4.5)
             y0 = pm.Uniform('Y0', -4.5, 4.5)
-            phi0_deg = pm.Uniform('Phi0', -180.0, 180.0)
+            phi0_deg = pm.Uniform('Phi0', self.min_phi, self.max_phi)
             phi0 = phi0_deg * np.pi/180.0
             print(self.min_v, self.max_v)
             u0 = pm.Uniform('U0', self.min_v, self.max_v)

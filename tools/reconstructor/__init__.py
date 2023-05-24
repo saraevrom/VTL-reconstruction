@@ -16,7 +16,6 @@ import numpy as np
 from pandastable import Table
 import pandas as pd
 import pymc as pm
-from vtl_common.parameters import NPROC
 import arviz as az
 import json
 import traceback
@@ -26,6 +25,8 @@ import zipfile
 import xarray as xr
 from .selection_dialog import SelectionDialog
 # az.style.use(["arviz-white", "arviz-redish"])
+from vtl_common.parameters import DATETIME_FORMAT
+# from vtl_common.parameters import NPROC
 
 from tkinter import messagebox
 
@@ -33,6 +34,7 @@ import matplotlib.pyplot as plt
 from .form import ControlForm
 from vtl_common.common_GUI.tk_forms import TkDictForm
 from vtl_common.parameters import HALF_GAP_SIZE, HALF_PIXELS, PIXEL_SIZE
+from datetime import datetime
 
 az.rcParams["data.load"] = "eager"
 
@@ -204,8 +206,10 @@ class ReconstructorTool(ToolBase, PopupPlotable):
                 trace = self._traces[label]
                 axs = az.plot_trace(trace).flatten()
                 print(axs)
+                for ax in axs:
+                    fig = ax.get_figure()
+                    fig.tight_layout()
                 fig = axs[0].get_figure()
-                fig.tight_layout()
                 fig.canvas.manager.set_window_title(f'Trace {label}')
                 fig.show()
 
@@ -313,7 +317,9 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self.track_plotter.buffer_matrix = flattened
         self.track_plotter.update_matrix_plot(True)
         # self.update_track_locations()
-        self.track_plotter.axes.set_title(filename)
+        self.track_plotter.axes.set_title(filename+"\n"+
+                                          datetime.utcfromtimestamp(self._loaded_ut0[0]).strftime(DATETIME_FORMAT)+"\n"+
+                                          f"Δt={self._loaded_ut0[1]-self._loaded_ut0[0]}s")
 
         self.track_plotter.draw()
 
