@@ -32,7 +32,7 @@ from tkinter import messagebox
 
 import matplotlib.pyplot as plt
 from .form import ControlForm
-from vtl_common.common_GUI.tk_forms import TkDictForm
+from vtl_common.localized_GUI.tk_forms import SaveableTkDictForm
 from vtl_common.parameters import HALF_GAP_SIZE, HALF_PIXELS, PIXEL_SIZE
 from datetime import datetime
 
@@ -42,6 +42,7 @@ az.rcParams["data.load"] = "eager"
 TRACKS_WORKSPACE = Workspace("tracks")
 TRACES_WORKSPACE = Workspace("traces")
 RECON_WORKSPACE = Workspace("reconstruction_results")
+RECO_PARAMETERS_WORKSPACE = Workspace("reconstruction_parameters")
 # USED_MODEL = linear_track_model_alt
 
 STDEV_PREFIX = "σ_"
@@ -164,7 +165,8 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self.control_panel.add_button(get_locale("reconstruction.btn.save_df"), self.on_save_dataframe, 6)
 
         self.ctrl_form_parser = ControlForm()
-        self.ctrl_form = TkDictForm(rpanel, self.ctrl_form_parser.get_configuration_root())
+        self.ctrl_form = SaveableTkDictForm(rpanel, self.ctrl_form_parser.get_configuration_root(),
+                                            file_asker=RECO_PARAMETERS_WORKSPACE)
         self.ctrl_form.pack(side="bottom", fill="both",expand=True)
 
         bottom_panel = tk.Frame(self)
@@ -354,9 +356,9 @@ class ReconstructorTool(ToolBase, PopupPlotable):
 
             trace = find_trace_entry(self._traces, trace_identifier)
             if trace is None or self.eager_reconstruction:
-                reconstruction_data = cutters[pmt].cut(self._loaded_data0)
+                reconstruction_data = cutters[pmt].cut(self._loaded_data0[:, i_slice, j_slice])
                 if reconstruction_data is not None:
-                    trace = reconstruct_event(formdata, reconstruction_data[:, i_slice, j_slice])
+                    trace = reconstruct_event(formdata, reconstruction_data)
                     self._traces[trace_identifier] = trace
 
             model_wrapper = formdata["model"][0]

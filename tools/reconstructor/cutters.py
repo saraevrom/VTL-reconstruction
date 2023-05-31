@@ -42,8 +42,9 @@ class ThresholdCutter(Cutter):
         self.threshold = threshold
 
     def cut(self, plot_data):
-        lightcurve = np.sum(plot_data, axis=(1,2))
+        lightcurve = np.max(plot_data, axis=(1,2))
         start = find_first_trigger(lightcurve, self.threshold)
         end = find_last_trigger(lightcurve, self.threshold)
         if end>start:
-            return lightcurve[start:end]
+            print(f"CUTTING FROM {start} to {end}")
+            return plot_data[start:end]

@@ -41,9 +41,10 @@ def wrap_cauchy(*args, **kwargs):
     :param kwargs:
     :return:
     '''
-    alpha = pm.HalfNormal("alpha", 1.0)
+    mu = kwargs["mu"]  # Since mean of cauchy is alpha, we will replace mu with alpha
     beta = pm.HalfNormal("beta", 1.0)
-    add_kwarg(kwargs, "alpha", alpha)
+    add_kwarg(kwargs, "alpha", mu)
+    del kwargs["mu"]
     add_kwarg(kwargs, "beta", beta)
     pm.Cauchy(*args, **kwargs)
 
