@@ -37,8 +37,8 @@ class NormalBuilder(FormNode):
 @kwarg_builder(DistFactory(pm.Cauchy))
 class CauchyBuilder(FormNode):
     DISPLAY_NAME = "Normal"
-    FIELD__mu = MU
-    FIELD__sigma = SIGMA
+    FIELD__alpha = create_value_field(FloatNode, "alpha", 0.0)
+    FIELD__beta = create_value_field(FloatNode, "beta", 0.0)
 
 
 @kwarg_builder(DistFactory(pm.HalfNormal))
@@ -64,8 +64,8 @@ class DistBuilder(AlternatingNode):
     SEL__normal = NormalBuilder
     SEL__halfnormal = HalfNormalBuilder
     SEL__uniform = UniformBuilder
-    SEL__truncated = TruncatedBuilder
     SEL__cauchy = CauchyBuilder
+    SEL__truncated = TruncatedBuilder
 
 
 TruncatedBuilder.FIELD__dist = DistBuilder

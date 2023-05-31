@@ -34,10 +34,23 @@ def wrap_student(*args, **kwargs):
     add_kwarg(kwargs, "nu", nu)
     return pm.StudentT(*args, **kwargs)
 
+def wrap_cauchy(*args, **kwargs):
+    '''
+    accepts same args as pymc.Cauchy
+    :param args:
+    :param kwargs:
+    :return:
+    '''
+    alpha = pm.HalfNormal("alpha", 1.0)
+    beta = pm.HalfNormal("beta", 1.0)
+    add_kwarg(kwargs, "alpha", alpha)
+    add_kwarg(kwargs, "beta", beta)
+    pm.Cauchy(*args, **kwargs)
 
 WRAPPERS = {
     "normal": wrap_normal,
-    "student": wrap_student
+    "student": wrap_student,
+    "cauchy": wrap_cauchy
 }
 
 class FinalDistributionNode(ComboNode):
