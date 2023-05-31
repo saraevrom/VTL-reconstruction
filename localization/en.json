@@ -4,10 +4,10 @@
   "tools.orientation": "Orientation",
 
 
-  "reconstruction.bl": "Bottom left",
-  "reconstruction.br": "Bottom right",
-  "reconstruction.tl": "Top left",
-  "reconstruction.tr": "Top right",
+  "reconstruction.bl": "Bottom left (C)",
+  "reconstruction.br": "Bottom right (D)",
+  "reconstruction.tl": "Top left (A)",
+  "reconstruction.tr": "Top right (B)",
 
   "reconstruction.filetypes.data": "Data source",
 
@@ -61,6 +61,8 @@
   "orientation.form.tune.range.min": "Min",
   "orientation.form.tune.range.max": "Max",
 
+
+  "reconstruction": "Reconstruction",
   "reconstruction_model": "Reconstruction model",
   "reconstruction_model.linear": "Linear",
   "reconstruction_model.linear.threshold": "Threshold",

@@ -4,10 +4,10 @@
   "tools.orientation": "Ориентация",
 
 
-  "reconstruction.bl": "Нижний левый",
-  "reconstruction.br": "Нижний правый",
-  "reconstruction.tl": "Верхний левый",
-  "reconstruction.tr": "Верхний правый",
+  "reconstruction.bl": "Нижний левый (C)",
+  "reconstruction.br": "Нижний правый (D)",
+  "reconstruction.tl": "Верхний левый (A)",
+  "reconstruction.tr": "Верхний правый (B)",
 
   "reconstruction.filetypes.data": "Данные",
 

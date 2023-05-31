@@ -36,10 +36,10 @@ class CutterSelection(AlternatingNode):
 
 class Cutter(FormNode):
     DISPLAY_NAME = get_locale("reconstruction.form.cutter")
-    FIELD__bl = create_value_field(CutterSelection, "BL", None)
-    FIELD__br = create_value_field(CutterSelection, "BR", None)
-    FIELD__tl = create_value_field(CutterSelection, "TL", None)
-    FIELD__tr = create_value_field(CutterSelection, "TR", None)
+    FIELD__tl = create_value_field(CutterSelection, "A", None)
+    FIELD__tr = create_value_field(CutterSelection, "B", None)
+    FIELD__bl = create_value_field(CutterSelection, "C", None)
+    FIELD__br = create_value_field(CutterSelection, "D", None)
 
 
 class ControlForm(ReconstructionForm):

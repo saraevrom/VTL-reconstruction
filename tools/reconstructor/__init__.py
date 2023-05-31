@@ -85,8 +85,16 @@ def get_track_attr(fp, attr):
     else:
         return 1
 
-def reconstruct_event(form_data, measured_data):
-    used_model = form_data["model"][1]
+
+PMT_MAPPING = {
+    "bl":"C",
+    "br":"D",
+    "tl":"A",
+    "tr":"B",
+}
+
+def reconstruct_event(form_data, measured_data,pmt):
+    used_model = form_data["model"][PMT_MAPPING[pmt]][1]
     sampler_params = form_data["sampler"]
 
     # some_matr = np.max(measured_data, axis=0)
@@ -148,6 +156,8 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self._formdata = None
         rpanel = tk.Frame(self)
         rpanel.pack(side="right", fill="y")
+        rpanel.config(width=500)
+        rpanel.pack_propagate(0)
 
         self.track_plotter = HighlightingPlotter(self)
         self.track_plotter.pack(fill="both", expand=True)
@@ -194,10 +204,10 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self._is_archive = False
         self.eager_reconstruction = False
 
-        create_checkbox(rpanel, "reconstruction.bl", self._bottom_left)
         create_checkbox(rpanel, "reconstruction.br", self._bottom_right)
-        create_checkbox(rpanel, "reconstruction.tl", self._top_left)
+        create_checkbox(rpanel, "reconstruction.bl", self._bottom_left)
         create_checkbox(rpanel, "reconstruction.tr", self._top_right)
+        create_checkbox(rpanel, "reconstruction.tl", self._top_left)
 
     def on_plot_arviz_traces(self):
         options_to_select = self._traces.keys()
@@ -358,10 +368,10 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             if trace is None or self.eager_reconstruction:
                 reconstruction_data = cutters[pmt].cut(self._loaded_data0[:, i_slice, j_slice])
                 if reconstruction_data is not None:
-                    trace = reconstruct_event(formdata, reconstruction_data)
+                    trace = reconstruct_event(formdata, reconstruction_data, pmt)
                     self._traces[trace_identifier] = trace
 
-            model_wrapper = formdata["model"][0]
+            model_wrapper = formdata["model"][PMT_MAPPING[pmt]][0]
             model_wrapper.reconstruction_overlay(plotter=self.track_plotter, i_trace=trace, offset=OFFSETS[pmt])
             # summary = render_event(trace, formdata)
             # summary.insert(0, 'PMT', pmt)

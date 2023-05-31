@@ -96,4 +96,4 @@ class LinearTrackModel(ReconstructionModelWrapper):
         plotter.plot_arrow(x_start+x_off, y_start+y_off, dx, dy, color="red", width=r, length_includes_head=True)
 
 
-LINEAR_TRACK = LinearTrackModel()
+LINEAR_TRACK_CONSTANT_BRIGHTNESS = LinearTrackModel()
