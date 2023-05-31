@@ -4,7 +4,7 @@ import pytensor.tensor as pt
 
 from .common import ensquared_energy_avg
 from .base_model import ReconstructionModelWrapper
-from .form_prototypes import FloatField
+from .form_prototypes import FloatField, DistributionField
 from vtl_common.parameters import PIXEL_SIZE, HALF_PIXELS
 
 
@@ -31,12 +31,16 @@ class LinearTrackModel(ReconstructionModelWrapper):
     # It gets transformed into pymc.<Distribution>. And it automatically adds error parameters (sigma, nu, etc...).
 
     # final_distribution = FinalDistributionField()
-    min_v = FloatField(0.01)   # Will be transformed to float
-    max_v = FloatField(0.45)
-    min_e = FloatField(10.0)
-    max_e = FloatField(60.0)
-    min_phi = FloatField(-180)
-    max_phi = FloatField(180)
+
+    U0 = DistributionField("uniform", lower=0.05, upper=0.5)
+    E0 = DistributionField("uniform", lower=10.0, upper=60.0)
+    Phi0 = DistributionField("uniform", lower=-180.0, upper=180.0)
+    # min_v = FloatField(0.01)   # Will be transformed to float
+    # max_v = FloatField(0.45)
+    # min_e = FloatField(10.0)
+    # max_e = FloatField(60.0)
+    # min_phi = FloatField(-180)
+    # max_phi = FloatField(180)
 
     def get_pymc_model(self,observed):
         with pm.Model() as model:
@@ -46,11 +50,15 @@ class LinearTrackModel(ReconstructionModelWrapper):
 
             x0 = pm.Uniform('X0', -4.5, 4.5)
             y0 = pm.Uniform('Y0', -4.5, 4.5)
-            phi0_deg = pm.Uniform('Phi0', self.min_phi, self.max_phi)
+
+            phi0_deg = self.Phi0("Phi0")
+            #phi0_deg = pm.Uniform('Phi0', self.min_phi, self.max_phi)
             phi0 = phi0_deg * np.pi/180.0
-            print(self.min_v, self.max_v)
-            u0 = pm.Uniform('U0', self.min_v, self.max_v)
-            e0 = pm.Uniform('E0', self.min_e, self.max_e)
+            # print(self.min_v, self.max_v)
+            # u0 = pm.Uniform('U0', self.min_v, self.max_v)
+            # e0 = pm.Uniform('E0', self.min_e, self.max_e)
+            u0 = self.U0("U0")
+            e0 = self.E0("E0")
 
             #sigma0 = pm.HalfNormal('Sigma0', 1.)
             sigmaPSF = pm.HalfNormal('SigmaPSF', 1.)

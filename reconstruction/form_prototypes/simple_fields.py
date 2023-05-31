@@ -1,6 +1,7 @@
 from vtl_common.common_GUI.tk_forms_assist import IntNode, FloatNode, BoolNode
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from .base import FieldPrototype
+from .distribution_parameter import DistBuilder
 
 
 class PassthroughField(FieldPrototype):
@@ -32,3 +33,12 @@ class IntField(BasicField):
 class BoolField(BasicField):
     def __init__(self, default_value):
         super().__init__(BoolNode, default_value)
+
+
+class DistributionField(BasicField):
+    def __init__(self, distribution, **params):
+        default_value = {
+            "selection_type": distribution,
+            "value": params
+        }
+        super().__init__(DistBuilder, default_value)
