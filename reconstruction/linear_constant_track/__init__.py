@@ -1,10 +1,11 @@
 import pymc as pm
 import numpy as np
 import pytensor.tensor as pt
+import pytensor
 
-from .common import ensquared_energy_avg
-from .base_model import ReconstructionModelWrapper
-from .form_prototypes import FloatField, DistributionField
+from ..common import ensquared_energy_avg
+from ..base_model import ReconstructionModelWrapper
+from ..form_prototypes import FloatField, DistributionField
 from vtl_common.parameters import PIXEL_SIZE, HALF_PIXELS
 
 
@@ -32,6 +33,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
 
     # final_distribution = FinalDistributionField()
 
+    A = DistributionField("const", 0.0)
     U0 = DistributionField("uniform", lower=0.05, upper=0.5)
     E0 = DistributionField("uniform", lower=10.0, upper=60.0)
     Phi0 = DistributionField("uniform", lower=-180.0, upper=180.0)
@@ -59,20 +61,33 @@ class LinearTrackModel(ReconstructionModelWrapper):
             # e0 = pm.Uniform('E0', self.min_e, self.max_e)
             u0 = self.U0("U0")
             e0 = self.E0("E0")
+            a = self.A("acceleration")
 
             #sigma0 = pm.HalfNormal('Sigma0', 1.)
             sigmaPSF = pm.HalfNormal('SigmaPSF', 1.)
 
             kk = np.arange(k_start, k_end)
             k0 = (k_start + k_end) / 2
-            X = x0 + u0 * pm.math.cos(phi0) * (kk - k0)
-            Y = y0 + u0 * pm.math.sin(phi0) * (kk - k0)
-            dX = u0 * pm.math.cos(phi0) * 1.
-            dY = u0 * pm.math.sin(phi0) * 1.
+
+
+            delta_k = kk - k0
+
+            u = u0 + a*delta_k
+            u_int = u0*delta_k + a*delta_k**2/2
+            #print(pytensor.printing.debugprint(u0))
+            #print(pytensor.printing.debugprint(u_int))
+
+            X = x0 + u_int * pm.math.cos(phi0)
+            Y = y0 + u_int * pm.math.sin(phi0)
+            dX = u * pm.math.cos(phi0)
+            dY = u * pm.math.sin(phi0)
 
             X = pt.expand_dims(X, (1, 2))
             Y = pt.expand_dims(Y, (1, 2))
-
+            dX = pt.expand_dims(dX, (1, 2))
+            dY = pt.expand_dims(dY, (1, 2))
+            #print(pytensor.printing.debugprint(X.shape))
+            #print(pytensor.printing.debugprint(dX.shape))
             mu = e0 * ensquared_energy_avg(X, Y, dX, dY, sigmaPSF, k_end - k_start)
             A = self.final_distribution('A', mu=mu,
                           observed=observed[k_start:k_end], shape=(k_end - k_start, 8, 8))  # A = A[k,i,j]

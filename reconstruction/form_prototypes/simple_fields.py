@@ -36,9 +36,15 @@ class BoolField(BasicField):
 
 
 class DistributionField(BasicField):
-    def __init__(self, distribution, **params):
-        default_value = {
-            "selection_type": distribution,
-            "value": params
-        }
+    def __init__(self, distribution, *args, **params):
+        if args:
+            default_value = {
+                "selection_type": distribution,
+                "value": args[0]
+            }
+        else:
+            default_value = {
+                "selection_type": distribution,
+                "value": params
+            }
         super().__init__(DistBuilder, default_value)

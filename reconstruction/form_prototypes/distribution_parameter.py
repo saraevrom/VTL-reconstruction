@@ -28,6 +28,7 @@ class DistFactory(object):
         return wrapper
 
 
+
 @kwarg_builder(DistFactory(pm.Normal))
 class NormalBuilder(FormNode):
     DISPLAY_NAME = "Normal"
@@ -53,14 +54,26 @@ class UniformBuilder(FormNode):
     FIELD__upper = UPPER
     FIELD__lower = LOWER
 
+
+@kwarg_builder(DistFactory(pm.Truncated))
 class TruncatedBuilder(FormNode):
     DISPLAY_NAME = "Truncated"
     FIELD__lower = LowerOpt
     FIELD__upper = UpperOpt
 
 
+class ConstantBuilder(FloatNode):
+    DISPLAY_NAME = "Const"
+    DEFAULT_VALUE = 0.0
+
+    def get_data(self):
+        data = super().get_data()
+        return lambda x: data
+
+
 class DistBuilder(AlternatingNode):
     DISPLAY_NAME = "dist"
+    SEL__const = ConstantBuilder
     SEL__normal = NormalBuilder
     SEL__halfnormal = HalfNormalBuilder
     SEL__uniform = UniformBuilder
