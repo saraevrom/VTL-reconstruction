@@ -8,7 +8,7 @@ class Cutter(object):
 
 class WholeCutter(Cutter):
     def cut(self, plot_data):
-        return plot_data
+        return None
 
 class RangeCutter(Cutter):
     def __init__(self, start, end):
@@ -16,7 +16,7 @@ class RangeCutter(Cutter):
         self.end = end
 
     def cut(self, plot_data):
-        return plot_data[self.start: self.end]
+        return self.start, self.end
 
 
 @nb.njit()
@@ -47,4 +47,4 @@ class ThresholdCutter(Cutter):
         end = find_last_trigger(lightcurve, self.threshold)
         if end>start:
             print(f"CUTTING FROM {start} to {end}")
-            return plot_data[start:end]
+            return start, end

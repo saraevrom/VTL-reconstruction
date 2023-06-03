@@ -1,5 +1,4 @@
 from .linear_constant_track import LINEAR_TRACK_CONSTANT_BRIGHTNESS
-from .linear_track_hard import LINEAR_HARD_MODEL
 from vtl_common.common_GUI.tk_forms_assist import AlternatingNode, FormNode, IntNode, FloatNode, OptionNode, ComboNode
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from vtl_common.localization import get_locale

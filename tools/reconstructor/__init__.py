@@ -78,6 +78,17 @@ def find_trace_entry(traces, entry_name):
     print("NOT FOUND")
     return None
 
+def get_slice(pmt):
+    lower_slice = slice(None, 8)
+    upper_slice = slice(8, None)
+    if pmt=="bl":
+        return (lower_slice, lower_slice)
+    if pmt=="br":
+        return (upper_slice, lower_slice)
+    if pmt=="tl":
+        return (lower_slice, upper_slice)
+    if pmt=="tr":
+        return (upper_slice, upper_slice)
 
 def get_track_attr(fp, attr):
     if attr in fp.attrs.keys():
@@ -93,7 +104,7 @@ PMT_MAPPING = {
     "tr":"B",
 }
 
-def reconstruct_event(form_data, measured_data,pmt):
+def reconstruct_event(form_data, measured_data,pmt, start,end):
     used_model = form_data["model"][PMT_MAPPING[pmt]][1]
     sampler_params = form_data["sampler"]
 
@@ -102,7 +113,7 @@ def reconstruct_event(form_data, measured_data,pmt):
     # plt.title(f"To reconstruct:")
     # plt.show()
 
-    re_model = used_model(np.array(measured_data))
+    re_model = used_model(np.array(measured_data),start,end)
     with re_model:
         print("Sampling")
         idata_0 = pm.sample(return_inferencedata=True, progressbar=True,
@@ -133,11 +144,12 @@ def render_event(idata_0, form_data):
         # summary['parameter'] = summary.index
     else:
         print(post)
-        posterior_collapsed = post.median(dim="chain")
-        posterior_collapsed = posterior_collapsed.expand_dims(dim={"chain": 1})
-        whole_summary = az.summary(posterior_collapsed)
-        whole_summary.insert(0, 'parameter', whole_summary.index)
-        whole_summary = whole_summary.reset_index(drop=True)
+        whole_summary = az.summary(post,stat_focus="median")
+        #posterior_collapsed = post.median(dim="chain")
+        #posterior_collapsed = posterior_collapsed.expand_dims(dim={"chain": 1})
+        #whole_summary = az.summary(posterior_collapsed)
+        #whole_summary.insert(0, 'parameter', whole_summary.index)
+        #whole_summary = whole_summary.reset_index(drop=True)
 
 
     return whole_summary
@@ -154,6 +166,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         super().__init__(master)
 
         self._formdata = None
+        self._last_traces = {"bl":None, "br":None, "tl":None, "tr":None}
         rpanel = tk.Frame(self)
         rpanel.pack(side="right", fill="y")
         rpanel.config(width=500)
@@ -208,6 +221,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         create_checkbox(rpanel, "reconstruction.bl", self._bottom_left)
         create_checkbox(rpanel, "reconstruction.tr", self._top_right)
         create_checkbox(rpanel, "reconstruction.tl", self._top_left)
+        self._update_formdata()
 
     def on_plot_arviz_traces(self):
         options_to_select = self._traces.keys()
@@ -239,6 +253,19 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             return None
         xs = np.arange(self._loaded_data0.shape[0])
         return xs, self._loaded_data0
+
+    def postprocess_plot(self, axes):
+        cutters = self._formdata["cutter"]
+        for pmt in ["bl", "br", "tl", "tr"]:
+            i_slice, j_slice = get_slice(pmt)
+            if self._last_traces[pmt] is not None:
+                start, end = cutters[pmt].cut(self._loaded_data0[:, i_slice, j_slice])
+                model_wrapper = self._formdata["model"][PMT_MAPPING[pmt]][0]
+                model_wrapper.postprocess(axes, start, end, pmt, self._last_traces[pmt])
+
+    def _clear_last(self):
+        for pmt in ["bl", "br", "tl", "tr"]:
+            self._last_traces[pmt] = None
 
     def on_load_archive(self):
         filename = TRACKS_WORKSPACE.askopenfilename(filetypes=[(get_locale("reconstruction.filetypes.data"), "*.zip *.h5")])
@@ -349,7 +376,8 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         else:
             self._show_h5(self.loaded_file, filename)
 
-    def _reconstruct_fill(self, pmt, i_slice, j_slice):
+    def _reconstruct_fill(self, pmt):
+        i_slice, j_slice = get_slice(pmt)
         src_file = self._filelist[self.pointer]
         upper_pmt = pmt.upper()
         formdata = self._formdata
@@ -368,10 +396,12 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             if trace is None or self.eager_reconstruction:
                 reconstruction_data = cutters[pmt].cut(self._loaded_data0[:, i_slice, j_slice])
                 if reconstruction_data is not None:
-                    trace = reconstruct_event(formdata, reconstruction_data, pmt)
+                    start, end = reconstruction_data
+                    trace = reconstruct_event(formdata, self._loaded_data0[:, i_slice, j_slice], pmt, start, end)
                     self._traces[trace_identifier] = trace
-
+            self._last_traces[pmt] = trace
             model_wrapper = formdata["model"][PMT_MAPPING[pmt]][0]
+            assert trace is not None
             model_wrapper.reconstruction_overlay(plotter=self.track_plotter, i_trace=trace, offset=OFFSETS[pmt])
             # summary = render_event(trace, formdata)
             # summary.insert(0, 'PMT', pmt)
@@ -412,6 +442,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         print("USED PARAMETERS:", json.dumps(formdata, indent=4, sort_keys=True))
         self.ctrl_form_parser.parse_formdata(formdata)
         self._formdata = self.ctrl_form_parser.get_data()
+        self._clear_last()
 
 
     def on_reconstruct(self):
@@ -432,15 +463,16 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             lower_slice = slice(None, 8)
             upper_slice = slice(8, None)
             self.track_plotter.clear_added_patches()
+            self._clear_last()
 
             if self._bottom_left.get():
-                self._reconstruct_fill("bl", lower_slice, lower_slice)
+                self._reconstruct_fill("bl")
             if self._bottom_right.get():
-                self._reconstruct_fill("br", upper_slice, lower_slice)
+                self._reconstruct_fill("br")
             if self._top_left.get():
-                self._reconstruct_fill("tl", lower_slice, upper_slice)
+                self._reconstruct_fill("tl")
             if self._top_right.get():
-                self._reconstruct_fill("tr", upper_slice, upper_slice)
+                self._reconstruct_fill("tr")
 
             self.render_traces()
             self.track_plotter.draw()
