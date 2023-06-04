@@ -94,6 +94,7 @@ class GaussianLC(LightCurve):
 #         sigma = self.sigma("sigma_LC")
 #         return e0 * pm.math.exp(-(delta_k-mu_k0)**2/(2*sigma**2))
 
+
 class LC_Alter(AlternatingNode):
     DISPLAY_NAME = "LC"
     SEL__const = ConstantLC().generate_subform()

@@ -16,16 +16,26 @@ class UpperOpt(OptionNode):
     DISPLAY_NAME = "upper"
     ITEM_TYPE = VALUE
 
+
+class DistCreator(object):
+    def __init__(self, dist_cls, **kwargs):
+        self.kwargs = kwargs
+        self.dist_cls = dist_cls
+
+    def __call__(self, name):
+        return self.dist_cls(name, **self.kwargs)
+
+    def get_dist(self):
+        return self.dist_cls.dist(**self.kwargs)
+
 class DistFactory(object):
 
     def __init__(self, dist_cls):
         self.dist_cls = dist_cls
 
     def __call__(self, **kwargs):
-        def wrapper(name):
-            return self.dist_cls(name, **kwargs)
+        return DistCreator(self.dist_cls, **kwargs)
 
-        return wrapper
 
 
 
@@ -55,12 +65,15 @@ class UniformBuilder(FormNode):
     FIELD__lower = LOWER
 
 
-@kwarg_builder(DistFactory(pm.Truncated))
 class TruncatedBuilder(FormNode):
     DISPLAY_NAME = "Truncated"
     FIELD__lower = LowerOpt
     FIELD__upper = UpperOpt
 
+    def get_data(self):
+        data = super().get_data()
+        data["dist"] = data["dist"].get_dist()
+        return DistCreator(pm.Truncated, **data)
 
 class ConstantBuilder(FloatNode):
     DISPLAY_NAME = "Const"
