@@ -91,7 +91,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
                 lc = pt.expand_dims(lc, (1,2))
 
             mu = lc * ensquared_energy_avg(X, Y, dX, dY, sigmaPSF, k_end - k_start)
-            A = self.final_distribution('A', mu=mu,
+            observed_var = self.final_distribution('OBSERVED', mu=mu,
                           observed=observed[k_start:k_end], shape=(k_end - k_start, 8, 8))  # A = A[k,i,j]
         return model
 
