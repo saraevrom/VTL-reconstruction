@@ -5,9 +5,9 @@ from vtl_common.parameters import MAX_STAR_MAGNITUDE
 from .stellar_math import radec_to_eci
 import numpy as np
 from .stellar_math import eci_to_ocef, rotate_yz, ocef_to_detector_plane
-import pymc as pm
-import pytensor.tensor as pt
+from vtl_common.parameters import PIXEL_SIZE # in mm
 
+PIXEL_AREA = (PIXEL_SIZE*1e-3)**2 # in m^2
 
 def name_a_star(row, name_limit=3):
     data = []
@@ -51,6 +51,12 @@ def get_database():
 VEGA_MAGNITUDE = 0.03
 VEGA_LUM = 2.54  # ulx (micro lux)
 
+SUN_MAGNITUDE = -26.74
+SUN_POWER = 1.36e15  # pW/m^2
+SUN_POWER *= PIXEL_AREA  # pW
+
+VEGA_POWER = SUN_POWER * 10**((SUN_MAGNITUDE - VEGA_MAGNITUDE)/2.5)
+
 class StarEntry(object):
     def __init__(self, record):
         self.record = record
@@ -59,7 +65,7 @@ class StarEntry(object):
         return self.record["mag"]
 
     def energy(self):
-        return VEGA_LUM * 10**((VEGA_MAGNITUDE - self.magnitude())/2.5)
+        return VEGA_POWER * 10**((VEGA_MAGNITUDE - self.magnitude())/2.5)
 
     def __eq__(self, other):
         return self.record["id"] == other.record["id"]

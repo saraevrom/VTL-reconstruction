@@ -1,5 +1,8 @@
+from copy import deepcopy
 import tkinter as tk
+from tkinter.simpledialog import askinteger
 
+import numpy as np
 import pymc as pm
 import arviz as az
 from pandastable import Table
@@ -8,7 +11,7 @@ from .datetime_picker import DatetimePicker
 from .astronomy_display import SkyPlotter
 from .source_explorer import SourceExplorer
 from .parameters import ParametersForm
-from .form import OrientationForm
+from .form import OrientationForm, MasterCoeffTuner
 from ..tool_base import ToolBase
 from vtl_common.common_GUI.button_panel import ButtonPanel
 from vtl_common.common_GUI.tk_forms import TkDictForm
@@ -21,6 +24,38 @@ from orientation.model import create_model
 
 ORIENTATION_WORKSPACE = Workspace("orientation")
 
+
+def modify_gauss_sigma(src, sigma):
+
+    src["sigma"] = sigma
+    # if "range" in src.keys():
+    #     range_ = src["range"]
+    #
+
+def modify_parameter(posterior, post_key, key, key_alt, param_formdata, formdata, inside_alter=False):
+    '''
+
+    :param posterior:
+    :param post_key: key of parameter in Model
+    :param key: key of parameter in ParametersForm
+    :param key_alt:  key of parameter in OrientationForm
+    :param param_formdata:
+    :param formdata:
+    :return:
+    '''
+    if post_key in posterior.keys() and formdata[key_alt] is not None:
+        mu, std = get_stats(posterior, post_key)
+        print(f"SET {post_key}={mu}±{std}")
+        param_formdata[key] = mu
+        modify_gauss_sigma(formdata[key_alt], std)
+    else:
+        print(f"{post_key} is unchanged")
+
+def get_stats(xarr, key):
+    mu = xarr[key].median()
+    mad = np.median(np.abs(xarr[key] - mu))
+    std = mad*np.sqrt(np.pi/2)
+    return float(mu), std
 
 class OrientationTool(ToolBase):
     TOOL_KEY = "tools.orientation"
@@ -132,7 +167,7 @@ class OrientationTool(ToolBase):
             print("Got model")
             with model:
                 self._trace = pm.sample(**self._formdata["sampler"])
-                df = az.summary(self._trace)
+                df = az.summary(self._trace, stat_focus="median")
                 df.insert(0, "parameters", df.index)
                 df.reset_index(drop=True)
                 self.result_table.model.df = df
@@ -146,7 +181,38 @@ class OrientationTool(ToolBase):
 
 
     def on_accept(self):
-        pass
+        if self._trace is None:
+            return
+        tgt_chain = askinteger("ACCEPT", "chain=")
+        if tgt_chain is not None and tgt_chain<self._trace.posterior.chain.shape[0]:
+            print("USING chain", tgt_chain)
+            workon = self._trace.posterior.isel(chain=tgt_chain)
+            outer_formdata = self.form.get_values()
+            formdata = outer_formdata["tuner"]
+            param_formdata = self.parameters_form.get_values()
+            # No need to ensure target formdata != None. If it is None, this variable will be just float constant
+            print("AVAILABLE FORMDATA:", formdata)
+            if "A" in workon.keys():
+                src = formdata["tune_a"]
+                mu, std = get_stats(workon, "A")
+                if src["selection_type"] != "norm":
+                    src["selection_type"] = "norm"
+                    src["value"] = {
+                        "sigma": std
+                    }
+                    print("SW A to normal")
+                print(f"SET A={mu}±{std}")
+                param_formdata["MULTIPLIER"] = mu  # Set center
+            else:
+                print("A is unchanged")
+            modify_parameter(workon, "PSF", "PSF", "tune_psf", param_formdata, formdata)
+            modify_parameter(workon, "f", "FOCAL_DISTANCE", "tune_f", param_formdata, formdata)
+            modify_parameter(workon, "Ω", "SELF_ROTATION", "tune_rot", param_formdata, formdata)
+            modify_parameter(workon, "lat", "VIEW_LATITUDE", "tune_lat", param_formdata, formdata)
+            modify_parameter(workon, "lon", "VIEW_LONGITUDE", "tune_lon", param_formdata, formdata)
+            self.form.set_values(outer_formdata)
+            self.parameters_form.set_values(param_formdata)
+            self.on_form_commit()
 
     def _sync_form(self):
         formdata = self.form.get_values()

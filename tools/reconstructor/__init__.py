@@ -148,8 +148,8 @@ def render_event(idata_0, form_data):
         #posterior_collapsed = post.median(dim="chain")
         #posterior_collapsed = posterior_collapsed.expand_dims(dim={"chain": 1})
         #whole_summary = az.summary(posterior_collapsed)
-        #whole_summary.insert(0, 'parameter', whole_summary.index)
-        #whole_summary = whole_summary.reset_index(drop=True)
+        whole_summary.insert(0, 'parameter', whole_summary.index)
+        whole_summary = whole_summary.reset_index(drop=True)
 
 
     return whole_summary

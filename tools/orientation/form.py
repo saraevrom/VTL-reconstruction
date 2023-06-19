@@ -1,4 +1,4 @@
-from vtl_common.common_GUI.tk_forms_assist import FormNode, BoolNode, FloatNode, OptionNode, AlternatingNode
+from vtl_common.common_GUI.tk_forms_assist import FormNode, BoolNode, FloatNode, OptionNode, AlternatingNode, ComboNode
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from vtl_common.localization import get_locale
 from reconstruction import Sampler
@@ -68,21 +68,17 @@ class MasterCoeffTunerUniform(FormNode):
         return lambda x, y: pm.Uniform(x, upper=data["higher"])
 
 
-class MasterCoeffTunerUniform(FormNode):
-    #DISPLAY_NAME = get_locale("orientation.form.tune.a")
-    DISPLAY_NAME = ""
-    FIELD__higher = create_value_field(FloatNode, get_locale("orientation.form.tune.range.max"), 100.0)
-
-    def get_data(self):
-        data = super().get_data()
-        return lambda x, y: pm.Uniform(x, upper=data["higher"])
-
-
 class MasterCoeffTuner(AlternatingNode):
     DISPLAY_NAME = get_locale("orientation.form.tune.dist")
     SEL__uniform = MasterCoeffTunerUniform
     SEL__norm = create_gauss(10)
 
+
+class FinalDistSelect(ComboNode):
+    DISPLAY_NAME = get_locale("orientation.form.tune.final_dist")
+    VALUES = ["gauss", "laplace", "student"]
+    DEFAULT_VALUE = "gauss"
+    SELECTION_READONLY = True
 
 class Tuner(FormNode):
     DISPLAY_NAME = get_locale("orientation.form.tune")
@@ -94,7 +90,9 @@ class Tuner(FormNode):
     FIELD__tune_a = wrap_in_option(MasterCoeffTuner, "orientation.form.tune.a")
     FIELD__tune_b = create_tunable_parameter("orientation.form.tune.b", 0.25, 0.1, 3.0)
     FIELD__tune_b_auto_assume = create_value_field(BoolNode, get_locale("orientation.form.tune.b_auto_assume"),True)
-    FIELD__use_laplace = create_value_field(BoolNode, get_locale("orientation.form.tune.use_laplace"), False)
+    #FIELD__use_laplace = create_value_field(BoolNode, get_locale("orientation.form.tune.use_laplace"), False)
+    FIELD__final_dist = FinalDistSelect
+
 
 class OrientationForm(FormNode):
     FIELD__use_ff = create_value_field(BoolNode, get_locale("orientation.form.use_ff"), True)

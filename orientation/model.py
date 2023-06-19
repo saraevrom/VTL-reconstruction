@@ -2,16 +2,18 @@ import numpy as np
 import pymc as pm
 import pytensor.tensor as pt
 from scipy.special import erf
+import numba as nb
 
 from orientation.stellar_math import unixtime_to_era
 from reconstruction.common import d_erf
-from .stellar_tensor_math import eci_to_ocef_pt, ocef_to_detector_plane_pt, rotate_yz_pt
+from .stellar_tensor_math import eci_to_ocef_pt, ocef_to_detector_plane_pt, rotate_yz_pt, ecef_to_ocef_pt
+from .stellar_tensor_math import ocef_to_altaz_pt
 from utils import binsearch_tgt
 from .time_interval import TimeRange
 from .database_reader import StarEntry
 from vtl_common.parameters import PIXEL_SIZE
 from vtl_common.localized_GUI.plotter import LOWER_EDGES
-import numba as nb
+from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 
 PIXEL_POSITIONS = LOWER_EDGES+PIXEL_SIZE/2
 
@@ -72,7 +74,8 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         tune_rot = tuner["tune_rot"]
         tune_f = tuner["tune_f"]
         tune_psf = tuner["tune_psf"]
-        use_laplace = tuner["use_laplace"]
+        #use_laplace = tuner["use_laplace"]
+        final_dist = tuner["final_dist"]
         tune_a = tuner["tune_a"]
         tune_b = tuner["tune_b"]
         tune_b_auto_assume = tuner["tune_b_auto_assume"]
@@ -150,9 +153,31 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         nonbroken_observed = mul*modelled+off
         broken_observed = pt.switch(break_matrix, 0.0, nonbroken_observed)  # Turning off broken pixels
 
-        if use_laplace:
+        # Deterministic auxiliary parameters
+        view_lat_rad = view_latitude * np.pi / 180
+        view_lon_rad = view_longitude * np.pi / 180
+
+        x_view_ecef = pt.cos(view_lon_rad)*pt.cos(view_lat_rad)
+        y_view_ecef = pt.sin(view_lon_rad)*pt.cos(view_lat_rad)
+        z_view_ecef = pt.sin(view_lat_rad)
+
+        x_view_ocef, y_view_ocef, z_view_ocef = ecef_to_ocef_pt(x_view_ecef, y_view_ecef, z_view_ecef,
+                                                                MAIN_LATITUDE * np.pi / 180, MAIN_LONGITUDE * np.pi / 180)
+
+        # view_azimuth = pm.Deterministic("AZ", pt.arctan2(y_view_ocef,z_view_ocef)*180/np.pi)
+        # hor = pt.sqrt(y_view_ocef**2+z_view_ocef**2)
+        # view_alt = pm.Deterministic("ALT",np.arctan(x_view_ocef/hor)*180/np.pi)
+        view_alt, view_az = ocef_to_altaz_pt(x_view_ocef, y_view_ocef, z_view_ocef)
+        view_azimuth = pm.Deterministic("AZ", view_az*180/np.pi)
+        view_altangle = pm.Deterministic("ALT", view_alt*180/np.pi)
+
+        if final_dist=="laplace":
             b = pm.HalfNormal("lapl_b", sigma=1.0)
             intensity = pm.Laplace("I", mu=broken_observed, b=b, observed=observed)
+        elif final_dist=="student":
+            sigma0 = pm.HalfNormal('Sigma0', 1.0)
+            nu = pm.Exponential('nu', 1.0  )
+            intensity = pm.StudentT("I", mu=broken_observed, sigma=sigma0, nu=nu, observed=observed)
         else:
             # Normal distributed variable may save some time
             sigma = pm.HalfNormal("σ", sigma=1.0)

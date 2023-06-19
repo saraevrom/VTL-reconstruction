@@ -98,6 +98,7 @@ def eci_to_ecef_pt(x_eci, y_eci, z_eci, era):
     return rotate_xy_pt(x_eci, y_eci, z_eci, -era)
 
 
+
 def eci_to_ocef_pt(x_eci, y_eci, z_eci, era, lat, lon):
     '''
     Transform direction from ECI to OCEF cartesian coordinates
@@ -114,6 +115,18 @@ def eci_to_ocef_pt(x_eci, y_eci, z_eci, era, lat, lon):
     return rotate_xz_pt(x_0, y_0, z_0, -lat)
 
 
+def ecef_to_ocef_pt(x_ecef, y_ecef, z_ecef, lat, lon):
+    '''
+    Transform direction from ECEF to OCEF cartesian coordinates
+    :param x_ecef:
+    :param y_ecef:
+    :param z_ecef:
+    :param lat:
+    :param lon:
+    :return:
+    '''
+    return eci_to_ocef_pt(x_ecef, y_ecef, z_ecef, 0, lat, lon) # When ERA=0 ECI and ECEF are same
+
 def ocef_to_detector_plane_pt(x_local, y_local, z_local, focal_distance):
     '''
     Transform direction from OCEF to detector coordinates
@@ -128,3 +141,16 @@ def ocef_to_detector_plane_pt(x_local, y_local, z_local, focal_distance):
     y_p = z_local*focal_distance/x_local
     return x_p, y_p, v
 
+
+def ocef_to_altaz_pt(x_local, y_local, z_local):
+    '''
+    Transform direction from OCEF to altitude/azimuth
+    :param x_local: x coordinate OCEF
+    :param y_local: y coordinate OCEF
+    :param z_local: z coordinate OCEF
+    :return: altitude, azimuth in radians. Azimuth is counted from north towards east
+    '''
+    horizontal = pt.sqrt(y_local**2 + z_local**2)
+    alt = pt.arctan(x_local/horizontal)
+    az = (pt.arctan2(y_local, z_local) + 2*np.pi) % (2*np.pi)
+    return alt, az
