@@ -45,7 +45,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
     # min_phi = FloatField(-180)
     # max_phi = FloatField(180)
 
-    def get_pymc_model(self, observed, cut_start, cut_end):
+    def get_pymc_model(self, observed, cut_start, cut_end, broken):
         with pm.Model() as model:
             # k_start, k_end = track_threshold(track_points, threshold)
             k_start = cut_start
@@ -90,9 +90,13 @@ class LinearTrackModel(ReconstructionModelWrapper):
             if lc.shape.data.size>0:
                 lc = pt.expand_dims(lc, (1,2))
 
-            mu = lc * ensquared_energy_avg(X, Y, dX, dY, sigmaPSF, k_end - k_start)
+            mu0 = lc * ensquared_energy_avg(X, Y, dX, dY, sigmaPSF, k_end - k_start)
+
+            alive = np.logical_not(broken)
+            mu = mu0[:, alive]  # :(
+            obs = observed[k_start:k_end, alive]
             observed_var = self.final_distribution('OBSERVED', mu=mu,
-                          observed=observed[k_start:k_end], shape=(k_end - k_start, 8, 8))  # A = A[k,i,j]
+                          observed=obs)  # A = A[k,i,j]
         return model
 
     def reconstruction_overlay(self, plotter, i_trace, offset):

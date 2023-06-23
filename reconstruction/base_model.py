@@ -48,7 +48,7 @@ class ReconstructionModelWrapper(FormPrototype):
     def get_form_result(self):
         return self, self.get_pymc_model
 
-    def get_pymc_model(self, observed, cut_start, cut_end):
+    def get_pymc_model(self, observed, cut_start, cut_end, broken):
         raise NotImplementedError("Cannot get model")
 
     def reconstruction_overlay(self, plotter, i_trace, offset):

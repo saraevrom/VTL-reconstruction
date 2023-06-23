@@ -104,7 +104,7 @@ PMT_MAPPING = {
     "tr":"B",
 }
 
-def reconstruct_event(form_data, measured_data, pmt, start,end):
+def reconstruct_event(form_data, measured_data, pmt, start,end, broken):
     used_model = form_data["model"][PMT_MAPPING[pmt]][1]
     sampler_params = form_data["sampler"]
 
@@ -113,7 +113,7 @@ def reconstruct_event(form_data, measured_data, pmt, start,end):
     # plt.title(f"To reconstruct:")
     # plt.show()
 
-    re_model = used_model(np.array(measured_data),start,end)
+    re_model = used_model(np.array(measured_data),start,end, broken)
     with re_model:
         print("Sampling")
         idata_0 = pm.sample(return_inferencedata=True, progressbar=True,
@@ -397,8 +397,11 @@ class ReconstructorTool(ToolBase, PopupPlotable):
                 reconstruction_data = cutters[pmt].cut(self._loaded_data0[:, i_slice, j_slice])
                 if reconstruction_data is not None:
                     start, end = reconstruction_data
-                    trace = reconstruct_event(formdata, self._loaded_data0[:, i_slice, j_slice], pmt, start, end)
+                    broken = self.track_plotter.get_broken()[i_slice, j_slice]
+                    trace = reconstruct_event(formdata, self._loaded_data0[:, i_slice, j_slice], pmt, start, end, broken)
                     self._traces[trace_identifier] = trace
+                else:
+                    return
             self._last_traces[pmt] = trace
             model_wrapper = formdata["model"][PMT_MAPPING[pmt]][0]
             assert trace is not None
