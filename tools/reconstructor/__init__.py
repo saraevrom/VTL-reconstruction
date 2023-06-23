@@ -104,7 +104,7 @@ PMT_MAPPING = {
     "tr":"B",
 }
 
-def reconstruct_event(form_data, measured_data,pmt, start,end):
+def reconstruct_event(form_data, measured_data, pmt, start,end):
     used_model = form_data["model"][PMT_MAPPING[pmt]][1]
     sampler_params = form_data["sampler"]
 

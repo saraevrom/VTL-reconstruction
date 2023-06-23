@@ -69,9 +69,17 @@ def ensquared_energy(X, Y, sigmaPSF, T):
     return 0.25 * a
 
 
+
 def ensquared_energy_avg(X, Y, dX, dY, sigmaPSF, T):
     return 0.2 * (ensquared_energy(X, Y, sigmaPSF, T) +
                   ensquared_energy(X - 0.2 * dX, Y - 0.2 * dY, sigmaPSF, T) +
                   ensquared_energy(X - 0.4 * dX, Y - 0.4 * dY, sigmaPSF, T) +
-                  ensquared_energy(X - 0.6 * dX, Y - 0.6 * dY, sigmaPSF, T) +
-                  ensquared_energy(X - 0.8 * dX, Y - 0.8 * dY, sigmaPSF, T))
+                  ensquared_energy(X + 0.2 * dX, Y + 0.2 * dY, sigmaPSF, T) +
+                  ensquared_energy(X + 0.4 * dX, Y + 0.4 * dY, sigmaPSF, T))
+
+# def ensquared_energy_avg(X, Y, dX, dY, sigmaPSF, T):
+#     return 0.2 * (ensquared_energy(X, Y, sigmaPSF, T) +
+#                   ensquared_energy(X - 0.2 * dX, Y - 0.2 * dY, sigmaPSF, T) +
+#                   ensquared_energy(X - 0.4 * dX, Y - 0.4 * dY, sigmaPSF, T) +
+#                   ensquared_energy(X - 0.6 * dX, Y - 0.6 * dY, sigmaPSF, T) +
+#                   ensquared_energy(X - 0.8 * dX, Y - 0.8 * dY, sigmaPSF, T))

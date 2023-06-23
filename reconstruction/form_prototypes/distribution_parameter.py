@@ -61,8 +61,8 @@ class HalfNormalBuilder(FormNode):
 @kwarg_builder(DistFactory(pm.Uniform))
 class UniformBuilder(FormNode):
     DISPLAY_NAME = "Uniform"
-    FIELD__upper = UPPER
     FIELD__lower = LOWER
+    FIELD__upper = UPPER
 
 
 class TruncatedBuilder(FormNode):
