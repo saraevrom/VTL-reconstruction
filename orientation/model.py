@@ -63,8 +63,8 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
     print("OBSERVED SHAPE", observed.shape)
     print("BROKEN SHAPE", break_matrix.shape)
     assert break_matrix.shape == observed.shape
-
-    observed[break_matrix] = 0.0
+    #
+    # observed[break_matrix] = 0.0
 
     T = times.shape[0]
     x_mesh, y_mesh = create_coord_mesh(T)
@@ -91,7 +91,6 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         off_sigma = np.mean((observed[alive_matrix] - off_mu) ** 2) ** 0.5
 
         max_energy = np.max([star.energy() for star in stars])
-
         max_value = np.max(observed[alive_matrix])
         max_light = max_value - off_mu
 
@@ -150,8 +149,8 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
                 modelled = modelled + energy_dist
                 print("Added", star.primary_name())
 
-        nonbroken_observed = mul*modelled+off
-        broken_observed = pt.switch(break_matrix, 0.0, nonbroken_observed)  # Turning off broken pixels
+        nonbroken_model = mul*modelled+off
+        #broken_observed = pt.switch(break_matrix, 0.0, nonbroken_observed)  # Turning off broken pixels
 
         # Deterministic auxiliary parameters
         view_lat_rad = view_latitude * np.pi / 180
@@ -171,16 +170,20 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         view_azimuth = pm.Deterministic("AZ", view_az*180/np.pi)
         view_altangle = pm.Deterministic("ALT", view_alt*180/np.pi)
 
+        alive = np.logical_not(broken)
+        broken_model = nonbroken_model[:,alive]
+        broken_observed = observed[:,alive]
+
         if final_dist=="laplace":
             b = pm.HalfNormal("lapl_b", sigma=1.0)
-            intensity = pm.Laplace("I", mu=broken_observed, b=b, observed=observed)
+            intensity = pm.Laplace("I", mu=broken_model, b=b, observed=broken_observed)
         elif final_dist=="student":
             sigma0 = pm.HalfNormal('Sigma0', 1.0)
             nu = pm.Exponential('nu', 1.0  )
-            intensity = pm.StudentT("I", mu=broken_observed, sigma=sigma0, nu=nu, observed=observed)
+            intensity = pm.StudentT("I", mu=broken_model, sigma=sigma0, nu=nu, observed=broken_observed)
         else:
             # Normal distributed variable may save some time
             sigma = pm.HalfNormal("σ", sigma=1.0)
-            intensity = pm.Normal("I", mu=broken_observed, sigma=sigma, observed=observed)
+            intensity = pm.Normal("I", mu=broken_model, sigma=sigma, observed=broken_observed)
 
     return model
