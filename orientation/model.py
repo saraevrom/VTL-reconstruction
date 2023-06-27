@@ -63,6 +63,7 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
     print("OBSERVED SHAPE", observed.shape)
     print("BROKEN SHAPE", break_matrix.shape)
     assert break_matrix.shape == observed.shape
+    print("USED PIXELS:", np.sum(broken))
     #
     # observed[break_matrix] = 0.0
 

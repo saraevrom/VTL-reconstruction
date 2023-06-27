@@ -396,7 +396,6 @@ class ReconstructorTool(ToolBase, PopupPlotable):
 
         self.track_plotter.draw()
         self.on_orienatation_update()
-        self.track_plotter.set_origin(0, 0, 0)
 
     def show_event(self):
         if self.pointer < 0:

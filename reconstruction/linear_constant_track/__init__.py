@@ -115,6 +115,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
         dy = y_end-y_start
 
         plotter.plot_arrow(x_start+x_off, y_start+y_off, dx, dy, color="red", width=r, length_includes_head=True)
+        plotter.set_origin(x0+x_off, y0+y_off)
 
     def postprocess(self,ax, k_start, k_end, pmt, trace):
         kk = np.arange(k_start, k_end)

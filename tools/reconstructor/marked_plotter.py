@@ -123,6 +123,7 @@ class HighlightingPlotter(GridPlotter):
         for x in self.added_patches:
             x.remove()
         self.added_patches.clear()
+        self.set_origin(0, 0)
 
     def set_mask(self, source):
         _set_mask(self.bottom_left, source["bottom_left"])
