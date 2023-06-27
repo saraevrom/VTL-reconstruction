@@ -28,13 +28,15 @@ from .selection_dialog import SelectionDialog
 from vtl_common.parameters import DATETIME_FORMAT
 # from vtl_common.parameters import NPROC
 
-from tkinter import messagebox
 
 import matplotlib.pyplot as plt
 from .form import ControlForm
 from vtl_common.localized_GUI.tk_forms import SaveableTkDictForm
+from vtl_common.common_GUI.tk_forms import TkDictForm
 from vtl_common.parameters import HALF_GAP_SIZE, HALF_PIXELS, PIXEL_SIZE
 from datetime import datetime
+from ..orientation.parameters import ParametersForm as OrientationParametersForm
+from .orientation_pointing_form import OrientedPoint
 
 az.rcParams["data.load"] = "eager"
 
@@ -43,6 +45,7 @@ TRACKS_WORKSPACE = Workspace("tracks")
 TRACES_WORKSPACE = Workspace("traces")
 RECON_WORKSPACE = Workspace("reconstruction_results")
 RECO_PARAMETERS_WORKSPACE = Workspace("reconstruction_parameters")
+ORIENTATION_WORKSPACE = Workspace("orientation")
 # USED_MODEL = linear_track_model_alt
 
 STDEV_PREFIX = "σ_"
@@ -172,8 +175,28 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         rpanel.config(width=500)
         rpanel.pack_propagate(0)
 
+        lpanel = tk.Frame(self)
+        lpanel.pack(side="left", fill="y")
+        lpanel.config(width=500)
+        lpanel.pack_propagate(0)
+
+
+
+        self.point_parser = OrientedPoint()
+        self.point_form = TkDictForm(lpanel, self.point_parser.get_configuration_root(), False)
+        self.point_form.pack(side="top", fill="x")
+        self.point_form.on_commit = self.on_orienatation_update
+
+        self.orientation_parser = OrientationParametersForm()
+        self.orientation_form = SaveableTkDictForm(lpanel, self.orientation_parser.get_configuration_root(), False,
+                                                   file_asker=ORIENTATION_WORKSPACE)
+        self.orientation_form.pack(side="top", fill="x")
+        self.orientation_form.on_commit = self.on_orienatation_update
+
         self.track_plotter = HighlightingPlotter(self)
         self.track_plotter.pack(fill="both", expand=True)
+
+
         self.control_panel = ButtonPanel(rpanel)
         self.control_panel.pack(side="top", fill="x")
         self.control_panel.add_button(get_locale("reconstruction.btn.load"), self.on_load_archive, 0)
@@ -215,6 +238,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         self._top_right.trace("w", self.on_vars_change)
         self._traces = dict()
         self._is_archive = False
+        self._orientation = None
         self.eager_reconstruction = False
 
         create_checkbox(rpanel, "reconstruction.br", self._bottom_right)
@@ -238,6 +262,16 @@ class ReconstructorTool(ToolBase, PopupPlotable):
                 fig = axs[0].get_figure()
                 fig.canvas.manager.set_window_title(f'Trace {label}')
                 fig.show()
+
+    def on_orienatation_update(self):
+        if self._loaded_ut0 is not None:
+            formdata_orient = self.orientation_form.get_values()
+            formdata = self.point_form.get_values()
+            self.point_parser.parse_formdata(formdata)
+            formdata = self.point_parser.get_data()
+            formdata["orientation"] = formdata_orient
+            self.track_plotter.set_point_direction(formdata, self._loaded_ut0)
+
 
 
     def on_prev(self):
@@ -361,6 +395,8 @@ class ReconstructorTool(ToolBase, PopupPlotable):
                                           f"Δt={self._loaded_ut0[1]-self._loaded_ut0[0]}s")
 
         self.track_plotter.draw()
+        self.on_orienatation_update()
+        self.track_plotter.set_origin(0, 0, 0)
 
     def show_event(self):
         if self.pointer < 0:

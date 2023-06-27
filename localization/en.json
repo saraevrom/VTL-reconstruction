@@ -31,6 +31,8 @@
   "reconstruction.sample.nuts_sampler": "NUTS sampler",
   "reconstruction.sample.init": "Init",
 
+  "reconstruction.direction.show": "Show",
+
 
   "reconstruction.form.distribution": "Distribution",
 
@@ -81,7 +83,9 @@
   "orientation.btn.Save": "Save",
   "orientation.btn.Load": "Load",
   "orientation.btn.accept": "Accept",
+  "orientation.btn.attach_master": "Attach master coefficients",
   "orientation.form.use_ff": "Use flatfielding",
+  "orientation.form.tune.final_dist": "Final distribution",
 
   "orientation.parameter.VIEW_LATITUDE": "View latitude [°]",
   "orientation.parameter.VIEW_LONGITUDE": "View longitude [°]",

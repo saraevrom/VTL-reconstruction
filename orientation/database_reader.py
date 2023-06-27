@@ -5,9 +5,9 @@ from vtl_common.parameters import MAX_STAR_MAGNITUDE
 from .stellar_math import radec_to_eci
 import numpy as np
 from .stellar_math import eci_to_ocef, rotate_yz, ocef_to_detector_plane
-from vtl_common.parameters import PIXEL_SIZE # in mm
+from vtl_common.parameters import APERTURE # in mm^2
 
-PIXEL_AREA = (PIXEL_SIZE*1e-3)**2 # in m^2
+#PIXEL_AREA = (PIXEL_SIZE*1e-3)**2 # in m^2
 
 def name_a_star(row, name_limit=3):
     data = []
@@ -52,8 +52,8 @@ VEGA_MAGNITUDE = 0.03
 VEGA_LUM = 2.54  # ulx (micro lux)
 
 SUN_MAGNITUDE = -26.74
-SUN_POWER = 1.36e15  # pW/m^2
-SUN_POWER *= PIXEL_AREA  # pW
+SUN_POWER = 1.3654e9  # pW/mm^2
+SUN_POWER *= APERTURE  # nW
 
 VEGA_POWER = SUN_POWER * 10**((SUN_MAGNITUDE - VEGA_MAGNITUDE)/2.5)
 

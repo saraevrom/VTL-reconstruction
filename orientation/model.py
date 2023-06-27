@@ -31,7 +31,7 @@ def create_coord_mesh(T):
 
 def ensquared_energy_full(x_mesh, y_mesh, x0, y0, psf):
     scale = np.sqrt(2)*psf
-    a = d_erf(x0 - x_mesh, scale, pixel_size=PIXEL_SIZE) * d_erf(y0 - y_mesh, scale, pixel_size=PIXEL_SIZE)
+    a = d_erf(x0 - x_mesh, scale, pixel_size=PIXEL_SIZE) * d_erf(y0 - y_mesh, scale, pixel_size=PIXEL_SIZE)/2
     return a
 
 def create_model(datafile, intervals, stars, known_params, unixtime, tuner, broken, ffmodel):

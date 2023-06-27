@@ -29,7 +29,7 @@ def wrap_student(*args, **kwargs):
         :return:
         '''
     sigma0 = pm.HalfNormal('Sigma0', 1.)
-    nu = pm.Exponential('nu', 0.2)
+    nu = pm.Exponential('nu', 1.0)
     add_kwarg(kwargs, "sigma", sigma0)
     add_kwarg(kwargs, "nu", nu)
     return pm.StudentT(*args, **kwargs)

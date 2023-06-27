@@ -32,6 +32,9 @@
   "reconstruction.sample.nuts_sampler": "Реализация NUTS",
   "reconstruction.sample.init": "Инициализация",
 
+
+  "reconstruction.direction.show": "Показать",
+
   "reconstruction.form.distribution": "Распределение",
 
   "reconstruction.form.cutter": "Вырезка",
@@ -80,7 +83,9 @@
   "orientation.btn.load_data": "Загрузить файл с данными",
   "orientation.btn.align": "Выровнять",
   "orientation.btn.accept": "Принять ориентацию",
+  "orientation.btn.attach_master": "Сохранить главные коэффициенты",
   "orientation.form.use_ff": "Выравнивать пиксели",
+  "orientation.form.tune.final_dist": "Финальное распределение",
 
   "orientation.parameter.VIEW_LATITUDE": "Широта наблюдения [°]",
   "orientation.parameter.VIEW_LONGITUDE": "Долгота наблюдения [°]",

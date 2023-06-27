@@ -1,4 +1,5 @@
 import json
+from pprint import pprint
 
 from vtl_common.localized_GUI import GridPlotter
 import tkinter as tk
@@ -102,15 +103,19 @@ class SourceExplorer(tk.Frame, PopupPlotable):
         if filename:
             if self._loaded_file is not None:
                 self._loaded_file.close()
-            self._loaded_file = h5py.File(filename,"r")
+            self._loaded_file = h5py.File(filename, "r+")
             self._ut0 = np.array(self._loaded_file["UT0"])
             if "ffmodel" in self._loaded_file.attrs.keys():
                 jsd = json.loads(self._loaded_file.attrs["ffmodel"])
-                self._ffmodel = FlatFieldingModel.create_from_parameters(jsd)
-                self.frame_plotter.set_broken(self._ffmodel.broken_query())
+                self.set_ffmodel(jsd)
             return True
         return False
 
+    def attach_master_coeff_offset(self, coeff, offset):
+        if (self._ffmodel is not None) and (self._loaded_file is not None):
+            jsd = self._ffmodel.dump(coeff, offset)
+            pprint(jsd)
+            self._loaded_file.attrs["ffmodel"] = json.dumps(jsd)
 
     def get_broken_pixels(self):
         return self.frame_plotter.get_broken()
@@ -120,10 +125,15 @@ class SourceExplorer(tk.Frame, PopupPlotable):
         if filename:
             with open(filename, "r") as fp:
                 jsd = json.load(fp)
-            self._ffmodel = FlatFieldingModel.create_from_parameters(jsd)
-            self.frame_plotter.set_broken(self._ffmodel.broken_query())
+            self.set_ffmodel(jsd)
             return True
         return False
+
+    def set_ffmodel(self, jsd):
+        self._ffmodel = FlatFieldingModel.create_from_parameters(jsd)
+        self._ffmodel.master_coeff = 1.0  # Calibration of this coefficient is a purpose of this application.
+        self._ffmodel.master_offset = 0.0  # Same
+        self.frame_plotter.set_broken(self._ffmodel.broken_query())
 
     def update_plot(self, use_ff=True):
         if self._loaded_file and self._index>=0:

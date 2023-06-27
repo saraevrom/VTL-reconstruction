@@ -105,6 +105,9 @@ class OrientationTool(ToolBase):
         self.control_panel.add_button(text=get_locale("orientation.btn.accept"),
                                       command=self.on_accept,
                                       row=2)
+        self.control_panel.add_button(text=get_locale("orientation.btn.attach_master"),
+                                      command=self.on_attach_master,
+                                      row=3)
         self.control_panel.pack(side=tk.TOP,fill=tk.X)
 
         self.orientation_form_parser = OrientationForm()
@@ -180,6 +183,20 @@ class OrientationTool(ToolBase):
                 fig.show()
 
 
+    def on_attach_master(self):
+        self._sync_form()
+        self.on_parameters_change()
+        param_formdata = self.parameters_form.get_values()
+        a = param_formdata["MULTIPLIER"]
+        b = param_formdata["OFFSET"]
+        print("MASTER COEFFS:")
+        coeff = 1/a
+        off = -b/a
+        print(f"K={coeff}")
+        print(f"B={off}")
+        self.source_explorer.attach_master_coeff_offset(coeff, off)
+        print("MASTER COEFFS attached")
+
     def on_accept(self):
         if self._trace is None:
             return
@@ -213,6 +230,7 @@ class OrientationTool(ToolBase):
             self.form.set_values(outer_formdata)
             self.parameters_form.set_values(param_formdata)
             self.on_form_commit()
+            self.on_parameters_change() # Trigger event manually
 
     def _sync_form(self):
         formdata = self.form.get_values()
