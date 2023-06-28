@@ -9,6 +9,11 @@ from vtl_common.parameters import APERTURE # in mm^2
 
 #PIXEL_AREA = (PIXEL_SIZE*1e-3)**2 # in m^2
 
+class DatabaseError(Exception):
+    def __init__(self, key):
+        super().__init__(f"Could not find entry for {key}")
+
+
 def name_a_star(row, name_limit=3):
     data = []
     if not pd.isnull(row["proper"]):
@@ -37,7 +42,7 @@ def get_database():
     global DATABASE
     if DATABASE is None:
         CWD = ospath.dirname(__file__)
-        DATABASE = pd.read_csv(CWD+"/hygdata_v3.csv", sep=",")
+        DATABASE = pd.read_csv(CWD+"/hygdata_v3_photometric_mod.csv", sep=",")
         DATABASE = DATABASE[(DATABASE["mag"] < MAX_STAR_MAGNITUDE) & (DATABASE["id"] != 0)]  # Remove Sun
         x,y,z = radec_to_eci(DATABASE["ra"].to_numpy()*np.pi/12, DATABASE["dec"].to_numpy()*np.pi/180)
 
@@ -64,8 +69,40 @@ class StarEntry(object):
     def magnitude(self):
         return self.record["mag"]
 
+    def magnitude_b(self):
+        '''
+        Stellar magnitude in U band
+        :return:
+        '''
+        ci = None
+        if "BV" in self.record.keys():
+            ci = self.record["BV"]
+        if "ci" in self.record.keys():
+            ci = self.record["ci"]
+        else:
+            raise DatabaseError("BV/ci")
+
+        return self.magnitude()+ci   # B = V + BV
+
+    def magnitude_u(self):
+        b = self.magnitude_b()
+        ub = None
+        if "UB" in self.record.keys():
+            ub = self.record["UB"]
+        else:
+            raise DatabaseError("UB")
+
+        return b + ub  # U = B + UB = V + BV + UB
+
+    def analyzable(self):
+        return ("BV" in self.record.keys() or "ci" in self.record.keys()) and "UB" in self.record.keys()
+
     def energy(self):
         return VEGA_POWER * 10**((VEGA_MAGNITUDE - self.magnitude())/2.5)
+
+    def energy_u(self):
+        return VEGA_POWER * 10**((VEGA_MAGNITUDE - self.magnitude_u())/2.5)
+
 
     def __eq__(self, other):
         return self.record["id"] == other.record["id"]

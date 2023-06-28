@@ -108,7 +108,7 @@ PMT_MAPPING = {
 }
 
 def reconstruct_event(form_data, measured_data, pmt, start,end, broken):
-    used_model = form_data["model"][PMT_MAPPING[pmt]][1]
+    used_model = form_data["model"][PMT_MAPPING[pmt]]
     sampler_params = form_data["sampler"]
 
     # some_matr = np.max(measured_data, axis=0)
@@ -116,12 +116,12 @@ def reconstruct_event(form_data, measured_data, pmt, start,end, broken):
     # plt.title(f"To reconstruct:")
     # plt.show()
 
-    re_model = used_model(np.array(measured_data),start,end, broken)
+    re_model, re_params = used_model.get_pymc_model(np.array(measured_data),start,end, broken)
     with re_model:
         print("Sampling")
         idata_0 = pm.sample(return_inferencedata=True, progressbar=True,
                             **sampler_params)
-    return idata_0
+    return idata_0, re_params
 
 
 def render_event(idata_0, form_data):
@@ -253,7 +253,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             selector = SelectionDialog(self, options_to_select)
             label = selector.result
             if label:
-                trace = self._traces[label]
+                trace = self._traces[label][0]
                 axs = az.plot_trace(trace).flatten()
                 print(axs)
                 for ax in axs:
@@ -294,7 +294,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             i_slice, j_slice = get_slice(pmt)
             if self._last_traces[pmt] is not None:
                 start, end = cutters[pmt].cut(self._loaded_data0[:, i_slice, j_slice])
-                model_wrapper = self._formdata["model"][PMT_MAPPING[pmt]][0]
+                model_wrapper = self._formdata["model"][PMT_MAPPING[pmt]]
                 model_wrapper.postprocess(axes, start, end, pmt, self._last_traces[pmt])
 
     def _clear_last(self):
@@ -338,7 +338,11 @@ class ReconstructorTool(ToolBase, PopupPlotable):
                         data = zipf.read(name)
                         #print(data)
                         tmp_file.write(data)
-                    self._traces[source_label] = az.from_netcdf(temp_filename, engine="h5netcdf")
+
+                    trace = az.from_netcdf(temp_filename, engine="h5netcdf")
+                    with h5py.File(temp_filename, "r") as fp:
+                        params = json.loads(fp.attrs["RECO_TRACE_PARAMS"])
+                    self._traces[source_label] = trace, params
                     print(self._traces[source_label])
                     os.remove(temp_filename)
 
@@ -350,11 +354,13 @@ class ReconstructorTool(ToolBase, PopupPlotable):
             if filename:
                 with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as zipf:
                     for label in self._traces.keys():
-                        trace = self._traces[label]
+                        trace, params = self._traces[label]
                         trace_name = f"{label}.h5"
                         print("Saving", trace_name)
                         number, temp_filename = tempfile.mkstemp(prefix="saved_", suffix="_"+trace_name)
                         trace.to_netcdf(temp_filename, engine="h5netcdf")
+                        with h5py.File(temp_filename, "a") as fp:
+                            fp.attrs["RECO_TRACE_PARAMS"] = json.dumps(params)
                         print("Saved temporary as", temp_filename)
                         zipf.write(temp_filename, trace_name)
                         os.remove(temp_filename)
@@ -427,20 +433,21 @@ class ReconstructorTool(ToolBase, PopupPlotable):
 
             trace_identifier = f"{noext(src_file)}_{pmt}"
 
-            trace = find_trace_entry(self._traces, trace_identifier)
-            if trace is None or self.eager_reconstruction:
+            trace_par = find_trace_entry(self._traces, trace_identifier)
+            if trace_par is None or self.eager_reconstruction:
                 reconstruction_data = cutters[pmt].cut(self._loaded_data0[:, i_slice, j_slice])
                 if reconstruction_data is not None:
                     start, end = reconstruction_data
                     broken = self.track_plotter.get_broken()[i_slice, j_slice]
-                    trace = reconstruct_event(formdata, self._loaded_data0[:, i_slice, j_slice], pmt, start, end, broken)
-                    self._traces[trace_identifier] = trace
+                    trace_par = reconstruct_event(formdata, self._loaded_data0[:, i_slice, j_slice], pmt, start, end, broken)
+                    self._traces[trace_identifier] = trace_par
                 else:
                     return
-            self._last_traces[pmt] = trace
-            model_wrapper = formdata["model"][PMT_MAPPING[pmt]][0]
-            assert trace is not None
-            model_wrapper.reconstruction_overlay(plotter=self.track_plotter, i_trace=trace, offset=OFFSETS[pmt])
+            self._last_traces[pmt] = trace_par
+            model_wrapper = formdata["model"][PMT_MAPPING[pmt]]
+            assert trace_par is not None
+            model_wrapper.reconstruction_overlay(plotter=self.track_plotter, i_trace_with_params=trace_par,
+                                                 offset=OFFSETS[pmt])
             # summary = render_event(trace, formdata)
             # summary.insert(0, 'PMT', pmt)
             # summary.insert(0, 'SRC', src_file)
@@ -464,7 +471,7 @@ class ReconstructorTool(ToolBase, PopupPlotable):
         formdata = self._formdata
         buffer_dataframes = []
         for label in self._traces.keys():
-            trace = self._traces[label]
+            trace = self._traces[label][0]
             summary = render_event(trace, formdata)
             summary.insert(0, 'SRC', label)
             buffer_dataframes.append(summary)

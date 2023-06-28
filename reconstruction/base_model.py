@@ -46,13 +46,13 @@ class ReconstructionModelWrapper(FormPrototype):
     final_distribution = FinalDistributionField() # One common field
 
     def get_form_result(self):
-        return self, self.get_pymc_model
+        return self
 
     def get_pymc_model(self, observed, cut_start, cut_end, broken):
         raise NotImplementedError("Cannot get model")
 
-    def reconstruction_overlay(self, plotter, i_trace, offset):
+    def reconstruction_overlay(self, plotter, i_trace_with_params, offset):
         x_off, y_off = offset
 
-    def postprocess(self, ax, k_start, k_end, pmt, trace):
+    def postprocess(self, ax, k_start, k_end, pmt, trace_with_params):
         pass

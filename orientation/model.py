@@ -132,7 +132,7 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         for star in stars:
             star:StarEntry
             x_eci, y_eci, z_eci = star.get_eci()
-            energy = star.energy()
+            energy = star.energy_u()
             x_ocef, y_ocef, z_ocef = eci_to_ocef_pt(x_eci, y_eci, z_eci, eras,
                                                     lat=view_latitude * np.pi / 180,
                                                     lon=view_longitude * np.pi / 180)

@@ -32,7 +32,7 @@ class StarDot(object):
 
     def draw_at(self, axes, params, unixtime):
         era = unixtime_to_era(unixtime)
-        lum = self.star_entry.energy()*params["MULTIPLIER"]+params["OFFSET"]
+        lum = self.star_entry.energy_u()*params["MULTIPLIER"]+params["OFFSET"]
         x, y, visible = self.star_entry.position_on_plane(params, era)
 
 

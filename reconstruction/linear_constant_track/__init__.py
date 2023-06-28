@@ -97,11 +97,16 @@ class LinearTrackModel(ReconstructionModelWrapper):
             obs = observed[k_start:k_end, alive]
             observed_var = self.final_distribution('OBSERVED', mu=mu,
                           observed=obs)  # A = A[k,i,j]
-        return model
+        return model, {
+            "k0": k0,
+            "k_start": k_start,
+            "k_end": k_end
+        }
 
-    def reconstruction_overlay(self, plotter, i_trace, offset):
+    def reconstruction_overlay(self, plotter, i_trace_with_params, offset):
         print("DRAW_CALL")
         x_off, y_off = offset
+        i_trace, params = i_trace_with_params
         post = i_trace.posterior
         x0 = post["X0"].median()*PIXEL_SIZE
         y0 = post["Y0"].median()*PIXEL_SIZE
@@ -109,15 +114,25 @@ class LinearTrackModel(ReconstructionModelWrapper):
         phi = post["Phi0"].median()*np.pi/180
         u0 = post["U0"].median()
 
-        x_start, y_start = rect_raycast(x0, y0, phi+np.pi, HALF_PIXELS/2*PIXEL_SIZE)
-        x_end, y_end = rect_raycast(x0, y0, phi, HALF_PIXELS/2*PIXEL_SIZE)
+        k0 = params["k0"]
+        k_start = params["k_start"]
+        k_end = params["k_end"]
+
+        x_start = x0+np.cos(phi)*u0*(k_start-k0)
+        y_start = y0+np.sin(phi)*u0*(k_start-k0)
+        x_end = x0+np.cos(phi)*u0*(k_end-k0)
+        y_end = y0+np.sin(phi)*u0*(k_end-k0)
+
+        #x_start, y_start = rect_raycast(x0, y0, phi+np.pi, HALF_PIXELS/2*PIXEL_SIZE)
+        #x_end, y_end = rect_raycast(x0, y0, phi, HALF_PIXELS/2*PIXEL_SIZE)
         dx = x_end-x_start
         dy = y_end-y_start
 
         plotter.plot_arrow(x_start+x_off, y_start+y_off, dx, dy, color="red", width=r, length_includes_head=True)
         plotter.set_origin(x0+x_off, y0+y_off)
 
-    def postprocess(self,ax, k_start, k_end, pmt, trace):
+    def postprocess(self,ax, k_start, k_end, pmt, trace_with_params):
+        trace, params = trace_with_params
         kk = np.arange(k_start, k_end)
         k0 = (k_start + k_end) / 2
         delta_k = kk - k0

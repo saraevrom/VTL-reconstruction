@@ -67,8 +67,12 @@ class StarList(GUIList):
                 if proc is not None:
                     filtered = proc(database,mat)
                     if filtered.shape[0] == 1:
-                        items.append(StarEntry(filtered.to_dict('records')[0]))
-                        print("Found",items[-1].name())
+                        star = StarEntry(filtered.to_dict('records')[0])
+                        if star.analyzable():
+                            items.append(star)
+                            print("Found",items[-1].name())
+                        else:
+                            print("NOT ANALYZABLE", items[-1].name())
         print("PARSE COMPLETED")
         return items
 

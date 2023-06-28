@@ -4,10 +4,10 @@
   "tools.orientation": "Orientation",
 
 
-  "reconstruction.bl": "Bottom left (C)",
-  "reconstruction.br": "Bottom right (D)",
-  "reconstruction.tl": "Top left (A)",
-  "reconstruction.tr": "Top right (B)",
+  "reconstruction.bl": "C (Bottom left)",
+  "reconstruction.br": "D (Bottom right)",
+  "reconstruction.tl": "A (Top left)",
+  "reconstruction.tr": "B (Top right)",
 
   "reconstruction.filetypes.data": "Data source",
 
