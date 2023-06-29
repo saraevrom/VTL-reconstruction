@@ -5,6 +5,7 @@ from ..base_model import FormPrototype
 from ..form_prototypes import DistributionField
 from vtl_common.common_GUI.tk_forms_assist import AlternatingNode
 
+LC_COLOR = "#536878"
 
 def E0_field():
     return DistributionField("uniform", lower=10.0, upper=60.0)
@@ -13,10 +14,10 @@ def tau_field():
     return DistributionField("halfnormal", sigma=1.0)
 
 HLINE_STYLES = {
-    "tl" : dict(linestyles="solid", color="black",label="LC_A"),
-    "tr" : dict(linestyles="dashed", color="black",label="LC_B"),
-    "bl" : dict(linestyles="dashdot", color="black",label="LC_C"),
-    "br" : dict(linestyles="dotted", color="black",label="LC_D")
+    "tl" : dict(linestyles="solid", color=LC_COLOR, label="LC_A"),
+    "tr" : dict(linestyles="dashed", color=LC_COLOR, label="LC_B"),
+    "bl" : dict(linestyles="dashdot", color=LC_COLOR, label="LC_C"),
+    "br" : dict(linestyles="dotted", color=LC_COLOR, label="LC_D")
 }
 
 def _mod_style(s):

@@ -118,10 +118,10 @@ class LinearTrackModel(ReconstructionModelWrapper):
         k_start = params["k_start"]
         k_end = params["k_end"]
 
-        x_start = x0+np.cos(phi)*u0*(k_start-k0)
-        y_start = y0+np.sin(phi)*u0*(k_start-k0)
-        x_end = x0+np.cos(phi)*u0*(k_end-k0)
-        y_end = y0+np.sin(phi)*u0*(k_end-k0)
+        x_start = x0+np.cos(phi)*u0*(k_start-k0)*PIXEL_SIZE
+        y_start = y0+np.sin(phi)*u0*(k_start-k0)*PIXEL_SIZE
+        x_end = x0+np.cos(phi)*u0*(k_end-k0)*PIXEL_SIZE
+        y_end = y0+np.sin(phi)*u0*(k_end-k0)*PIXEL_SIZE
 
         #x_start, y_start = rect_raycast(x0, y0, phi+np.pi, HALF_PIXELS/2*PIXEL_SIZE)
         #x_end, y_end = rect_raycast(x0, y0, phi, HALF_PIXELS/2*PIXEL_SIZE)
@@ -129,7 +129,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
         dy = y_end-y_start
 
         plotter.plot_arrow(x_start+x_off, y_start+y_off, dx, dy, color="red", width=r, length_includes_head=True)
-        plotter.set_origin(x0+x_off, y0+y_off)
+        plotter.set_origin(x0+x_off, y0+y_off, k0)
 
     def postprocess(self,ax, k_start, k_end, pmt, trace_with_params):
         trace, params = trace_with_params
