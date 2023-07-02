@@ -1,7 +1,7 @@
 from vtl_common.common_GUI.tk_forms_assist import FormNode, BoolNode, FloatNode, OptionNode, AlternatingNode, ComboNode
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from vtl_common.localization import get_locale
-from reconstruction import Sampler
+from common_forms import Sampler
 import pymc as pm
 
 

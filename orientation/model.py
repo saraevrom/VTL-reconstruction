@@ -1,33 +1,20 @@
 import numpy as np
 import pymc as pm
 import pytensor.tensor as pt
-from scipy.special import erf
-import numba as nb
 
 from orientation.stellar_math import unixtime_to_era
-from reconstruction.common import d_erf
 from .stellar_tensor_math import eci_to_ocef_pt, ocef_to_detector_plane_pt, rotate_yz_pt, ecef_to_ocef_pt
 from .stellar_tensor_math import ocef_to_altaz_pt
 from utils import binsearch_tgt
 from .time_interval import TimeRange
 from .database_reader import StarEntry
 from vtl_common.parameters import PIXEL_SIZE
-from vtl_common.localized_GUI.plotter import LOWER_EDGES
 from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 
-PIXEL_POSITIONS = LOWER_EDGES+PIXEL_SIZE/2
+from common_functions import create_coord_mesh
+from common_functions import d_erf
 
 
-@nb.njit(cache=True)
-def create_coord_mesh(T):
-    result_x = np.zeros(shape=(T, 16, 16))
-    result_y = np.zeros(shape=(T, 16, 16))
-    for k in range(T):
-        for i in range(16):
-            for j in range(16):
-                result_x[k,i,j] = PIXEL_POSITIONS[i]
-                result_y[k,i,j] = PIXEL_POSITIONS[j]
-    return result_x, result_y
 
 def ensquared_energy_full(x_mesh, y_mesh, x0, y0, psf):
     scale = np.sqrt(2)*psf
@@ -68,7 +55,7 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
     # observed[break_matrix] = 0.0
 
     T = times.shape[0]
-    x_mesh, y_mesh = create_coord_mesh(T)
+    x_mesh, y_mesh, _ = create_coord_mesh(T)
     with pm.Model() as model:
         tune_lat = tuner["tune_lat"]
         tune_lon = tuner["tune_lon"]
