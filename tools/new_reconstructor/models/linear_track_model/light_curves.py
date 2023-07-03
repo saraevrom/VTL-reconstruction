@@ -59,7 +59,6 @@ class LinearLC(LightCurve):
         return e0*(1+delta_k/tau)
 
     def postprocess(self, delta_k, k0, ax, trace, pmt):
-        print(trace)
         tau = float(trace.posterior["τ_LC"].median())
         e0 = float(trace.posterior["E0"].median())
         # coeff = float(trace.posterior["K_LC"].median())

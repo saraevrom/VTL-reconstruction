@@ -60,7 +60,6 @@ class LinearTrackModel(ReconstructionModelWrapper):
 
             delta_k = pixel_ts - k0
 
-
             x0 = x0_from_pmt(pmt)
             y0 = y0_from_pmt(pmt)
 
@@ -69,7 +68,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
             u0 = self.U0("U0", consts)
             a = self.accel("accel", consts)
 
-            sigmaPSF = pm.HalfNormal('SigmaPSF', 1.)
+            sigmaPSF = pm.HalfNormal('SigmaPSF', 1.) * PIXEL_SIZE
 
             u = (u0 + a * delta_k) * PIXEL_SIZE
             lc = self.LC.get_lc(delta_k, k0, consts)
@@ -96,7 +95,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
         post = i_trace.posterior
         x0 = model_params.get_estimation("X0")
         y0 = model_params.get_estimation("Y0")
-        r = model_params.get_estimation("SigmaPSF")
+        r = model_params.get_estimation("SigmaPSF")*PIXEL_SIZE
         phi = model_params.get_estimation("Phi0")*np.pi/180
         u0 = model_params.get_estimation("U0")
         a = model_params.get_estimation("accel")
