@@ -9,6 +9,7 @@ from .models import ModelSelect
 @kwarg_builder(RangeCutter)
 class RangeSelect(FormNode):
     DISPLAY_NAME = get_locale("reconstruction.form.cutter.range")
+    LOCKED = True
     FIELD__start = create_value_field(IntNode, get_locale("reconstruction.form.cutter.start"), 0)
     FIELD__end = create_value_field(IntNode, get_locale("reconstruction.form.cutter.end"), -1)
 
@@ -17,6 +18,7 @@ class RangeSelect(FormNode):
 
 class WholeSelect(LabelNode):
     DISPLAY_NAME = "---"
+    LOCKED = True
 
     def get_data(self):
         return WholeCutter()
@@ -24,12 +26,15 @@ class WholeSelect(LabelNode):
 
 @kwarg_builder(ThresholdCutter)
 class ThreshSelect(FormNode):
+    DISPLAY_NAME = get_locale("reconstruction.form.cutter.threshold")
+    LOCKED = True
     FIELD__threshold = create_value_field(FloatNode, get_locale("reconstruction.form.cutter.threshold"), 3.5)
 
 
 
 class CutterSelection(AlternatingNode):
     DISPLAY_NAME = get_locale("reconstruction.form.cutter.selection")
+    LOCKED = True
     SEL__entire = WholeSelect
     SEL__range = RangeSelect
     SEL__threshold = ThreshSelect
