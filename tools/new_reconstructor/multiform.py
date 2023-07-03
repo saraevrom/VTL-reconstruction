@@ -8,11 +8,11 @@ from .form_diff import diff, patch
 TABS = "MABCD"
 
 class FormUnit(tk.Frame):
-    def __init__(self, master, form_conf_cls):
+    def __init__(self, master, form_conf_cls, protection):
         super().__init__(master)
         self._parser = form_conf_cls()
         self._parser: FormNode
-        self._form = TkDictForm(self, self._parser.get_configuration_root())
+        self._form = TkDictForm(self, self._parser.get_configuration_root(), protection=protection)
         self._form.pack(fill="both", expand=True)
 
     def set_listener(self, on_commit):
@@ -40,7 +40,7 @@ class Multiform(tk.Frame):
         self._tabs = []
 
         for tab in TABS:
-            tab_frame = FormUnit(self, form_conf_cls)
+            tab_frame = FormUnit(self, form_conf_cls, protection=(tab != "M"))
             self.notebook.add(tab_frame, text=tab)
             self._tabs.append(tab_frame)
 
@@ -50,13 +50,7 @@ class Multiform(tk.Frame):
 
     def on_master_change(self):
         if self.propagate_master_change:
-            mdata = self._tabs[0].get_values()
-            differ = diff(self._last_mdata, mdata)
-            for i in range(1, 5):
-                tdata = self._tabs[i].get_values()
-                patched = patch(tdata, differ)
-                self._tabs[i].set_values(patched)
-            self._last_mdata = mdata
+            self.reset_individuals()
 
     def reset_individuals(self):
         mdata = self._tabs[0].get_values()

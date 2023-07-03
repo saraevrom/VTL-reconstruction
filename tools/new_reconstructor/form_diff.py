@@ -79,6 +79,8 @@ def patch(struct_a, diff_obj):
             else:
                 if k in res.keys():
                     res[k] = patch(res[k], diff_obj[k])
+                elif isinstance(diff_obj[k], Unchanged):
+                    res[k] = diff_obj[k].value
                 else:
                     res[k] = diff_obj[k]
         return res
