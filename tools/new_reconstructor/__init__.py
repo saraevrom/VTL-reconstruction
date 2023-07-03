@@ -150,8 +150,8 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.control_panel.add_button(get_locale("reconstruction.btn.reconstruct"), self.on_reconstruct, 3)
         self.control_panel.add_button(get_locale("reconstruction.btn.trace"), self.on_show_trace, 4)
         self.control_panel.add_button(get_locale("reconstruction.btn.clear_traces"), self.on_traces_clear, 4)
-        self.control_panel.add_button(get_locale("reconstruction.btn.reset_individual"),
-                                      self.mod_notebook.reset_individuals, 5)
+        # self.control_panel.add_button(get_locale("reconstruction.btn.reset_individual"),
+        #                               self.mod_notebook.reset_individuals, 5)
 
         self._pmt_a = tk.IntVar(self)
         self._pmt_a.trace("w", self.on_vars_change)
@@ -178,7 +178,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.mod_notebook.pack(side="bottom", fill="both", expand=True)
 
         create_checkbox(rpanel, "reconstruction.form.split_chains", self._split_chains)
-        create_checkbox(rpanel, "reconstruction.propagate_formchange", self._propagate_formchange)
+        #create_checkbox(rpanel, "reconstruction.propagate_formchange", self._propagate_formchange)
         create_checkbox(rpanel, "reconstruction.all", self._pmt_m)
         create_checkbox(rpanel, "reconstruction.br", self._pmt_d)
         create_checkbox(rpanel, "reconstruction.bl", self._pmt_c)
@@ -187,6 +187,8 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
 
         bottom_panel = tk.Frame(self)
         bottom_panel.pack(side="bottom", fill="x")
+
+
 
         self.result_table = Table(bottom_panel)
         self.result_table.show()
@@ -356,13 +358,14 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.show_event()
 
     def redraw_tracks(self):
-        self.track_plotter.clear_added_patches()
-        modes = self.get_pmt_modes()
-        for mode in modes:
-            identifier = f"{self._filelist[self.pointer]}_{mode[0]}"
-            if identifier in self._traces.keys():
-                obj = self._traces[identifier]
-                obj.reconstruction_overlay(self.track_plotter)
+        if self._loaded_data0 is not None:
+            self.track_plotter.clear_added_patches()
+            modes = self.get_pmt_modes()
+            for mode in modes:
+                identifier = f"{self._filelist[self.pointer]}_{mode[0]}"
+                if identifier in self._traces.keys():
+                    obj = self._traces[identifier]
+                    obj.reconstruction_overlay(self.track_plotter)
 
     def on_show_trace(self):
         options_to_select = self._traces.keys()

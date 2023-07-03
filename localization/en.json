@@ -8,6 +8,7 @@
   "reconstruction.br": "D (Bottom right)",
   "reconstruction.tl": "A (Top left)",
   "reconstruction.tr": "B (Top right)",
+  "reconstruction.all": "M (Use entire elementary cell)",
 
   "reconstruction.filetypes.data": "Data source",
 
@@ -21,6 +22,8 @@
   "reconstruction.btn.load_traces": "Load traces",
   "reconstruction.btn.save_df": "Save dataframe",
   "reconstruction.btn.clear_traces": "Clear traces",
+  "reconstruction.btn.save_params": "Save parameters",
+  "reconstruction.btn.load_params": "Load parameters",
 
   "reconstruction.sample": "Sampling",
   "reconstruction.sample.draws": "Draws",

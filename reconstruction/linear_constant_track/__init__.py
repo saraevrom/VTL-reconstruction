@@ -9,6 +9,7 @@ from ..form_prototypes import FloatField, DistributionField, PassthroughField
 from vtl_common.parameters import PIXEL_SIZE, HALF_PIXELS
 from .light_curves import LC_Alter
 
+# THIS FILE WILL BE REMOVED
 
 def rect_raycast(x0, y0, phi, edge):
     dx = np.cos(phi)
