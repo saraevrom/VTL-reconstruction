@@ -31,6 +31,7 @@ from .model_form import ReconstructionParameters
 from .models.model_base import ReconstructionModelWrapper
 from .cutters import Cutter
 from .selection_dialog import SelectionDialog
+from common_functions import ut0_to_copystr
 
 ORIENTATION_WORKSPACE = Workspace("orientation")
 TRACKS_WORKSPACE = Workspace("tracks")
@@ -130,7 +131,9 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
 
         self.orientation_parser = OrientationParametersForm()
         self.orientation_form = SaveableTkDictForm(lpanel, self.orientation_parser.get_configuration_root(), False,
-                                                   file_asker=ORIENTATION_WORKSPACE)
+                                                   file_asker=ORIENTATION_WORKSPACE,
+                                                   save_label="form.orientation.save",
+                                                   load_label="form.orientation.load")
         self.orientation_form.pack(side="top", fill="x")
         self.orientation_form.on_commit = self.on_orientation_update
 
@@ -145,11 +148,10 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.control_panel.add_button(get_locale("reconstruction.btn.load"), self.on_load, 0)
         self.control_panel.add_button(get_locale("reconstruction.btn.prev"), self.on_prev, 1)
         self.control_panel.add_button(get_locale("reconstruction.btn.next"), self.on_next, 1)
-        self.control_panel.add_button(get_locale("reconstruction.btn.save_params"), self.on_parameters_save, 2)
-        self.control_panel.add_button(get_locale("reconstruction.btn.load_params"), self.on_parameters_load, 2)
-        self.control_panel.add_button(get_locale("reconstruction.btn.reconstruct"), self.on_reconstruct, 3)
-        self.control_panel.add_button(get_locale("reconstruction.btn.trace"), self.on_show_trace, 4)
-        self.control_panel.add_button(get_locale("reconstruction.btn.clear_traces"), self.on_traces_clear, 4)
+        self.control_panel.add_button(get_locale("reconstruction.btn.reconstruct"), self.on_reconstruct, 2)
+        self.control_panel.add_button(get_locale("reconstruction.btn.trace"), self.on_show_trace, 3)
+        self.control_panel.add_button(get_locale("reconstruction.btn.clear_traces"), self.on_traces_clear, 3)
+        self.control_panel.add_button(get_locale("reconstruction.btn.copy_datetime"), self.on_copy_time, 3)
         # self.control_panel.add_button(get_locale("reconstruction.btn.reset_individual"),
         #                               self.mod_notebook.reset_individuals, 5)
 
@@ -174,6 +176,13 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self._propagate_formchange = tk.IntVar(self)
         self._propagate_formchange.set(1)
         self._propagate_formchange.trace("w", self.on_vars_change)
+
+
+        self.low_button_panel = ButtonPanel(rpanel)
+        self.low_button_panel.add_button(get_locale("reconstruction.btn.load_params"), self.on_parameters_load, 0)
+        self.low_button_panel.add_button(get_locale("reconstruction.btn.save_params"), self.on_parameters_save, 0)
+
+        self.low_button_panel.pack(side="bottom", fill="x")
 
         self.mod_notebook.pack(side="bottom", fill="both", expand=True)
 
@@ -207,6 +216,13 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             df = pd.concat(buffer_dataframes)
             self.result_table.model.df = df
             self.result_table.redraw()
+
+    def on_copy_time(self):
+        if self._loaded_ut0 is not None:
+            ut0 = self._loaded_ut0[0]
+            s = ut0_to_copystr(ut0)
+            self.winfo_toplevel().clipboard_clear()
+            self.winfo_toplevel().clipboard_append(s)
 
     def on_traces_clear(self):
         self._traces.clear()
@@ -278,7 +294,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         if filename:
             with open(filename, "r") as fp:
                 data = json.load(fp)
-            self.mod_notebook.set_values(data["params"])
+            self.mod_notebook.set_values(data["params"], force=True)
             self._pmt_a.set(data["a_en"])
             self._pmt_b.set(data["b_en"])
             self._pmt_c.set(data["c_en"])

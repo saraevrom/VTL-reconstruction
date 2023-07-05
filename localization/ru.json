@@ -24,6 +24,7 @@
   "reconstruction.btn.clear_traces": "Очистить данные следов",
   "reconstruction.btn.save_params": "Сохранить параметры",
   "reconstruction.btn.load_params": "Загрузить параметры",
+  "reconstruction.btn.copy_datetime ": "Скопировать дату/время",
 
 
   "reconstruction.sample": "Сэмплирование",
@@ -90,8 +91,8 @@
   "orientation.form.use_ff": "Выравнивать пиксели",
   "orientation.form.tune.final_dist": "Финальное распределение",
 
-  "orientation.parameter.VIEW_LATITUDE": "Широта наблюдения [°]",
-  "orientation.parameter.VIEW_LONGITUDE": "Долгота наблюдения [°]",
+  "orientation.parameter.VIEW_LATITUDE": "Склонение [°]",
+  "orientation.parameter.VIEW_LONGITUDE": "Часовой угол (GHA) [°]",
   "orientation.parameter.SELF_ROTATION": "Собственный поворот [°]",
   "orientation.parameter.FOCAL_DISTANCE": "Фокусное расстояние [мм]",
   "orientation.parameter.PSF": "PSF [пикс]",
@@ -115,5 +116,18 @@
   "orientation.selection.time.end": "Конец",
   "orientation.selection.time.stride": "Шаг",
 
-  "app.parameters.MAX_STAR_MAGNITUDE": "Предел звёздной величины"
+  "tools.converter": "Конвертер",
+  "converter.fixed_params": "Зафиксированные параметры",
+  "converter.coords": "Координаты",
+  "converter.astronomy": "Экваториальная система",
+  "converter.altaz": "Альт-азимутальная системя",
+  "converter.device": "Собственная система прибора",
+  "converter.planar": "Система фокальной поверхности",
+
+
+  "app.parameters.MAX_STAR_MAGNITUDE": "Предел звёздной величины",
+
+
+  "form.orientation.save": "Сохранить ориентацию",
+  "form.orientation.load": "Загрузить ориентацию"
 }

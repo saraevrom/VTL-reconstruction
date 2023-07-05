@@ -26,8 +26,8 @@ class FormUnit(tk.Frame):
         self._parser.parse_formdata(v)
         return self._parser.get_data()
 
-    def set_values(self, v):
-        self._form.set_values(v)
+    def set_values(self, v, force=False):
+        self._form.set_values(v, force=force)
 
 
 
@@ -63,9 +63,9 @@ class Multiform(tk.Frame):
             res[k] = self._tabs[i].get_values()
         return res
 
-    def set_values(self, v):
+    def set_values(self, v, force=False):
         for i, k in enumerate(TABS):
-            self._tabs[i].set_values(v[k])
+            self._tabs[i].set_values(v[k], force=force)
 
     def get_data(self):
         res = dict()

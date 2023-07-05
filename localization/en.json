@@ -24,6 +24,7 @@
   "reconstruction.btn.clear_traces": "Clear traces",
   "reconstruction.btn.save_params": "Save parameters",
   "reconstruction.btn.load_params": "Load parameters",
+  "reconstruction.btn.copy_datetime ": "Copy datetime",
 
   "reconstruction.sample": "Sampling",
   "reconstruction.sample.draws": "Draws",
@@ -90,8 +91,8 @@
   "orientation.form.use_ff": "Use flatfielding",
   "orientation.form.tune.final_dist": "Final distribution",
 
-  "orientation.parameter.VIEW_LATITUDE": "View latitude [°]",
-  "orientation.parameter.VIEW_LONGITUDE": "View longitude [°]",
+  "orientation.parameter.VIEW_LATITUDE": "Declination [°]",
+  "orientation.parameter.VIEW_LONGITUDE": "Hour angle (GHA) [°]",
   "orientation.parameter.SELF_ROTATION": "Own rotation [°]",
   "orientation.parameter.FOCAL_DISTANCE": "Focal distance [mm]",
   "orientation.parameter.PSF": "PSF [pix]",
@@ -116,6 +117,17 @@
   "orientation.step.second": "Second",
 
 
+  "tools.converter": "Converter",
+  "converter.fixed_params": "Fixed parameters",
+  "converter.coords": "Coordinates",
+  "converter.astronomy": "Equatorial system",
+  "converter.altaz": "Alt-azimuthal system",
+  "converter.device": "Own device system",
+  "converter.planar": "Detector plane system",
 
-  "app.parameters.MAX_STAR_MAGNITUDE": "Star magnitude limit"
+
+  "app.parameters.MAX_STAR_MAGNITUDE": "Star magnitude limit",
+
+  "form.orientation.save": "Save orientation",
+  "form.orientation.load": "Load orientation"
 }

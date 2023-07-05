@@ -1,3 +1,5 @@
+import datetime
+
 import numpy as np
 import numba as nb
 import pymc as pm
@@ -106,6 +108,11 @@ def radec_to_eci(ra, dec):
     y = cos_dec * np.sin(ra)
     return x, y, z
 
+@nb.njit()
+def eci_to_radec(x,y,z):
+    dec = np.arcsin(z)
+    ra = np.arctan2(y, x)
+    return ra, dec
 
 @nb.njit()
 def eci_to_ecef(x_eci, y_eci, z_eci, era):
@@ -136,11 +143,16 @@ def eci_to_ocef(x_eci, y_eci, z_eci, era, lat, lon):
     # Meridian is aligned
     return rotate_xz(x_0, y_0, z_0, -lat)
 
+@nb.njit()
+def ocef_to_eci(x_ocef, y_ocef, z_ocef, era, lat, lon):
+    x_0, y_0, z_0 = rotate_xz(x_ocef, y_ocef, z_ocef, lat)
+    return rotate_xy(x_0, y_0, z_0, era + lon)
+
 
 @nb.njit()
 def ocef_to_detector_plane(x_local, y_local, z_local, focal_distance):
     '''
-    Transform direction from OCEF to detector coordinates
+    Transform direction from OCEF to detector coordinates as it was pointed in zenith
     :param x_local: x coordinate OCEF
     :param y_local: y coordinate OCEF
     :param z_local: z coordinate OCEF
@@ -152,7 +164,15 @@ def ocef_to_detector_plane(x_local, y_local, z_local, focal_distance):
     y_p = z_local*focal_distance/x_local
     return x_p, y_p, v
 
+@nb.njit()
+def detector_plane_to_ocef_f(x_p, y_p, focal_distance):
+    x_ocef = 1
+    y_ocef = -x_p/focal_distance
+    z_ocef = y_p/focal_distance
+    r = (x_ocef*x_ocef+y_ocef*y_ocef+z_ocef*z_ocef)**0.5
+    return x_ocef/r, y_ocef/r, z_ocef/r
 
+@nb.njit()
 def detector_plane_to_ocef(x_pdf, y_pdf, focal_distance):
     x_ocef = np.ones(x_pdf.shape)
     y_ocef = -x_pdf/focal_distance
@@ -170,11 +190,25 @@ def ocef_to_altaz(x_local, y_local, z_local):
     :return: altitude, azimuth in radians. Azimuth is counted from north towards east
     '''
     horizontal = np.sqrt(y_local**2 + z_local**2)
-    alt = np.arctan(x_local/horizontal)
+    alt = np.arctan2(x_local, horizontal)
     az = (np.arctan2(y_local, z_local) + 2*np.pi) % (2*np.pi)
     return alt, az
+
+@nb.njit()
+def altaz_to_ocef(alt, az):
+    x = np.sin(alt)
+    z = np.cos(alt)*np.cos(az)
+    y = np.cos(alt)*np.sin(az)
+    return x, y, z
+
 
 @nb.njit()
 def unixtime_to_era(unixtime):
     ut1 = unixtime/86400.0 - 10957.5
     return np.pi*2*(0.7790572732640 + 1.00273781191135448*ut1) % (2*np.pi)
+
+
+def datetime_to_era(dt:datetime.datetime):
+    ref_dt = datetime.datetime(1970, 1, 1)
+    unixtime = (dt - ref_dt).total_seconds()
+    return unixtime_to_era(unixtime)
