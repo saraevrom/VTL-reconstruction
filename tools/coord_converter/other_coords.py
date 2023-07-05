@@ -145,7 +145,10 @@ class DeviceSystem(CoordSystem):
         gamma = 90-gamma
         gamma = round(gamma, 6)
 
-        psi = psi*180/np.pi+90
+        psi = (psi*180/np.pi+90) % 360
+        if psi>180:
+            psi = psi-360
+
         psi = round(psi, 6)
 
         self.gamma_deg.set_value(gamma)
