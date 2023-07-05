@@ -24,7 +24,7 @@
   "reconstruction.btn.clear_traces": "Clear traces",
   "reconstruction.btn.save_params": "Save parameters",
   "reconstruction.btn.load_params": "Load parameters",
-  "reconstruction.btn.copy_datetime ": "Copy datetime",
+  "reconstruction.btn.copy_datetime": "Copy datetime",
 
   "reconstruction.sample": "Sampling",
   "reconstruction.sample.draws": "Draws",

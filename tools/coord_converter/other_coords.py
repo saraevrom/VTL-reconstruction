@@ -38,22 +38,24 @@ class AstronomicalSystem(CoordSystem):
         self.ra_hours = self.settings_frame.add_setting(DoubleValue, "ra_h", "RA [h]", 0.0)
         self.ra_deg = self.settings_frame.add_setting(DoubleValue, "ra_deg", "RA [°]", 0.0)
         self.dec_deg = self.settings_frame.add_setting(DoubleValue, "dec_deg", "Dec [°]", 0.0)
-        self.settings_frame.add_tracer("ra_h", self.ra_h_to_deg)
-        self.settings_frame.add_tracer("ra_deg", self.ra_deg_to_h)
+        self.settings_frame.add_tracer("ra_h", lambda: self.ra_h_to_deg(True))
+        self.settings_frame.add_tracer("ra_deg", lambda: self.ra_deg_to_h(True))
 
         self.add_tracer("dec_deg")
 
-    def ra_h_to_deg(self):
+    def ra_h_to_deg(self, auto=False):
         d = self.ra_hours.get_value()*180/12
         d = round(d, 6)
         self.ra_deg.set_value(d)
-        self.part_changed()
+        if auto:
+            self.part_changed()
 
-    def ra_deg_to_h(self):
+    def ra_deg_to_h(self, auto=False):
         h = self.ra_deg.get_value()*12/180
         h = round(h, 6)
         self.ra_hours.set_value(h)
-        self.part_changed()
+        if auto:
+            self.part_changed()
 
     def get_eci(self, location, orientation, dt):
         ra = self.ra_deg.get_value()*np.pi/180
@@ -220,6 +222,7 @@ class CoordList(tk.Frame):
         if self._time is not None:
             for dst in self.systems:
                 if dst != src:
+                    print(src, ">>>", dst)
                     eci = src.get_eci(self._location, self._orientation, self._time)
                     dst.set_eci(eci, self._location, self._orientation, self._time)
         self.settings_frame.notify_enable()
@@ -228,5 +231,4 @@ class CoordList(tk.Frame):
         self.settings_frame.push_settings_dict(self._formdata)
         while self._schedule:
             src = self._schedule.pop(0)
-            print(src)
             self.syncto(src)
