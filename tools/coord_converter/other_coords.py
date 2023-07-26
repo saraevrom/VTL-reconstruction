@@ -5,8 +5,10 @@ import numpy as np
 
 from vtl_common.common_GUI.settings_frame import SettingMenu, DoubleValue
 from vtl_common.localization import get_locale
-from orientation.stellar_math import eci_to_ocef, ocef_to_detector_plane, ocef_to_altaz, radec_to_eci, datetime_to_era
-from orientation.stellar_math import ocef_to_eci, detector_plane_to_ocef_f, altaz_to_ocef, eci_to_radec, rotate_yz
+from tools.orientation.orientation.stellar_math import eci_to_ocef, ocef_to_detector_plane
+from tools.orientation.orientation.stellar_math import ocef_to_altaz, radec_to_eci, datetime_to_era
+from tools.orientation.orientation.stellar_math import ocef_to_eci, detector_plane_to_ocef_f
+from tools.orientation.orientation.stellar_math import altaz_to_ocef, eci_to_radec, rotate_yz
 
 
 class CoordSystem(object):

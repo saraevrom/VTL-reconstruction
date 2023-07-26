@@ -1,10 +1,10 @@
 from vtl_common.localized_GUI import Plotter
 import numpy as np
-from orientation.database_reader import get_database
-from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE, MAX_STAR_MAGNITUDE
+from .orientation.database_reader import get_database
+from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 from vtl_common.parameters import HALF_PIXELS, PIXEL_SIZE, HALF_GAP_SIZE
-from orientation.stellar_math import unixtime_to_era, eci_to_ocef, ocef_to_altaz, detector_plane_to_ocef
-from orientation.stellar_math import rotate_yz, rotate_xz, rotate_xy
+from .orientation.stellar_math import unixtime_to_era, eci_to_ocef, ocef_to_altaz, detector_plane_to_ocef
+from .orientation.stellar_math import rotate_yz, rotate_xz, rotate_xy
 
 DETECTOR_SPAN = HALF_PIXELS*PIXEL_SIZE+HALF_GAP_SIZE
 

@@ -1,4 +1,3 @@
-from copy import deepcopy
 import tkinter as tk
 from tkinter.simpledialog import askinteger
 
@@ -20,7 +19,7 @@ from .gui_lists import StarList, TimeList
 from .gui_lists.time_list import TimeRange
 from vtl_common.localized_GUI.tk_forms import SaveableTkDictForm
 from vtl_common.workspace_manager import Workspace
-from orientation.model import create_model
+from tools.orientation.orientation.model import create_model
 
 ORIENTATION_WORKSPACE = Workspace("orientation")
 

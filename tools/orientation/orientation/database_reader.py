@@ -7,7 +7,17 @@ import numpy as np
 from .stellar_math import eci_to_ocef, rotate_yz, ocef_to_detector_plane
 from vtl_common.parameters import APERTURE # in mm^2
 
+
+LIGHTSPEED = 299792458. # m/s
+NU1 = LIGHTSPEED/300e-9 # Hz
+NU2 = LIGHTSPEED/400e-9 # Hz
+DELTA_NU = NU1-NU2
+EFFICIENCY = 0.15
+
 #PIXEL_AREA = (PIXEL_SIZE*1e-3)**2 # in m^2
+JY_TO_W = 1e-23 * 1e-7 * (APERTURE/100) * DELTA_NU * EFFICIENCY
+JY_TO_PICO_W = JY_TO_W*1e12
+
 
 class DatabaseError(Exception):
     def __init__(self, key):
@@ -53,15 +63,6 @@ def get_database():
         gc.collect()
     return DATABASE
 
-VEGA_MAGNITUDE = 0.03
-VEGA_LUM = 2.54  # ulx (micro lux)
-
-SUN_MAGNITUDE = -26.74
-SUN_POWER = 1.3654e9  # pW/mm^2
-SUN_POWER *= APERTURE  # nW
-
-VEGA_POWER = SUN_POWER * 10**((SUN_MAGNITUDE - VEGA_MAGNITUDE)/2.5)
-
 class StarEntry(object):
     def __init__(self, record):
         self.record = record
@@ -98,10 +99,10 @@ class StarEntry(object):
         return ("BV" in self.record.keys() or "ci" in self.record.keys()) and "UB" in self.record.keys()
 
     def energy(self):
-        return VEGA_POWER * 10**((VEGA_MAGNITUDE - self.magnitude())/2.5)
+        return 3640 * JY_TO_PICO_W * 10**(-self.magnitude()/2.5)
 
     def energy_u(self):
-        return VEGA_POWER * 10**((VEGA_MAGNITUDE - self.magnitude_u())/2.5)
+        return 1810 * JY_TO_PICO_W * 10**(-self.magnitude_u()/2.5)
 
 
     def __eq__(self, other):

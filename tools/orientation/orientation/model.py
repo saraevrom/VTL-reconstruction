@@ -2,7 +2,7 @@ import numpy as np
 import pymc as pm
 import pytensor.tensor as pt
 
-from orientation.stellar_math import unixtime_to_era
+from tools.orientation.orientation.stellar_math import unixtime_to_era
 from .stellar_tensor_math import eci_to_ocef_pt, ocef_to_detector_plane_pt, rotate_yz_pt, ecef_to_ocef_pt
 from .stellar_tensor_math import ocef_to_altaz_pt
 from utils import binsearch_tgt

@@ -1,11 +1,9 @@
 from .base import GUIList
-from orientation.database_reader import get_database, name_a_star
+from ..orientation.database_reader import get_database
 import re
 from tkinter.simpledialog import askstring
 from vtl_common.localization import get_locale
-from orientation.stellar_math import eci_to_ocef, ocef_to_detector_plane, rotate_yz
-import numpy as np
-from orientation.database_reader import StarEntry
+from ..orientation.database_reader import StarEntry
 
 def match_by_group(database, match, field):
     return database[database[field] == match.group()]

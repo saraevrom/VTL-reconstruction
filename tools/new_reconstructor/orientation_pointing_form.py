@@ -1,18 +1,27 @@
 import numpy as np
 
-from vtl_common.common_GUI.tk_forms_assist import FormNode, FloatNode, BoolNode
+from vtl_common.common_GUI.tk_forms_assist import FormNode, FloatNode, BoolNode, AlternatingNode
 from vtl_common.localization import get_locale
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from ..orientation.parameters import ParametersForm as OrientationParametersForm
 
 
-class RightAnscension(FloatNode):
+class RightAnscensionH(FloatNode):
     DISPLAY_NAME = "RA [h]"
     DEFAULT_VALUE = 0.0
 
     def get_data(self):
         d = super().get_data()
         return d*np.pi/12
+
+
+class RightAnscensionDeg(FloatNode):
+    DISPLAY_NAME = "RA [°]"
+    DEFAULT_VALUE = 0.0
+
+    def get_data(self):
+        d = super().get_data()
+        return d*np.pi/180
 
 
 class Declination(FloatNode):
@@ -23,6 +32,10 @@ class Declination(FloatNode):
         d = super().get_data()
         return d*np.pi/180
 
+class RightAnscension(AlternatingNode):
+    DISPLAY_NAME = "RA"
+    SEL__h = RightAnscensionH
+    SEL__deg = RightAnscensionDeg
 
 class OrientedPoint(FormNode):
     DISPLAY_NAME = ""

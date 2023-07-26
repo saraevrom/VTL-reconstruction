@@ -6,8 +6,9 @@ from vtl_common.localized_GUI import GridPlotter
 from vtl_common.parameters import HALF_PIXELS, PIXEL_SIZE, HALF_GAP_SIZE
 from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 
-from orientation.stellar_math import radec_to_eci, eci_to_ocef, ocef_to_detector_plane, unixtime_to_era, rotate_yz
-from orientation.stellar_math import ocef_to_altaz
+from tools.orientation.orientation.stellar_math import radec_to_eci, eci_to_ocef
+from tools.orientation.orientation.stellar_math import ocef_to_detector_plane, unixtime_to_era, rotate_yz
+from tools.orientation.orientation.stellar_math import ocef_to_altaz
 
 SPAN = HALF_PIXELS*PIXEL_SIZE+HALF_GAP_SIZE
 NA_TEXT = "N/A"+"\n"*4

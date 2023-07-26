@@ -6,13 +6,11 @@ import tkinter as tk
 from vtl_common.workspace_manager import Workspace
 import h5py
 import numpy as np
-import numba as nb
 import matplotlib.pyplot as plt
 from vtl_common.common_flatfielding.models import FlatFieldingModel
 from .astronomy_display import DETECTOR_SPAN
 from .gui_lists.star_list import StarEntry
-from orientation.stellar_math import unixtime_to_era
-from orientation.database_reader import VEGA_LUM
+from .orientation.stellar_math import unixtime_to_era
 from vtl_common.parameters import PIXEL_SIZE
 from vtl_common.localized_GUI.signal_plotter import PopupPlotable
 

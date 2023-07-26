@@ -3,8 +3,7 @@ from tkinter.simpledialog import Dialog
 import tkinter as tk
 from vtl_common.datetime_parser import parse_datetimes_dt
 from vtl_common.localization import get_locale
-from vtl_common.common_GUI.modified_base import EntryWithEnterKey
-from orientation.time_interval import TimeRange
+from tools.orientation.orientation.time_interval import TimeRange
 
 
 
