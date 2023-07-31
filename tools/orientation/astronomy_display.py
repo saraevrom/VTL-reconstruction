@@ -3,8 +3,10 @@ import numpy as np
 from .orientation.database_reader import get_database
 from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 from vtl_common.parameters import HALF_PIXELS, PIXEL_SIZE, HALF_GAP_SIZE
-from .orientation.stellar_math import unixtime_to_era, eci_to_ocef, ocef_to_altaz, detector_plane_to_ocef
-from .orientation.stellar_math import rotate_yz, rotate_xz, rotate_xy
+#from .orientation.stellar_math import unixtime_to_era, eci_to_ocef, ocef_to_altaz, detector_plane_to_ocef
+#from .orientation.stellar_math import rotate_yz, rotate_xz, rotate_xy
+from fixed_rotator import Vector3, Quaternion, unixtime_to_era, eci_to_ocef, ocef_to_altaz, detector_plane_to_ocef
+from fixed_rotator import Vector2
 
 DETECTOR_SPAN = HALF_PIXELS*PIXEL_SIZE+HALF_GAP_SIZE
 
@@ -13,16 +15,16 @@ MIN_STAR_MAGNITUDE =-1.5
 
 def params_rotate(xs,ys,  params):
     focus = params["FOCAL_DISTANCE"]
-    x_ocef, y_ocef, z_ocef = detector_plane_to_ocef(xs, ys, focus)
+    v_ocef = detector_plane_to_ocef(Vector2(xs, ys), focus)
     self_rotation = params["SELF_ROTATION"] * np.pi / 180
     lat = params["VIEW_LATITUDE"]
     lon = params["VIEW_LONGITUDE"]
 
-    x_ocef, y_ocef, z_ocef = rotate_yz(x_ocef, y_ocef, z_ocef, -self_rotation)
-    x_ocef, y_ocef, z_ocef = rotate_xz(x_ocef, y_ocef, z_ocef, lat * np.pi / 180)
-    x_ocef, y_ocef, z_ocef = rotate_xy(x_ocef, y_ocef, z_ocef, (lon - MAIN_LONGITUDE) * np.pi / 180)
-    x_ocef, y_ocef, z_ocef = rotate_xz(x_ocef, y_ocef, z_ocef, -MAIN_LATITUDE * np.pi / 180)
-    alt, az = ocef_to_altaz(x_ocef, y_ocef, z_ocef)
+    q1 = Quaternion.rotate_yz(-self_rotation)
+    q2 = Quaternion.rotate_xz(lat * np.pi / 180)
+    q3 = Quaternion.rotate_xy((lon - MAIN_LONGITUDE) * np.pi / 180)
+    q4 = Quaternion.rotate_xz(-MAIN_LATITUDE * np.pi / 180)
+    alt, az = ocef_to_altaz(q4*q3*q2*q1*v_ocef)
     rs = 90 - alt * 180 / np.pi
     return az, rs
 
@@ -78,8 +80,9 @@ class SkyPlotter(Plotter):
         eci_x = database["eci_x"].to_numpy()
         eci_y = database["eci_y"].to_numpy()
         eci_z = database["eci_z"].to_numpy()
-        x,y,z = eci_to_ocef(eci_x, eci_y, eci_z, era, MAIN_LATITUDE*np.pi/180, MAIN_LONGITUDE*np.pi/180)
-        alt, az = ocef_to_altaz(x,y,z)
+        eci = Vector3(eci_x,eci_y,eci_z)
+        pos = eci_to_ocef(era, MAIN_LATITUDE*np.pi/180, MAIN_LONGITUDE*np.pi/180)*eci
+        alt, az = ocef_to_altaz(pos)
         if self._stars is None:
             mag = database["mag"]*1.0
             y1 = -2.5

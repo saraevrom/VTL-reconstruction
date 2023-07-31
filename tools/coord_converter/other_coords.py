@@ -5,10 +5,15 @@ import numpy as np
 
 from vtl_common.common_GUI.settings_frame import SettingMenu, DoubleValue
 from vtl_common.localization import get_locale
-from tools.orientation.orientation.stellar_math import eci_to_ocef, ocef_to_detector_plane
-from tools.orientation.orientation.stellar_math import ocef_to_altaz, radec_to_eci, datetime_to_era
-from tools.orientation.orientation.stellar_math import ocef_to_eci, detector_plane_to_ocef_f
-from tools.orientation.orientation.stellar_math import altaz_to_ocef, eci_to_radec, rotate_yz
+# from tools.orientation.orientation.stellar_math import eci_to_ocef, ocef_to_detector_plane
+# from tools.orientation.orientation.stellar_math import ocef_to_altaz, radec_to_eci, datetime_to_era
+# from tools.orientation.orientation.stellar_math import ocef_to_eci, detector_plane_to_ocef_f
+# from tools.orientation.orientation.stellar_math import altaz_to_ocef, eci_to_radec, rotate_yz
+
+from fixed_rotator import eci_to_ocef, ocef_to_detector_plane
+from fixed_rotator import ocef_to_altaz, radec_to_eci, datetime_to_era
+from fixed_rotator import ocef_to_eci, detector_plane_to_ocef_f
+from fixed_rotator import altaz_to_ocef, eci_to_radec, Quaternion, Vector3, Vector2
 
 
 class CoordSystem(object):
@@ -23,7 +28,7 @@ class CoordSystem(object):
     def get_eci(self, location:dict, orientation:dict, dt:datetime.datetime):
         raise NotImplementedError()
 
-    def set_eci(self, eci, location:dict, orientation:dict, dt:datetime.datetime):
+    def set_eci(self, eci:Vector3, location:dict, orientation:dict, dt:datetime.datetime):
         raise NotImplementedError()
 
     def part_changed(self):
@@ -62,16 +67,15 @@ class AstronomicalSystem(CoordSystem):
     def get_eci(self, location, orientation, dt):
         ra = self.ra_deg.get_value()*np.pi/180
         dec = self.dec_deg.get_value()*np.pi/180
-        x,y,z = radec_to_eci(ra, dec)
-        return x,y,z
+        eci = radec_to_eci(ra, dec)
+        return eci
 
-    def set_eci(self, eci, location, orientation, dt):
-        x, y, z = eci
-        ra, dec = eci_to_radec(x, y, z)
+    def set_eci(self, eci: Vector3, location, orientation, dt):
+        ra, dec = eci_to_radec(eci)
         dec_deg = dec*180/np.pi
         ra_deg = ra*180/np.pi
-        dec_deg = round(dec_deg,3)
-        ra_deg = round(ra_deg,3)
+        dec_deg = round(dec_deg, 3)
+        ra_deg = round(ra_deg, 3)
 
         self.dec_deg.set_value(dec_deg)
         self.ra_deg.set_value(ra_deg)
@@ -91,17 +95,16 @@ class GeoSystem(CoordSystem):
         alt = (90-self.zang_deg.get_value())*np.pi/180
         az = self.az_deg.get_value()*np.pi/180
 
-        x0, y0, z0 = altaz_to_ocef(alt, az)
+        p0 = altaz_to_ocef(alt, az)
         era = datetime_to_era(dt)
-        return ocef_to_eci(x0,y0,z0,era,lat,lon)
+        return ocef_to_eci(era, lat, lon)*p0
 
-    def set_eci(self, eci, location:dict, orientation:dict, dt:datetime.datetime):
+    def set_eci(self, eci:Vector3, location:dict, orientation:dict, dt:datetime.datetime):
         lat = location["lat"] * np.pi / 180
         lon = location["lon"] * np.pi / 180
         era = datetime_to_era(dt)
-        x_eci, y_eci, z_eci = eci
-        x0, y0, z0 = eci_to_ocef(x_eci, y_eci, z_eci, era, lat, lon)
-        alt, az = ocef_to_altaz(x0, y0, z0)
+        p0 = eci_to_ocef(era, lat, lon)*eci
+        alt, az = ocef_to_altaz(p0)
 
         az = az*180/np.pi
         az = round(az, 6)
@@ -128,20 +131,19 @@ class DeviceSystem(CoordSystem):
         gamma = (90-self.gamma_deg.get_value())*np.pi/180
         psi = (self.psi_deg.get_value() - 90)*np.pi/180
 
-        x0, y0, z0 = altaz_to_ocef(gamma, psi)
-        x0, y0, z0 = rotate_yz(x0, y0, z0, -self_rot)
+        p0 = altaz_to_ocef(gamma, psi)
+        p0 = Quaternion.rotate_yz(-self_rot)*p0
         era = datetime_to_era(dt)
-        return ocef_to_eci(x0,y0,z0,era,lat,lon)
+        return ocef_to_eci(era,lat,lon)*p0
 
     def set_eci(self, eci, location:dict, orientation:dict, dt:datetime.datetime):
         lat = orientation["VIEW_LATITUDE"] * np.pi / 180
         lon = orientation["VIEW_LONGITUDE"] * np.pi / 180
         self_rot = orientation["SELF_ROTATION"] * np.pi / 180
         era = datetime_to_era(dt)
-        x_eci, y_eci, z_eci = eci
-        x0, y0, z0 = eci_to_ocef(x_eci, y_eci, z_eci, era, lat, lon)
-        x0, y0, z0 = rotate_yz(x0, y0, z0, self_rot)
-        gamma, psi = ocef_to_altaz(x0, y0, z0)
+        eci2ocef = eci_to_ocef(era, lat, lon, self_rot=self_rot)
+        p0 = eci2ocef*eci
+        gamma, psi = ocef_to_altaz(p0)
 
         gamma = gamma * 180 / np.pi
         gamma = 90-gamma
@@ -172,11 +174,12 @@ class PlanarSystem(CoordSystem):
         f = orientation["FOCAL_DISTANCE"]
         x = self.x.get_value()
         y = self.y.get_value()
+        detector_plane = Vector2(x,y)
 
-        x0, y0, z0 = detector_plane_to_ocef_f(x, y, f)
-        x0, y0, z0 = rotate_yz(x0, y0, z0, -self_rot)
+        p0 = detector_plane_to_ocef_f(detector_plane, f)
+        p0 = Quaternion.rotate_yz(-self_rot) * p0
         era = datetime_to_era(dt)
-        return ocef_to_eci(x0,y0,z0,era,lat,lon)
+        return ocef_to_eci(era,lat,lon)*p0
 
     def set_eci(self, eci, location:dict, orientation:dict, dt:datetime.datetime):
         lat = orientation["VIEW_LATITUDE"] * np.pi / 180
@@ -184,11 +187,10 @@ class PlanarSystem(CoordSystem):
         self_rot = orientation["SELF_ROTATION"] * np.pi / 180
         f = orientation["FOCAL_DISTANCE"]
         era = datetime_to_era(dt)
-        x_eci, y_eci, z_eci = eci
-        x0, y0, z0 = eci_to_ocef(x_eci, y_eci, z_eci, era, lat, lon)
-        x0, y0, z0 = rotate_yz(x0, y0, z0, self_rot)
+        p0 = eci_to_ocef(era, lat, lon,self_rot=self_rot)*eci
         #gamma, psi = ocef_to_altaz(x0, y0, z0)
-        x, y, v = ocef_to_detector_plane(x0, y0, z0, f)
+        xy, v = ocef_to_detector_plane(p0, f)
+        x,y = xy.x, xy.y
         if not v:
             x = 0
             y = 0

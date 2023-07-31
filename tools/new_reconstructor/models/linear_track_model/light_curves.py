@@ -36,7 +36,12 @@ class LightCurve(FormPrototype):
     def get_lc(self, delta_k, k0, const_storage):
         raise NotImplementedError("This light curve is not implemented")
 
-    def postprocess(self, delta_k, k0, ax, trace, pmt):
+    def postprocess_plot(self, delta_k, k0, ax, trace, pmt, actual_x=None):
+        if actual_x is None:
+            actual_x = delta_k+k0
+        self._postprocess(delta_k, k0, ax, trace, pmt, actual_x)
+
+    def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
         pass
 
 class ConstantLC(LightCurve):
@@ -44,10 +49,10 @@ class ConstantLC(LightCurve):
     def get_lc(self, delta_k, k0, const_storage):
         return self.E0("E0", const_storage)
 
-    def postprocess(self, delta_k, k0, ax, trace, pmt):
+    def _postprocess(self, delta_k, k0, ax, trace, pmt,actual_x):
         print(trace)
         e0 = trace.posterior["E0"].median()
-        ax.hlines(e0, k0+delta_k[0], k0+delta_k[-1], **HLINE_STYLES[pmt[0]])
+        ax.hlines(e0, actual_x[0], actual_x[-1], **HLINE_STYLES[pmt[0]])
 
 class LinearLC(LightCurve):
     TAU = DistributionField("normal", mu=0, sigma=1.0)
@@ -58,13 +63,13 @@ class LinearLC(LightCurve):
         e0 = self.E0("E0", const_storage)
         return e0*(1+delta_k/tau)
 
-    def postprocess(self, delta_k, k0, ax, trace, pmt):
+    def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
         tau = float(trace.posterior["τ_LC"].median())
         e0 = float(trace.posterior["E0"].median())
         # coeff = float(trace.posterior["K_LC"].median())
         # offset = float(trace.posterior["B_LC"].median())
 
-        ax.plot(delta_k+k0, e0*(1+delta_k/tau), **PLOT_STYLES[pmt[0]])
+        ax.plot(actual_x, e0*(1+delta_k/tau), **PLOT_STYLES[pmt[0]])
 
 class GaussianLC(LightCurve):
     E0 = E0_field()
@@ -78,12 +83,12 @@ class GaussianLC(LightCurve):
         tau = self.tau("τ_LC", const_storage)
         return e0 * pm.math.exp(-(delta_k-mu_k0)**2/(2*tau**2))
 
-    def postprocess(self, delta_k, k0, ax, trace, pmt):
+    def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
         print(trace)
         e0 = float(trace.posterior["E0"].median())
         mu_k0 = float(trace.posterior["mu_LC_k0"].median())
         tau = float(trace.posterior["τ_LC"].median())
-        ax.plot(delta_k+k0, e0*np.exp(-(delta_k-mu_k0)**2/(2*tau**2)), **PLOT_STYLES[pmt[0]])
+        ax.plot(actual_x, e0*np.exp(-(delta_k-mu_k0)**2/(2*tau**2)), **PLOT_STYLES[pmt[0]])
 
 
 class ExponentialLC(LightCurve):
@@ -95,10 +100,10 @@ class ExponentialLC(LightCurve):
         e0 = self.E0("E0", const_storage)
         return e0*pm.math.exp(delta_k/tau)
 
-    def postprocess(self, delta_k, k0, ax, trace, pmt):
+    def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
         e0 = float(trace.posterior["E0"].median())
         tau = float(trace.posterior["τ_LC"].median())
-        ax.plot(delta_k+k0, e0*np.exp(delta_k/tau), **PLOT_STYLES[pmt[0]])
+        ax.plot(actual_x, e0*np.exp(delta_k/tau), **PLOT_STYLES[pmt[0]])
 
 
 # class TriangularLC(LightCurve):

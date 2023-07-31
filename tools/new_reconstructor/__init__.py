@@ -320,10 +320,11 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
 
             identifier = f"{self._filelist[self.pointer]}_{pmt[0]}"
 
-            observed = np.array(self._loaded_data0)
-            start, end = cutter.cut(cut_workon(observed, pmt))
+            observed = np.array(self._loaded_data0), np.array(self._loaded_ut0)
+            start, end = cutter.cut(cut_workon(observed[0], pmt))
+            print("CUTTER_WORK",cutter, start,end)
             broken = self.track_plotter.get_broken()
-            sampler = model_wrapper.get_pymc_model(observed, start, end, broken, pmt)
+            sampler = model_wrapper.get_pymc_model(observed, start, end, broken, pmt, self)
             sampler.sample(**sampler_params)
             self._traces[identifier] = sampler
             self.redraw_traces()
@@ -391,7 +392,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             if label:
                 trace = self._traces[label].idata
                 axs = arviz.plot_trace(trace).flatten()
-                print(axs)
+                #print(axs)
                 fig = axs[0].get_figure()
                 fig.canvas.manager.set_window_title(f'Trace {label}')
                 for ax in axs:

@@ -16,7 +16,7 @@ def wrap_normal(*args, **kwargs):
     :param kwargs:
     :return:
     '''
-    sigma0 = pm.HalfNormal('Sigma0', 1.)
+    sigma0 = pm.Exponential('Sigma0', 1.)
     add_kwarg(kwargs, "sigma", sigma0)
     return pm.Normal(*args, **kwargs)
 

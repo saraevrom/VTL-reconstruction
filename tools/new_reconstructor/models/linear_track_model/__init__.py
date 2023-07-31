@@ -44,7 +44,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
     Phi0 = DistributionField("uniform", lower=-180.0, upper=180.0)
     LC = PassthroughField(LC_Alter)
 
-    def generate_pymc_model(self, observed, cut_start, cut_end, broken, pmt) -> ModelWithParameters:
+    def generate_pymc_model(self, observed, cut_start, cut_end, broken, pmt, reconstructor_main) -> ModelWithParameters:
         with pm.Model() as model:
             consts = dict()
             k_start = cut_start
@@ -79,7 +79,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
             dX = u * pm.math.cos(phi0)
             dY = u * pm.math.sin(phi0)
             intensity = lc * ensquared_energy_avg(pixel_xs, pixel_ys, dX, dY, X, Y, sigmaPSF)
-            obs = observed[k_start:k_end]
+            obs = observed[0][k_start:k_end]
             observed_var = self.final_distribution('OBSERVED', mu=intensity,
                                                    observed=obs[:, alive])
         return ModelWithParameters(model, {
@@ -129,6 +129,6 @@ class LinearTrackModel(ReconstructionModelWrapper):
         kk = np.arange(k_start, k_end)
         k0 = model_params.parameters["k0"]
         delta_k = kk - k0
-        self.LC.postprocess(delta_k, k0, ax, trace, model_params.pmt)
+        self.LC.postprocess_plot(delta_k, k0, ax, trace, model_params.pmt)
 
 LINEAR_TRACK_FORM = LinearTrackModel()

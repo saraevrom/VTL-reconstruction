@@ -6,6 +6,7 @@ from common_forms import Sampler
 from .cutters import RangeCutter, WholeCutter, ThresholdCutter
 from .models import ModelSelect
 
+
 @kwarg_builder(RangeCutter)
 class RangeSelect(FormNode):
     DISPLAY_NAME = get_locale("reconstruction.form.cutter.range")

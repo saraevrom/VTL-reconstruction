@@ -6,9 +6,13 @@ from vtl_common.localized_GUI import GridPlotter
 from vtl_common.parameters import HALF_PIXELS, PIXEL_SIZE, HALF_GAP_SIZE
 from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 
-from tools.orientation.orientation.stellar_math import radec_to_eci, eci_to_ocef
-from tools.orientation.orientation.stellar_math import ocef_to_detector_plane, unixtime_to_era, rotate_yz
-from tools.orientation.orientation.stellar_math import ocef_to_altaz
+# from tools.orientation.orientation.stellar_math import radec_to_eci, eci_to_ocef
+# from tools.orientation.orientation.stellar_math import ocef_to_detector_plane, unixtime_to_era, rotate_yz
+# from tools.orientation.orientation.stellar_math import ocef_to_altaz
+
+from fixed_rotator.astro_math import radec_to_eci, eci_to_ocef, ocef_to_detector_plane, unixtime_to_era, Quaternion
+from fixed_rotator.astro_math import ocef_to_altaz, radec_to_ocef
+
 
 SPAN = HALF_PIXELS*PIXEL_SIZE+HALF_GAP_SIZE
 NA_TEXT = "N/A"+"\n"*4
@@ -20,10 +24,7 @@ def _set_mask(patch, value):
         patch.set_alpha(0.5)
 
 
-def radec_to_ocef(ra, dec, lat, lon, self_rotation, era, f):
-    x_eci, y_eci, z_eci = radec_to_eci(ra, dec)
-    x_ocef, y_ocef, z_ocef = eci_to_ocef(x_eci, y_eci, z_eci, era, lat, lon)
-    return rotate_yz(x_ocef, y_ocef, z_ocef, self_rotation)
+
 
 
 class HighlightingPlotter(GridPlotter):
@@ -73,12 +74,9 @@ class HighlightingPlotter(GridPlotter):
                 self_rotation = orientation["SELF_ROTATION"] * np.pi / 180
                 f = orientation["FOCAL_DISTANCE"]
 
-                # x_eci, y_eci, z_eci = radec_to_eci(ra, dec)
-                # x_ocef, y_ocef, z_ocef = eci_to_ocef(x_eci, y_eci, z_eci, era, lat, lon)
-                # x_ocef, y_ocef, z_ocef = rotate_yz(x_ocef, y_ocef, z_ocef, self_rotation)
-                # x, y, v = ocef_to_detector_plane(x_ocef, y_ocef, z_ocef, f)
-                x_ocef, y_ocef, z_ocef = radec_to_ocef(ra, dec, v_lat, v_lon, self_rotation, era, f)
-                x, y, v = ocef_to_detector_plane(x_ocef, y_ocef, z_ocef, f)
+                v_ocef = radec_to_ocef(ra, dec, v_lat, v_lon, self_rotation, era)
+                xy, v = ocef_to_detector_plane(v_ocef, f)
+                x,y = xy.x, xy.y
 
                 if v:
                     self._not_visible.set_visible(False)
@@ -96,12 +94,12 @@ class HighlightingPlotter(GridPlotter):
                 psi = np.arctan2(y, x)*180/np.pi
                 s += f"ψ [°]: {round(psi, 2)}\n"
 
-                x_obs, y_obs, z_obs = radec_to_ocef(ra, dec,
-                                                   MAIN_LATITUDE*np.pi/180,
-                                                   MAIN_LONGITUDE*np.pi/180,
-                                                   0.0, era, f)
+                v_obs = radec_to_ocef(ra, dec,
+                                       MAIN_LATITUDE*np.pi/180,
+                                       MAIN_LONGITUDE*np.pi/180,
+                                       0.0, era)
 
-                alt, az = ocef_to_altaz(x_obs, y_obs, z_obs)
+                alt, az = ocef_to_altaz(v_obs)
                 alt *= 180/np.pi
                 az *= 180/np.pi
 

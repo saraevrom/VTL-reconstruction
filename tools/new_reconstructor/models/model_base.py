@@ -1,4 +1,5 @@
 import inspect
+from pprint import pprint
 
 import numpy as np
 import pymc as pm
@@ -61,6 +62,10 @@ class ModelWithParameters(object):
         self.idata = None
         self.parent = None
         self.consts = consts
+        print("PARAMETERS SET")
+        pprint(parameters)
+        print("CONSTANTS")
+        pprint(consts)
 
     def sample(self, *args, **kwargs):
         with self.model:
@@ -90,7 +95,7 @@ class ReconstructionModelWrapper(FormPrototype):
     def get_form_result(self):
         return self
 
-    def generate_pymc_model(self, observed, cut_start, cut_end, broken, pmt) -> ModelWithParameters:
+    def generate_pymc_model(self, observed, cut_start, cut_end, broken, pmt, reconstructor_main) -> ModelWithParameters:
         raise NotImplementedError("Cannot get model")
 
     @staticmethod
@@ -98,9 +103,9 @@ class ReconstructionModelWrapper(FormPrototype):
         mask = pmt_break_mask(pmt)
         return np.logical_or(mask, broken)
 
-    def get_pymc_model(self, observed, cut_start, cut_end, broken, pmt):
+    def get_pymc_model(self, observed, cut_start, cut_end, broken, pmt, reconstructor_main):
         b = self.process_mask(broken, pmt)
-        res = self.generate_pymc_model(observed, cut_start, cut_end, b, pmt)
+        res = self.generate_pymc_model(observed, cut_start, cut_end, b, pmt, reconstructor_main)
         res.pmt = pmt
         res.parent = self
         return res

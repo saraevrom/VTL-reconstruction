@@ -20,6 +20,15 @@ def create_coord_mesh(T, t_off=0):
                 result_t[k,i,j] = k+t_off
     return result_x, result_y, result_t
 
+@nb.njit(cache=True)
+def create_temporal_part(T, t_start, src):
+    result_t = np.zeros(shape=(T, 16, 16))
+
+    for k in range(T):
+        for i in range(16):
+            for j in range(16):
+                result_t[k,i,j] = src[k+t_start]
+    return result_t
 
 def d_erf(dX, scale, pixel_size=1.0):
     return pm.math.erf((dX + 0.5*pixel_size) / scale) - pm.math.erf((dX - 0.5*pixel_size) / scale)

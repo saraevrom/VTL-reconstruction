@@ -10,10 +10,16 @@ class WholeCutter(Cutter):
     def cut(self, plot_data):
         return 0, plot_data.shape[0]
 
+    def __repr__(self):
+        return "Cut[all]"
+
 class RangeCutter(Cutter):
     def __init__(self, start, end):
         self.start = start
         self.end = end
+
+    def __repr__(self):
+        return f"Cut[{self.start}, {self.end})"
 
     def cut(self, plot_data):
         if self.end >= 0:
@@ -43,6 +49,9 @@ def find_last_trigger(curve, thresh):
 class ThresholdCutter(Cutter):
     def __init__(self, threshold):
         self.threshold = threshold
+
+    def __repr__(self):
+        return f"Cut[>{self.threshold}]"
 
     def cut(self, plot_data):
         lightcurve = np.max(plot_data, axis=(1,2))

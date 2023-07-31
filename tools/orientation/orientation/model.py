@@ -2,9 +2,11 @@ import numpy as np
 import pymc as pm
 import pytensor.tensor as pt
 
-from tools.orientation.orientation.stellar_math import unixtime_to_era
-from .stellar_tensor_math import eci_to_ocef_pt, ocef_to_detector_plane_pt, rotate_yz_pt, ecef_to_ocef_pt
-from .stellar_tensor_math import ocef_to_altaz_pt
+# from .stellar_tensor_math import eci_to_ocef_pt, ocef_to_detector_plane_pt, rotate_yz_pt, ecef_to_ocef_pt
+# from .stellar_tensor_math import ocef_to_altaz_pt
+from fixed_rotator import eci_to_ocef, ocef_to_detector_plane, Quaternion, ecef_to_ocef, Vector3, altaz_to_ocef
+from fixed_rotator import ocef_to_altaz, unixtime_to_era
+
 from utils import binsearch_tgt
 from .time_interval import TimeRange
 from .database_reader import StarEntry
@@ -118,13 +120,12 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
 
         for star in stars:
             star:StarEntry
-            x_eci, y_eci, z_eci = star.get_eci()
+            #x_eci, y_eci, z_eci = star.get_eci()
+            eci = Vector3(*star.get_eci())
             energy = star.energy_u()
-            x_ocef, y_ocef, z_ocef = eci_to_ocef_pt(x_eci, y_eci, z_eci, eras,
-                                                    lat=view_latitude * np.pi / 180,
-                                                    lon=view_longitude * np.pi / 180)
-            x_ocef, y_ocef, z_ocef = rotate_yz_pt(x_ocef, y_ocef, z_ocef, self_rotation * np.pi / 180)
-            x_pdf, y_pdf, v = ocef_to_detector_plane_pt(x_ocef, y_ocef, z_ocef, focal_distance)
+            eci2ocef = eci_to_ocef(eras, lat=view_latitude * np.pi / 180, lon=view_longitude * np.pi / 180)
+            eci2ocef = Quaternion.rotate_yz(self_rotation * np.pi / 180, backend=pt)*eci2ocef
+            x_pdf, y_pdf, v = ocef_to_detector_plane(eci2ocef*eci, focal_distance)
             x_pdf = pt.expand_dims(x_pdf, (1, 2))
             y_pdf = pt.expand_dims(y_pdf, (1, 2))
             v = pt.expand_dims(v, (1, 2))
@@ -147,14 +148,10 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         x_view_ecef = pt.cos(view_lon_rad)*pt.cos(view_lat_rad)
         y_view_ecef = pt.sin(view_lon_rad)*pt.cos(view_lat_rad)
         z_view_ecef = pt.sin(view_lat_rad)
+        view_ecef = Vector3(x_view_ecef, y_view_ecef, z_view_ecef)
 
-        x_view_ocef, y_view_ocef, z_view_ocef = ecef_to_ocef_pt(x_view_ecef, y_view_ecef, z_view_ecef,
-                                                                MAIN_LATITUDE * np.pi / 180, MAIN_LONGITUDE * np.pi / 180)
-
-        # view_azimuth = pm.Deterministic("AZ", pt.arctan2(y_view_ocef,z_view_ocef)*180/np.pi)
-        # hor = pt.sqrt(y_view_ocef**2+z_view_ocef**2)
-        # view_alt = pm.Deterministic("ALT",np.arctan(x_view_ocef/hor)*180/np.pi)
-        view_alt, view_az = ocef_to_altaz_pt(x_view_ocef, y_view_ocef, z_view_ocef)
+        ecef2ocef = ecef_to_ocef(MAIN_LATITUDE * np.pi / 180, MAIN_LONGITUDE * np.pi / 180)
+        view_alt, view_az = ocef_to_altaz(ecef2ocef*view_ecef)
         view_azimuth = pm.Deterministic("AZ", view_az*180/np.pi)
         view_altangle = pm.Deterministic("ALT", view_alt*180/np.pi)
 
