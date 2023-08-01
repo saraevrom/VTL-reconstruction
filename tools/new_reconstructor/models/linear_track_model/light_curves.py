@@ -1,5 +1,6 @@
 import numpy as np
 import pymc as pm
+import pytensor.tensor as pt
 
 from ..model_base import FormPrototype
 from ..form_prototypes import DistributionField
@@ -106,6 +107,20 @@ class ExponentialLC(LightCurve):
         ax.plot(actual_x, e0*np.exp(delta_k/tau), **PLOT_STYLES[pmt[0]])
 
 
+class CandleLC(LightCurve):
+    E0 = E0_field()
+    tau_left = tau_field()
+    tau_right = tau_field()
+
+    def get_lc(self, delta_k, k0, const_storage):
+        tau1 = self.tau_left("τ_L")
+        tau2 = self.tau_right("τ_R")
+        mu_k0 = DistributionField("normal", mu=0, sigma=1.0)
+        mu = pm.Deterministic("mu_LC", k0 + mu_k0)  # Maximum position from start of frame
+        e0 = self.E0("E0", const_storage)
+        lpart = e0*pm.math.exp(delta_k/tau1)
+        rpart = e0*(1 - delta_k/tau2)
+
 # class TriangularLC(LightCurve):
 #     E_max = E0_field()
 #     E_start = E0_field()
@@ -121,9 +136,11 @@ class ExponentialLC(LightCurve):
 #         return e0 * pm.math.exp(-(delta_k-mu_k0)**2/(2*sigma**2))
 
 
-class LC_Alter(AlternatingNode):
-    DISPLAY_NAME = "LC"
-    SEL__const = ConstantLC().generate_subform()
-    SEL__linear = LinearLC().generate_subform()
-    SEL__gauss = GaussianLC().generate_subform()
-    SEL__exp = ExponentialLC().generate_subform()
+def create_lc_alter():
+    class LC_Alter(AlternatingNode):
+        DISPLAY_NAME = "LC"
+        SEL__const = ConstantLC().generate_subform()
+        SEL__linear = LinearLC().generate_subform()
+        SEL__gauss = GaussianLC().generate_subform()
+        SEL__exp = ExponentialLC().generate_subform()
+    return LC_Alter

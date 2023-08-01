@@ -4,7 +4,7 @@ import pytensor.tensor as pt
 
 from ..model_base import ModelWithParameters, ReconstructionModelWrapper
 from ..form_prototypes import DistributionField, PassthroughField
-from .light_curves import LC_Alter
+from .light_curves import create_lc_alter
 from vtl_common.parameters import PIXEL_SIZE, HALF_GAP_SIZE, HALF_PIXELS
 from common_functions import create_coord_mesh, ensquared_energy_avg
 
@@ -42,7 +42,7 @@ class LinearTrackModel(ReconstructionModelWrapper):
     accel = DistributionField("const", 0.0)
     U0 = DistributionField("uniform", lower=0.05, upper=0.5)
     Phi0 = DistributionField("uniform", lower=-180.0, upper=180.0)
-    LC = PassthroughField(LC_Alter)
+    LC = PassthroughField(create_lc_alter)
 
     def generate_pymc_model(self, observed, cut_start, cut_end, broken, pmt, reconstructor_main) -> ModelWithParameters:
         with pm.Model() as model:

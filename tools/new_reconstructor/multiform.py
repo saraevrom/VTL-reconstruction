@@ -33,14 +33,14 @@ class FormUnit(tk.Frame):
 
 
 class Multiform(tk.Frame):
-    def __init__(self, master, form_conf_cls):
+    def __init__(self, master, form_conf_cls_creator):
         super().__init__(master)
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True)
         self._tabs = []
 
         for tab in TABS:
-            tab_frame = FormUnit(self, form_conf_cls, protection=(tab != "M"))
+            tab_frame = FormUnit(self, form_conf_cls_creator(), protection=(tab != "M"))
             self.notebook.add(tab_frame, text=tab)
             self._tabs.append(tab_frame)
 

@@ -6,7 +6,7 @@ from vtl_common.common_GUI.tk_forms import TkDictForm
 
 from ..model_base import ModelWithParameters, ReconstructionModelWrapper
 from ..form_prototypes import DistributionField, PassthroughField
-from ..linear_track_model.light_curves import LC_Alter
+from ..linear_track_model.light_curves import create_lc_alter
 from ..linear_track_model import x0_from_pmt, y0_from_pmt
 from vtl_common.parameters import PIXEL_SIZE, HALF_GAP_SIZE, HALF_PIXELS, MAIN_LATITUDE,MAIN_LONGITUDE
 from common_functions import create_coord_mesh, ensquared_energy_full, create_temporal_part
@@ -35,7 +35,7 @@ class SpatialTrackModel(ReconstructionModelWrapper):
     V0 = DistributionField("normal", mu=0.05, sigma=5)
     dec_deg = DistributionField("const", 33.0)
     ra_deg = DistributionField("const", 112.0)
-    LC = PassthroughField(LC_Alter)
+    LC = PassthroughField(create_lc_alter)
     distance0 = DistributionField("uniform", lower=70, upper=100)
     # x_pdm0 = DistributionField("uniform", lower=-SPAN, upper=SPAN)
     # y_pdm0 = DistributionField("uniform", lower=-SPAN, upper=SPAN)

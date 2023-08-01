@@ -5,11 +5,11 @@ from .distribution_parameter import DistBuilder
 
 
 class PassthroughField(FieldPrototype):
-    def __init__(self, required_class):
-        self.req_class = required_class
+    def __init__(self, required_class_creator):
+        self.req_class_creator = required_class_creator
 
     def generate(self, display_name):
-        return self.req_class
+        return self.req_class_creator()
 
 class BasicField(FieldPrototype):
     def __init__(self, req_type, default_value):

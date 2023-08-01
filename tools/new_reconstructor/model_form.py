@@ -4,7 +4,7 @@ from vtl_common.common_GUI.tk_forms_assist.factory import kwarg_builder
 from vtl_common.localization import get_locale
 from common_forms import Sampler
 from .cutters import RangeCutter, WholeCutter, ThresholdCutter
-from .models import ModelSelect
+from .models import create_selector
 
 
 @kwarg_builder(RangeCutter)
@@ -42,7 +42,10 @@ class CutterSelection(AlternatingNode):
 
 
 
-class ReconstructionParameters(FormNode):
-    FIELD__cutter = CutterSelection
-    FIELD__sampler = Sampler
-    FIELD__model = ModelSelect
+def create_reco_params():
+    class ReconstructionParameters(FormNode):
+        FIELD__cutter = CutterSelection
+        FIELD__sampler = Sampler
+        FIELD__model = create_selector()
+
+    return ReconstructionParameters

@@ -27,7 +27,7 @@ from ..tool_base import ToolBase
 from .orientation_pointing_form import OrientationParametersForm
 from .marked_plotter import NA_TEXT
 from .multiform import Multiform
-from .model_form import ReconstructionParameters
+from .model_form import create_reco_params
 from .models.model_base import ReconstructionModelWrapper, ModelWithParameters
 from .cutters import Cutter
 from .selection_dialog import SelectionDialog, CheckListDialog
@@ -141,8 +141,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.track_plotter.pack(fill="both", expand=True)
         PopupPlotable.__init__(self, self.track_plotter)
 
-
-        self.mod_notebook = Multiform(rpanel, ReconstructionParameters)
+        self.mod_notebook = Multiform(rpanel, create_reco_params)
         self.control_panel = ButtonPanel(rpanel)
         self.control_panel.pack(side="top", fill="x")
         self.control_panel.add_button(get_locale("reconstruction.btn.load"), self.on_load, 0)
@@ -317,7 +316,9 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             selected = formdata[pmt[0]]
             cutter: Cutter = selected["cutter"]
             sampler_params = selected["sampler"]
+            print("SAMPLER PARAMS", sampler_params)
             model_wrapper: ReconstructionModelWrapper = selected["model"]
+            print("FORMDATA", formdata)
 
             identifier = f"{self._filelist[self.pointer]}_{pmt[0]}"
 

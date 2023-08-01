@@ -77,6 +77,9 @@ class HighlightingPlotter(GridPlotter):
                 v_ocef = radec_to_ocef(ra, dec, v_lat, v_lon, self_rotation, era)
                 xy, v = ocef_to_detector_plane(v_ocef, f)
                 x,y = xy.x, xy.y
+                print(self._origin)
+                x1 = x-self._origin[0]
+                y1 = y-self._origin[1]
 
                 if v:
                     self._not_visible.set_visible(False)
@@ -92,7 +95,10 @@ class HighlightingPlotter(GridPlotter):
 
 
                 psi = np.arctan2(y, x)*180/np.pi
+                psi1 = np.arctan2(y1, x1)*180/np.pi
                 s += f"ψ [°]: {round(psi, 2)}\n"
+                s += f"ψ (relative) [°]: {round(psi1, 2)}\n"
+
 
                 v_obs = radec_to_ocef(ra, dec,
                                        MAIN_LATITUDE*np.pi/180,
@@ -124,6 +130,8 @@ class HighlightingPlotter(GridPlotter):
         self.draw()
 
     def set_origin(self, x, y, k0=None, view_enable=False):
+        x = float(x)
+        y = float(y)
         self._origin = (x, y)
         if k0 is not None:
             self._pointer_time_index = int(k0)
