@@ -78,9 +78,9 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             point0 = detector_plane_to_ocef_f(pdm0, f)*dist
 
             x0,y0,z0 = point0.unpack()
-            pm.Deterministic("x0_dev", x0)
-            pm.Deterministic("y0_dev", y0)
-            pm.Deterministic("z0_dev", z0)
+            pm.Deterministic("z0_dev", x0)
+            pm.Deterministic("x0_dev", y0)
+            pm.Deterministic("y0_dev", z0)
 
             # x0 = self.x0("x0", consts)
             # y0 = self.y0("y0", consts)
@@ -108,9 +108,9 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             dev2surf = eci2dev.inverse()*eci2surf
             surf_point0 = dev2surf*point0
             s0x, s0y,s0z = surf_point0.unpack()
-            pm.Deterministic("x0_surf", s0x)
-            pm.Deterministic("y0_surf", s0y)
-            pm.Deterministic("z0_surf", s0z)
+            pm.Deterministic("z0_surf", s0x)
+            pm.Deterministic("x0_surf", s0y)
+            pm.Deterministic("y0_surf", s0z)
             #surf_3d = dev2surf*dev_3d
 
             # dev_3d = surf2dev*surf_3d
@@ -152,9 +152,9 @@ class SpatialTrackModel(ReconstructionModelWrapper):
         UT0 = params["UT0"]
         f = params["f"]
         self_rotation = params["self_rotation"]
-        x0 = float(model_params.get_estimation("x0_dev"))
-        y0 = float(model_params.get_estimation("y0_dev"))
-        z0 = float(model_params.get_estimation("z0_dev"))
+        x0 = float(model_params.get_estimation("z0_dev"))
+        y0 = float(model_params.get_estimation("x0_dev"))
+        z0 = float(model_params.get_estimation("y0_dev"))
         ra = float(model_params.get_estimation("RA"))*np.pi/180
         dec = float(model_params.get_estimation("DEC"))*np.pi/180
         v0 = float(model_params.get_estimation("V0"))
