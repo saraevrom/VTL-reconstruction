@@ -37,7 +37,7 @@ class FormPrototype(object):
 
             def get_data(self_internal):
                 data = super().get_data()
-                print("DATA", data)
+                #print("DATA", data)
                 self.set_params(data)
                 return self.get_form_result()
 

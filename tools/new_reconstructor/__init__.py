@@ -316,9 +316,9 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             selected = formdata[pmt[0]]
             cutter: Cutter = selected["cutter"]
             sampler_params = selected["sampler"]
-            print("SAMPLER PARAMS", sampler_params)
+            #print("SAMPLER PARAMS", sampler_params)
             model_wrapper: ReconstructionModelWrapper = selected["model"]
-            print("FORMDATA", formdata)
+            #print("FORMDATA", formdata)
 
             identifier = f"{self._filelist[self.pointer]}_{pmt[0]}"
 
