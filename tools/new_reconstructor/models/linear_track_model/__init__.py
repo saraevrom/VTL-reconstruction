@@ -129,6 +129,6 @@ class LinearTrackModel(ReconstructionModelWrapper):
         kk = np.arange(k_start, k_end)
         k0 = model_params.parameters["k0"]
         delta_k = kk - k0
-        self.LC.postprocess_plot(delta_k, k0, ax, trace, model_params.pmt)
+        self.LC.postprocess_plot(delta_k, k0, ax, model_params, model_params.pmt)
 
 LINEAR_TRACK_FORM = LinearTrackModel()

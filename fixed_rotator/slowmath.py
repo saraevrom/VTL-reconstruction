@@ -666,7 +666,7 @@ class Quaternion(object):
         Get inverted quaternion.
         :return: inverted quaternion
         '''
-        return self.conj() / self.length()
+        return self.conj() / self.dot(self)
 
     def rotate_vector(self, vec: Vector3):
         '''

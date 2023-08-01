@@ -52,7 +52,7 @@ class ConstantLC(LightCurve):
 
     def _postprocess(self, delta_k, k0, ax, trace, pmt,actual_x):
         print(trace)
-        e0 = trace.posterior["E0"].median()
+        e0 = trace.get_estimation("E0")
         ax.hlines(e0, actual_x[0], actual_x[-1], **HLINE_STYLES[pmt[0]])
 
 class LinearLC(LightCurve):
@@ -65,10 +65,10 @@ class LinearLC(LightCurve):
         return e0*(1+delta_k/tau)
 
     def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
-        tau = float(trace.posterior["τ_LC"].median())
-        e0 = float(trace.posterior["E0"].median())
-        # coeff = float(trace.posterior["K_LC"].median())
-        # offset = float(trace.posterior["B_LC"].median())
+        tau = trace.get_estimation("τ_LC")
+        e0 = trace.get_estimation("E0")
+        # coeff = trace.get_estimation("K_LC")
+        # offset = trace.get_estimation("B_LC")
 
         ax.plot(actual_x, e0*(1+delta_k/tau), **PLOT_STYLES[pmt[0]])
 
@@ -86,9 +86,9 @@ class GaussianLC(LightCurve):
 
     def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
         print(trace)
-        e0 = float(trace.posterior["E0"].median())
-        mu_k0 = float(trace.posterior["mu_LC_k0"].median())
-        tau = float(trace.posterior["τ_LC"].median())
+        e0 = trace.get_estimation("E0")
+        mu_k0 = trace.get_estimation("mu_LC_k0")
+        tau = trace.get_estimation("τ_LC")
         ax.plot(actual_x, e0*np.exp(-(delta_k-mu_k0)**2/(2*tau**2)), **PLOT_STYLES[pmt[0]])
 
 
@@ -102,24 +102,39 @@ class ExponentialLC(LightCurve):
         return e0*pm.math.exp(delta_k/tau)
 
     def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
-        e0 = float(trace.posterior["E0"].median())
-        tau = float(trace.posterior["τ_LC"].median())
+        e0 = trace.get_estimation("E0")
+        tau = trace.get_estimation("τ_LC")
         ax.plot(actual_x, e0*np.exp(delta_k/tau), **PLOT_STYLES[pmt[0]])
 
 
-class CandleLC(LightCurve):
+class ExpolinearLC(LightCurve):
     E0 = E0_field()
     tau_left = tau_field()
     tau_right = tau_field()
+    mu_k0 = DistributionField("normal", mu=0, sigma=1.0)
 
     def get_lc(self, delta_k, k0, const_storage):
         tau1 = self.tau_left("τ_L")
         tau2 = self.tau_right("τ_R")
-        mu_k0 = DistributionField("normal", mu=0, sigma=1.0)
+        mu_k0 = self.mu_k0("mu_LC_k0", const_storage)
         mu = pm.Deterministic("mu_LC", k0 + mu_k0)  # Maximum position from start of frame
         e0 = self.E0("E0", const_storage)
-        lpart = e0*pm.math.exp(delta_k/tau1)
-        rpart = e0*(1 - delta_k/tau2)
+        delta_k_centered = (delta_k-mu_k0)
+        lpart = e0*pm.math.exp(delta_k_centered/tau1)
+        rpart = e0*(1 - delta_k_centered/tau2)
+        return pt.switch(delta_k_centered < 0, lpart, rpart)
+
+    def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
+        tau1 = trace.get_estimation("τ_L")
+        tau2 = trace.get_estimation("τ_R")
+        mu_k0 = trace.get_estimation("mu_LC_k0")
+        delta_k_centered = delta_k - mu_k0
+        e0 = trace.get_estimation("E0")
+        lpart = e0 * np.exp(delta_k_centered / tau1)
+        rpart = e0 * (1 - delta_k_centered / tau2)
+        res = np.where(delta_k_centered < 0, lpart, rpart)
+        ax.plot(actual_x, res, **PLOT_STYLES[pmt[0]])
+
 
 # class TriangularLC(LightCurve):
 #     E_max = E0_field()
@@ -143,4 +158,6 @@ def create_lc_alter():
         SEL__linear = LinearLC().generate_subform()
         SEL__gauss = GaussianLC().generate_subform()
         SEL__exp = ExponentialLC().generate_subform()
+        SEL__expolinear = ExpolinearLC().generate_subform()
+
     return LC_Alter

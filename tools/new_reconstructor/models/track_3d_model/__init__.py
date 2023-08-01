@@ -187,6 +187,6 @@ class SpatialTrackModel(ReconstructionModelWrapper):
 
         kk = np.arange(k_start, k_end)
         k0 = model_params.parameters["k0"]
-        self.LC.postprocess_plot(t-UT0, UT0, ax, trace, model_params.pmt, actual_x=kk)
+        self.LC.postprocess_plot(t-UT0, UT0, ax, model_params, model_params.pmt, actual_x=kk)
 
 TRACK_3d_FORM = SpatialTrackModel()

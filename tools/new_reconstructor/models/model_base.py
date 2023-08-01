@@ -78,9 +78,11 @@ class ModelWithParameters(object):
     def postprocess(self, axes):
         self.parent.postprocess(axes, self)
 
-    def get_estimation(self, key):
+    def get_estimation(self, key, use_float=True):
         if key in self.consts:
             return self.consts[key]
+        elif use_float:
+            return float(self.idata.posterior[key].median())
         else:
             return self.idata.posterior[key].median()
 
