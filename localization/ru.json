@@ -25,6 +25,7 @@
   "reconstruction.btn.save_params": "Сохранить параметры",
   "reconstruction.btn.load_params": "Загрузить параметры",
   "reconstruction.btn.copy_datetime": "Скопировать дату/время",
+  "reconstruction.btn.pairplot": "Построить парное распределение",
 
 
   "reconstruction.sample": "Сэмплирование",

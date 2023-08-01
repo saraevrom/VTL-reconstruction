@@ -157,15 +157,21 @@ class SpatialTrackModel(ReconstructionModelWrapper):
         z0 = float(model_params.get_estimation("z0_dev"))
         ra = float(model_params.get_estimation("RA"))*np.pi/180
         dec = float(model_params.get_estimation("DEC"))*np.pi/180
-        u0 = float(model_params.get_estimation("U0"))
+        v0 = float(model_params.get_estimation("V0"))
         pixel_uts = params["times"]
 
         point_0 = Vector3(x0, y0, z0)
-        vel_dev = -radec_to_ocef(ra, dec, v_lat, v_lon, self_rotation, unixtime_to_era(pixel_uts)) * u0
+        vel_dev = -radec_to_ocef(ra, dec, v_lat, v_lon, self_rotation, unixtime_to_era(pixel_uts)) * v0
         dev_3d = point_0 + vel_dev * (pixel_uts - UT0)
 
-
         fs_2d, visible = ocef_to_detector_plane(dev_3d, f)
+
+        X0 = float(model_params.get_estimation("X0"))
+        Y0 = float(model_params.get_estimation("Y0"))
+
+        k0 = model_params.parameters["k0"]
+        plotter.set_origin(X0, Y0, k0)
+
         fs_x, fs_y = fs_2d.unpack()
         print("OVERLAY DIM",fs_x.shape[0])
         print("OVERLAY RANGE",k_start, k_end)

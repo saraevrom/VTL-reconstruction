@@ -25,6 +25,7 @@
   "reconstruction.btn.save_params": "Save parameters",
   "reconstruction.btn.load_params": "Load parameters",
   "reconstruction.btn.copy_datetime": "Copy datetime",
+  "reconstruction.btn.pairplot": "Plot pair",
 
   "reconstruction.sample": "Sampling",
   "reconstruction.sample.draws": "Draws",

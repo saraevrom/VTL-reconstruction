@@ -83,6 +83,9 @@ class ModelWithParameters(object):
         else:
             return self.idata.posterior[key].median()
 
+    def get_posterior_variables(self):
+        return list(self.idata.posterior.keys())
+
 
 class ReconstructionModelWrapper(FormPrototype):
     '''

@@ -28,9 +28,9 @@ from .orientation_pointing_form import OrientationParametersForm
 from .marked_plotter import NA_TEXT
 from .multiform import Multiform
 from .model_form import ReconstructionParameters
-from .models.model_base import ReconstructionModelWrapper
+from .models.model_base import ReconstructionModelWrapper, ModelWithParameters
 from .cutters import Cutter
-from .selection_dialog import SelectionDialog
+from .selection_dialog import SelectionDialog, CheckListDialog
 from common_functions import ut0_to_copystr
 
 ORIENTATION_WORKSPACE = Workspace("orientation")
@@ -149,9 +149,10 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.control_panel.add_button(get_locale("reconstruction.btn.prev"), self.on_prev, 1)
         self.control_panel.add_button(get_locale("reconstruction.btn.next"), self.on_next, 1)
         self.control_panel.add_button(get_locale("reconstruction.btn.reconstruct"), self.on_reconstruct, 2)
-        self.control_panel.add_button(get_locale("reconstruction.btn.trace"), self.on_show_trace, 3)
         self.control_panel.add_button(get_locale("reconstruction.btn.clear_traces"), self.on_traces_clear, 3)
         self.control_panel.add_button(get_locale("reconstruction.btn.copy_datetime"), self.on_copy_time, 3)
+        self.control_panel.add_button(get_locale("reconstruction.btn.trace"), self.on_show_trace, 4)
+        self.control_panel.add_button(get_locale("reconstruction.btn.pairplot"), self.on_pair_plot, 4)
         # self.control_panel.add_button(get_locale("reconstruction.btn.reset_individual"),
         #                               self.mod_notebook.reset_individuals, 5)
 
@@ -384,21 +385,47 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
                     obj = self._traces[identifier]
                     obj.reconstruction_overlay(self.track_plotter)
 
-    def on_show_trace(self):
+
+    def ask_trace(self):
         options_to_select = self._traces.keys()
         if options_to_select:
             selector = SelectionDialog(self, options_to_select)
-            label = selector.result
-            if label:
-                trace = self._traces[label].idata
-                axs = arviz.plot_trace(trace).flatten()
-                #print(axs)
-                fig = axs[0].get_figure()
-                fig.canvas.manager.set_window_title(f'Trace {label}')
-                for ax in axs:
-                    fig = ax.get_figure()
-                    fig.tight_layout()
-                fig = axs[0].get_figure()
+            return selector.result
+        return None
+
+    def on_show_trace(self):
+        label = self.ask_trace()
+        if label:
+            trace = self._traces[label].idata
+            axs = arviz.plot_trace(trace).flatten()
+            #print(axs)
+            fig = axs[0].get_figure()
+            fig.canvas.manager.set_window_title(f'Trace {label}')
+            for ax in axs:
+                fig = ax.get_figure()
+                fig.tight_layout()
+            fig = axs[0].get_figure()
+            fig.show()
+
+    def on_pair_plot(self):
+        label = self.ask_trace()
+        if label:
+            reco_result:ModelWithParameters = self._traces[label]
+            trace = reco_result.idata
+            needed_keys = reco_result.get_posterior_variables()
+            selected_vars = CheckListDialog(self, needed_keys)
+            if selected_vars.result:
+                print("KEYS:", needed_keys)
+                axs = arviz.plot_pair(trace, group="posterior", var_names=selected_vars.result)
+                print(axs)
+                if isinstance(axs,np.ndarray):
+                    fig = axs[0][0].get_figure()
+                else:
+                    fig = axs.get_figure()
+                fig.canvas.manager.set_window_title(f'Dual {label}')
+                # for ax in axs:
+                #     fig = ax.get_figure()
+                #     fig.tight_layout()
                 fig.show()
 
     def show_event(self):
