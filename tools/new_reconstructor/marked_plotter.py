@@ -11,7 +11,7 @@ from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 # from tools.orientation.orientation.stellar_math import ocef_to_altaz
 
 from fixed_rotator.astro_math import radec_to_eci, eci_to_ocef, ocef_to_detector_plane, unixtime_to_era, Quaternion
-from fixed_rotator.astro_math import ocef_to_altaz, radec_to_ocef
+from fixed_rotator.astro_math import ocef_to_altaz, radec_to_ocef, Vector3
 
 
 SPAN = HALF_PIXELS*PIXEL_SIZE+HALF_GAP_SIZE
@@ -78,6 +78,8 @@ class HighlightingPlotter(GridPlotter):
                 xy, v = ocef_to_detector_plane(v_ocef, f)
                 x,y = xy.x, xy.y
                 print(self._origin)
+
+
                 x1 = x-self._origin[0]
                 y1 = y-self._origin[1]
 
@@ -93,10 +95,16 @@ class HighlightingPlotter(GridPlotter):
                     angsep = 180-angsep
                 s += f"γ [°]: {round(angsep,2)}\n"
 
+                origin_dir = Vector3(self._origin[0], self._origin[1], f).normalized()
+                tgtdir = Vector3(x, y, f).normalized()
+                if not v:
+                    tgtdir = -tgtdir
+                angsep1 = np.arccos(tgtdir.dot(origin_dir))*180/np.pi
 
                 psi = np.arctan2(y, x)*180/np.pi
                 psi1 = np.arctan2(y1, x1)*180/np.pi
                 s += f"ψ [°]: {round(psi, 2)}\n"
+                s += f"γ (relative) [°]: {round(angsep1, 2)}\n"
                 s += f"ψ (relative) [°]: {round(psi1, 2)}\n"
 
 

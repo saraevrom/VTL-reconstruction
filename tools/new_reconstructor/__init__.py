@@ -309,6 +309,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         formdata = self.mod_notebook.get_data()
         for mode in self.get_pmt_modes():
             self._reconstruct(formdata, mode)
+        self.on_orientation_update()
 
     def _reconstruct(self, formdata, pmt):
         try:
