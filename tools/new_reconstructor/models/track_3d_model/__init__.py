@@ -178,7 +178,7 @@ class SpatialTrackModel(ReconstructionModelWrapper):
         r = model_params.get_estimation("SigmaPSF")*PIXEL_SIZE
         plotter.plot_lines(fs_x, fs_y, "-o", color="red", linewidth=r*2)
 
-    def postprocess(self, ax, model_params: ModelWithParameters):
+    def postprocess(self, ax, model_params: ModelWithParameters, actual_x):
         trace = model_params.idata
         k_start = model_params.parameters["k_start"]
         k_end = model_params.parameters["k_end"]
@@ -187,6 +187,6 @@ class SpatialTrackModel(ReconstructionModelWrapper):
 
         kk = np.arange(k_start, k_end)
         k0 = model_params.parameters["k0"]
-        self.LC.postprocess_plot(t-UT0, UT0, ax, model_params, model_params.pmt, actual_x=kk)
+        self.LC.postprocess_plot(t-UT0, UT0, ax, model_params, model_params.pmt, actual_x=actual_x[kk])
 
 TRACK_3d_FORM = SpatialTrackModel()

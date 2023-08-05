@@ -254,7 +254,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.redraw_traces()
         self.redraw_tracks()
 
-    def on_var_invalidate(self):
+    def on_var_invalidate(self,*args):
         self.invalidate_popup_plot()
 
     def get_pmt_modes(self):
@@ -387,7 +387,6 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
 
     def plot_overlay(self, axes_proxy):
         if self._loaded_data0 is not None:
-            self.track_plotter.clear_added_patches()
             modes = self.get_pmt_modes()
             for mode in modes:
                 identifier = f"{self._filelist[self.pointer]}_{mode[0]}"
@@ -396,6 +395,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
                     obj.reconstruction_overlay(axes_proxy)
 
     def redraw_tracks(self):
+        self.track_plotter.clear_added_patches()
         self.plot_overlay(self.track_plotter)
 
     def postprocess_auxgrid(self, axes):
@@ -500,4 +500,8 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             identifier = f"{self._filelist[self.pointer]}_{mode[0]}"
             if identifier in self._traces.keys():
                 obj = self._traces[identifier]
-                obj.postprocess(axes)
+                if self._use_time.get():
+                    xs = self._loaded_ut0 - self._loaded_ut0[0]
+                else:
+                    xs = np.arange(self._loaded_data0.shape[0])
+                obj.postprocess(axes, xs)

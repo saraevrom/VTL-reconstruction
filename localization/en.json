@@ -9,6 +9,7 @@
   "reconstruction.tl": "A (Top left)",
   "reconstruction.tr": "B (Top right)",
   "reconstruction.all": "M (Use entire elementary cell)",
+  "reconstruction.use_seconds": "Use seconds in plots",
 
   "reconstruction.filetypes.data": "Data source",
 

@@ -9,6 +9,7 @@
   "reconstruction.tl": "A (Верхний левый)",
   "reconstruction.tr": "B (Верхний правый)",
   "reconstruction.all": "M (Вся ячейка)",
+  "reconstruction.use_seconds": "Секунды в графиках",
 
   "reconstruction.filetypes.data": "Данные",
 

@@ -122,13 +122,13 @@ class LinearTrackModel(ReconstructionModelWrapper):
         plotter.plot_arrow(x_start, y_start, dx, dy, color="red", width=r, length_includes_head=True)
         plotter.set_origin(x0, y0, k0)
 
-    def postprocess(self, ax, model_params: ModelWithParameters):
+    def postprocess(self, ax, model_params: ModelWithParameters, actual_x):
         trace = model_params.idata
         k_start = model_params.parameters["k_start"]
         k_end = model_params.parameters["k_end"]
         kk = np.arange(k_start, k_end)
         k0 = model_params.parameters["k0"]
         delta_k = kk - k0
-        self.LC.postprocess_plot(delta_k, k0, ax, model_params, model_params.pmt)
+        self.LC.postprocess_plot(delta_k, k0, ax, model_params, model_params.pmt, actual_x=actual_x[kk])
 
 LINEAR_TRACK_FORM = LinearTrackModel()

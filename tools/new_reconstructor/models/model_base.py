@@ -75,8 +75,8 @@ class ModelWithParameters(object):
     def reconstruction_overlay(self, plotter):
         self.parent.reconstruction_overlay(plotter, self)
 
-    def postprocess(self, axes):
-        self.parent.postprocess(axes, self)
+    def postprocess(self, axes, actual_x):
+        self.parent.postprocess(axes, self, actual_x)
 
     def get_estimation(self, key, use_float=True):
         if key in self.consts:
@@ -119,5 +119,5 @@ class ReconstructionModelWrapper(FormPrototype):
     def reconstruction_overlay(self, plotter, model_params: ModelWithParameters):
         pass
 
-    def postprocess(self, ax, model_params: ModelWithParameters):
+    def postprocess(self, ax, model_params: ModelWithParameters, actual_x):
         pass
