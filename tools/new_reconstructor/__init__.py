@@ -170,6 +170,9 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self._pmt_m = tk.IntVar(self)
         self._pmt_m.trace("w", self.on_vars_change)
 
+        self._use_time = tk.IntVar(self)
+        self._use_time.trace("w", self.on_var_invalidate)
+
         self._split_chains = tk.IntVar()
         self._split_chains.trace("w", self.on_vars_change)
 
@@ -186,6 +189,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
 
         self.mod_notebook.pack(side="bottom", fill="both", expand=True)
 
+        create_checkbox(rpanel, "reconstruction.use_seconds", self._use_time)
         create_checkbox(rpanel, "reconstruction.form.split_chains", self._split_chains)
         #create_checkbox(rpanel, "reconstruction.propagate_formchange", self._propagate_formchange)
         create_checkbox(rpanel, "reconstruction.all", self._pmt_m)
@@ -249,6 +253,9 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.mod_notebook.propagate_master_change = bool(self._propagate_formchange.get())
         self.redraw_traces()
         self.redraw_tracks()
+
+    def on_var_invalidate(self):
+        self.invalidate_popup_plot()
 
     def get_pmt_modes(self):
         if self._pmt_m.get():
@@ -481,7 +488,10 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
     def get_plot_data(self):
         if self._loaded_data0 is None:
             return None
-        xs = np.arange(self._loaded_data0.shape[0])
+        if self._use_time.get():
+            xs = self._loaded_ut0 - self._loaded_ut0[0]
+        else:
+            xs = np.arange(self._loaded_data0.shape[0])
         return xs, self._loaded_data0
 
     def postprocess_plot(self, axes):
