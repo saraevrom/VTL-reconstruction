@@ -15,11 +15,11 @@ def tau_field():
     return DistributionField("halfnormal", sigma=1.0)
 
 HLINE_STYLES = {
-    "A" : dict(linestyles="solid", color=LC_COLOR, label="LC_A"),
-    "B" : dict(linestyles="dashed", color=LC_COLOR, label="LC_B"),
-    "C" : dict(linestyles="dashdot", color=LC_COLOR, label="LC_C"),
-    "D" : dict(linestyles="dotted", color=LC_COLOR, label="LC_D"),
-    "M" : dict(linestyles="solid", color="#555555", label="LC_all")
+    "A" : dict(linestyles="dashed", color="red", label="LC_A"),
+    "B" : dict(linestyles="dashed", color="green", label="LC_B"),
+    "C" : dict(linestyles="dashed", color="blue", label="LC_C"),
+    "D" : dict(linestyles="dashed", color="yellow", label="LC_D"),
+    "M" : dict(linestyles="dashed", color="#0000AA", label="LC_all")
 }
 
 def _mod_style(s):
