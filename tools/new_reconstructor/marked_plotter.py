@@ -27,6 +27,7 @@ def _set_mask(patch, value):
 class PlotProxy(object):
     def __init__(self, axes):
         self.axes = axes
+        self.__proxy_origin = None
 
     def append_patch(self, patch):
         pass
@@ -49,6 +50,9 @@ class PlotProxy(object):
         pass
 
 
+ARROW_ARGS = dict(width=0.2, length_includes_head=True, edgecolor="green", facecolor="green")
+
+
 class HighlightingPlotter(GridPlotter, PlotProxy):
     def __init__(self, master):
         GridPlotter.__init__(self,master)
@@ -66,8 +70,7 @@ class HighlightingPlotter(GridPlotter, PlotProxy):
         self._origin = (0, 0)  # Where to start draw arrow for Direction pick
         self._point_target = (1, 1)
         self._pointer_time_index = 0  # Frame from start for ut0
-        self._direction_arrow = self.axes.arrow(0, 0, 1, 1, width=0.2, length_includes_head=True,
-                                                edgecolor="green", facecolor="green")
+        self._direction_arrow = self.axes.arrow(0, 0, 1, 1, **ARROW_ARGS)
         self._direction_arrow.set_visible(False)
         self._not_visible = self.axes.text(0, 0, "N/V", color="red",ha='center', va='center')
         self._not_visible.set_visible(False)
@@ -202,3 +205,11 @@ class HighlightingPlotter(GridPlotter, PlotProxy):
         _set_mask(self.bottom_right, br.get())
         _set_mask(self.top_left, tl.get())
         _set_mask(self.top_right, tr.get())
+
+    def mirror_arrow_direction(self, proxy:PlotProxy):
+        x0 = self._origin[0]
+        y0 = self._origin[1]
+        x = self._point_target[0]
+        y = self._point_target[1]
+
+        proxy.axes.arrow(x0, y0, x-x0, y-y0, **ARROW_ARGS)

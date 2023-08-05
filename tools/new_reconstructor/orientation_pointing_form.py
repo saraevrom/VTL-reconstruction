@@ -39,7 +39,7 @@ class RightAnscension(AlternatingNode):
 
 class OrientedPoint(FormNode):
     DISPLAY_NAME = ""
-    FIELD__show = create_value_field(BoolNode, get_locale("reconstruction.direction.show"), False)
+    #FIELD__show = create_value_field(BoolNode, get_locale("reconstruction.direction.show"), False)
     #FIELD__orientation = OrientationParametersForm
     FIELD__ra = RightAnscension
     FIELD__dec = Declination

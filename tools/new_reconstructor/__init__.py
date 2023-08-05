@@ -34,6 +34,7 @@ from .selection_dialog import SelectionDialog, CheckListDialog
 from common_functions import ut0_to_copystr
 
 ORIENTATION_WORKSPACE = Workspace("orientation")
+SKY_CATALOG = Workspace("sky_catalog")
 TRACKS_WORKSPACE = Workspace("tracks")
 RECO_PARAMETERS_WORKSPACE = Workspace("reconstruction_parameters")
 
@@ -124,8 +125,17 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         angshow = tk.Label(lpanel, textvariable=self._pointparams, anchor="w")
         angshow.pack(side="top", fill="both", anchor="nw")
 
+        self._show_point_var = tk.IntVar(self)
+        self._show_point_var.trace("w", self.on_orientation_update)
+        show_check = tk.Checkbutton(lpanel, text=get_locale("reconstruction.direction.show"),
+                                    variable=self._show_point_var, anchor="w")
+        show_check.pack(side="top", fill="x")
         self.point_parser = OrientedPoint()
-        self.point_form = TkDictForm(lpanel, self.point_parser.get_configuration_root(), False)
+        self.point_form = SaveableTkDictForm(lpanel, self.point_parser.get_configuration_root(), False,
+                                             file_asker=SKY_CATALOG,
+                                             save_label="form.point.save",
+                                             load_label="form.point.load"
+                                             )
         self.point_form.pack(side="top", fill="x")
         self.point_form.on_commit = self.on_orientation_update
 
@@ -133,7 +143,9 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.orientation_form = SaveableTkDictForm(lpanel, self.orientation_parser.get_configuration_root(), False,
                                                    file_asker=ORIENTATION_WORKSPACE,
                                                    save_label="form.orientation.save",
-                                                   load_label="form.orientation.load")
+                                                   load_label="form.orientation.load",
+                                                   optional=True,
+                                                   option_default_visible=False)
         self.orientation_form.pack(side="top", fill="x")
         self.orientation_form.on_commit = self.on_orientation_update
 
@@ -233,12 +245,13 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.redraw_traces()
         self.redraw_tracks()
 
-    def on_orientation_update(self):
+    def on_orientation_update(self, *args):
         if self._loaded_ut0 is not None:
             formdata_orient = self.orientation_form.get_values()
             formdata = self.point_form.get_values()
             self.point_parser.parse_formdata(formdata)
             formdata = self.point_parser.get_data()
+            formdata["show"] = self._show_point_var.get()
             formdata["orientation"] = formdata_orient
             self._pointparams.set(self.track_plotter.set_point_direction(formdata, self._loaded_ut0))
         else:
@@ -399,7 +412,9 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.plot_overlay(self.track_plotter)
 
     def postprocess_auxgrid(self, axes):
-        self.plot_overlay(PlotProxy(axes))
+        proxy = PlotProxy(axes)
+        self.plot_overlay(proxy)
+        self.track_plotter.mirror_arrow_direction(proxy)
 
     def ask_trace(self):
         options_to_select = self._traces.keys()
