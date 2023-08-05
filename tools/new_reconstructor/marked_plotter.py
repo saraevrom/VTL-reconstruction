@@ -211,5 +211,5 @@ class HighlightingPlotter(GridPlotter, PlotProxy):
         y0 = self._origin[1]
         x = self._point_target[0]
         y = self._point_target[1]
-
-        proxy.axes.arrow(x0, y0, x-x0, y-y0, **ARROW_ARGS)
+        if self._direction_arrow.get_visible():
+            proxy.axes.arrow(x0, y0, x-x0, y-y0, **ARROW_ARGS)

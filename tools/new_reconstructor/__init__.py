@@ -413,8 +413,8 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
 
     def postprocess_auxgrid(self, axes):
         proxy = PlotProxy(axes)
-        self.plot_overlay(proxy)
         self.track_plotter.mirror_arrow_direction(proxy)
+        self.plot_overlay(proxy)
 
     def ask_trace(self):
         options_to_select = self._traces.keys()
