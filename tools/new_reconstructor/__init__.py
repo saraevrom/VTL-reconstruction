@@ -139,7 +139,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
 
         self.track_plotter = HighlightingPlotter(self)
         self.track_plotter.pack(fill="both", expand=True)
-        PopupPlotable.__init__(self, self.track_plotter)
+        PopupPlotable.__init__(self, self.track_plotter, True)
 
         self.mod_notebook = Multiform(rpanel, create_reco_params)
         self.control_panel = ButtonPanel(rpanel)
@@ -310,6 +310,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         for mode in self.get_pmt_modes():
             self._reconstruct(formdata, mode)
         self.on_orientation_update()
+        self.invalidate_popup_plot()
 
     def _reconstruct(self, formdata, pmt):
         try:
@@ -445,6 +446,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             self._show_h5(self.loaded_file, filename)
 
         self.redraw_tracks()
+        self.invalidate_popup_plot()
 
 
     def on_load(self):
