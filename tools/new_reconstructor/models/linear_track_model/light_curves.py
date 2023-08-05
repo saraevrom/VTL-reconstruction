@@ -53,7 +53,9 @@ class ConstantLC(LightCurve):
     def _postprocess(self, delta_k, k0, ax, trace, pmt,actual_x):
         print(trace)
         e0 = trace.get_estimation("E0")
-        ax.hlines(e0, actual_x[0], actual_x[-1], **HLINE_STYLES[pmt[0]])
+        ax.plot([actual_x[0], actual_x[-1]], [e0, e0], **PLOT_STYLES[pmt[0]])
+        # hline1, = ax.hlines(e0, actual_x[0], actual_x[-1], **HLINE_STYLES[pmt[0]])
+        # hline1.set_label(HLINE_STYLES[pmt[0]]["label"][:])
 
 class LinearLC(LightCurve):
     TAU = DistributionField("normal", mu=0, sigma=1.0)

@@ -25,7 +25,7 @@ from .marked_plotter import HighlightingPlotter
 from .orientation_pointing_form import OrientedPoint
 from ..tool_base import ToolBase
 from .orientation_pointing_form import OrientationParametersForm
-from .marked_plotter import NA_TEXT
+from .marked_plotter import NA_TEXT, PlotProxy
 from .multiform import Multiform
 from .model_form import create_reco_params
 from .models.model_base import ReconstructionModelWrapper, ModelWithParameters
@@ -378,7 +378,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.pointer += 1
         self.show_event()
 
-    def redraw_tracks(self):
+    def plot_overlay(self, axes_proxy):
         if self._loaded_data0 is not None:
             self.track_plotter.clear_added_patches()
             modes = self.get_pmt_modes()
@@ -386,8 +386,13 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
                 identifier = f"{self._filelist[self.pointer]}_{mode[0]}"
                 if identifier in self._traces.keys():
                     obj = self._traces[identifier]
-                    obj.reconstruction_overlay(self.track_plotter)
+                    obj.reconstruction_overlay(axes_proxy)
 
+    def redraw_tracks(self):
+        self.plot_overlay(self.track_plotter)
+
+    def postprocess_auxgrid(self, axes):
+        self.plot_overlay(PlotProxy(axes))
 
     def ask_trace(self):
         options_to_select = self._traces.keys()

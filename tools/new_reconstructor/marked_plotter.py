@@ -24,12 +24,35 @@ def _set_mask(patch, value):
         patch.set_alpha(0.5)
 
 
+class PlotProxy(object):
+    def __init__(self, axes):
+        self.axes = axes
+
+    def append_patch(self, patch):
+        pass
+
+    def plot_lines(self, *args, **kwargs):
+        lines = self.axes.plot(*args,**kwargs)
+        for l in lines:
+            self.append_patch(l)
+
+    def plot_arrow(self, *args, **kwargs):
+        arrow = self.axes.arrow(*args, **kwargs)
+        self.append_patch(arrow)
+
+    def plot_circle(self, *args, **kwargs):
+        patch = plt.Circle(*args, **kwargs)
+        self.axes.add_patch(patch)
+        self.append_patch(patch)
+
+    def set_origin(self, x, y, k0=None, view_enable=False):
+        pass
 
 
-
-class HighlightingPlotter(GridPlotter):
+class HighlightingPlotter(GridPlotter, PlotProxy):
     def __init__(self, master):
-        super().__init__(master)
+        GridPlotter.__init__(self,master)
+        PlotProxy.__init__(self,self.axes)
         self.bottom_left = Rectangle((0, 0), -SPAN, -SPAN, color="gray", alpha=0.0)
         self.bottom_right = Rectangle((0, 0), SPAN, -SPAN, color="gray", alpha=0.0)
         self.top_left = Rectangle((0, 0), -SPAN, SPAN, color="gray", alpha=0.0)
@@ -159,18 +182,7 @@ class HighlightingPlotter(GridPlotter):
             self._direction_arrow.set_visible(True)
         self.draw()
 
-    def plot_lines(self, *args, **kwargs):
-        lines = self.axes.plot(*args,**kwargs)
-        for l in lines:
-            self.added_patches.append(l)
-
-    def plot_arrow(self, *args, **kwargs):
-        arrow = self.axes.arrow(*args, **kwargs)
-        self.added_patches.append(arrow)
-
-    def plot_circle(self, *args, **kwargs):
-        patch = plt.Circle(*args, **kwargs)
-        self.axes.add_patch(patch)
+    def append_patch(self, patch):
         self.added_patches.append(patch)
 
     def clear_added_patches(self):
