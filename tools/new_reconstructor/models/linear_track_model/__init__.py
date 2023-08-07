@@ -11,6 +11,13 @@ from common_functions import create_coord_mesh, ensquared_energy_avg
 SPAN = HALF_GAP_SIZE + HALF_PIXELS*PIXEL_SIZE
 
 
+def resample(src:np.ndarray,change_mul):
+    old_len = src.shape[0]
+    new_len = int(old_len*change_mul)
+    sampler = np.linspace(0, old_len-1, new_len)
+    #print(sampler)
+    return np.interp(sampler, np.arange(old_len), src)
+
 def x0_from_pmt(pmt):
     low = HALF_GAP_SIZE
     high = -HALF_GAP_SIZE
@@ -88,6 +95,9 @@ class LinearTrackModel(ReconstructionModelWrapper):
             "k_end": k_end,
         }, consts)
 
+    def ask_phi0(self, model_params: ModelWithParameters):
+        return model_params.get_estimation("Phi0")
+
     def reconstruction_overlay(self, plotter, model_params: ModelWithParameters):
         print("DRAW_CALL")
         i_trace = model_params.idata
@@ -129,6 +139,9 @@ class LinearTrackModel(ReconstructionModelWrapper):
         kk = np.arange(k_start, k_end)
         k0 = model_params.parameters["k0"]
         delta_k = kk - k0
-        self.LC.postprocess_plot(delta_k, k0, ax, model_params, model_params.pmt, actual_x=actual_x[kk])
+        actual_x1 = resample(actual_x[kk], 10)
+        delta_k1 = resample(delta_k,10)
+        return self.LC.postprocess_plot(delta_k1, k0, ax, model_params, model_params.pmt, actual_x=actual_x1)
+
 
 LINEAR_TRACK_FORM = LinearTrackModel()

@@ -13,7 +13,7 @@ import pandas as pd
 import  arviz
 
 
-from vtl_common.localized_GUI.signal_plotter import PopupPlotable
+from vtl_common.localized_GUI.signal_plotter import PopupPlotable, ChoosablePlotter
 from vtl_common.common_GUI.tk_forms import TkDictForm
 from vtl_common.localized_GUI.tk_forms import SaveableTkDictForm
 from vtl_common.localization import get_locale
@@ -149,7 +149,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.orientation_form.pack(side="top", fill="x")
         self.orientation_form.on_commit = self.on_orientation_update
 
-        self.track_plotter = HighlightingPlotter(self)
+        self.track_plotter = HighlightingPlotter(self, self)
         self.track_plotter.pack(fill="both", expand=True)
         PopupPlotable.__init__(self, self.track_plotter, True)
 
@@ -398,14 +398,19 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.pointer += 1
         self.show_event()
 
-    def plot_overlay(self, axes_proxy):
+    def get_current_reconstruction(self):
         if self._loaded_data0 is not None:
             modes = self.get_pmt_modes()
             for mode in modes:
                 identifier = f"{self._filelist[self.pointer]}_{mode[0]}"
                 if identifier in self._traces.keys():
-                    obj = self._traces[identifier]
-                    obj.reconstruction_overlay(axes_proxy)
+                    return self._traces[identifier]
+        return None
+
+    def plot_overlay(self, axes_proxy):
+        obj = self.get_current_reconstruction()
+        if obj:
+            obj.reconstruction_overlay(axes_proxy)
 
     def redraw_tracks(self):
         self.track_plotter.clear_added_patches()
@@ -519,4 +524,14 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
                     xs = self._loaded_ut0 - self._loaded_ut0[0]
                 else:
                     xs = np.arange(self._loaded_data0.shape[0])
-                obj.postprocess(axes, xs)
+                res_xs, res_ys = obj.postprocess(axes, xs)
+                self.plot_add_attribute("lc_xs", res_xs)
+                self.plot_add_attribute("lc_ys", res_ys)
+
+    def postprocess_plot_export(self, h5file:h5py.File, caller_window:ChoosablePlotter):
+        if hasattr(caller_window, "lc_xs"):
+            lc_xs = caller_window.lc_xs
+            h5file.create_dataset("lc_xs", data=lc_xs)
+        if hasattr(caller_window, "lc_ys"):
+            lc_ys = caller_window.lc_ys
+            h5file.create_dataset("lc_ys", data=lc_ys)

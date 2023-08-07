@@ -54,9 +54,10 @@ ARROW_ARGS = dict(width=0.2, length_includes_head=True, edgecolor="green", facec
 
 
 class HighlightingPlotter(GridPlotter, PlotProxy):
-    def __init__(self, master):
+    def __init__(self, master, controller):
         GridPlotter.__init__(self,master)
         PlotProxy.__init__(self,self.axes)
+        self._controller = controller
         self.bottom_left = Rectangle((0, 0), -SPAN, -SPAN, color="gray", alpha=0.0)
         self.bottom_right = Rectangle((0, 0), SPAN, -SPAN, color="gray", alpha=0.0)
         self.top_left = Rectangle((0, 0), -SPAN, SPAN, color="gray", alpha=0.0)
@@ -132,7 +133,11 @@ class HighlightingPlotter(GridPlotter, PlotProxy):
                 s += f"ψ [°]: {round(psi, 2)}\n"
                 s += f"γ (relative) [°]: {round(angsep1, 2)}\n"
                 s += f"ψ (relative) [°]: {round(psi1, 2)}\n"
-
+                reco = self._controller.get_current_reconstruction()
+                if reco:
+                    phi0 = reco.ask_parameter("phi0")
+                    if phi0 is not None:
+                        s += f"Δψ [°]: {round((180+psi1)-phi0,2)}\n"
 
                 v_obs = radec_to_ocef(ra, dec,
                                        MAIN_LATITUDE*np.pi/180,

@@ -76,7 +76,7 @@ class ModelWithParameters(object):
         self.parent.reconstruction_overlay(plotter, self)
 
     def postprocess(self, axes, actual_x):
-        self.parent.postprocess(axes, self, actual_x)
+        return self.parent.postprocess(axes, self, actual_x)
 
     def get_estimation(self, key, use_float=True):
         if key in self.consts:
@@ -88,6 +88,12 @@ class ModelWithParameters(object):
 
     def get_posterior_variables(self):
         return list(self.idata.posterior.keys())
+
+    def ask_parameter(self, parameter_name):
+        callable_name = f"ask_{parameter_name}"
+        if hasattr(self.parent, callable_name):
+            return getattr(self.parent,callable_name)(self)
+        return None
 
 
 class ReconstructionModelWrapper(FormPrototype):

@@ -40,7 +40,7 @@ class LightCurve(FormPrototype):
     def postprocess_plot(self, delta_k, k0, ax, trace, pmt, actual_x=None):
         if actual_x is None:
             actual_x = delta_k+k0
-        self._postprocess(delta_k, k0, ax, trace, pmt, actual_x)
+        return actual_x, self._postprocess(delta_k, k0, ax, trace, pmt, actual_x)
 
     def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
         pass
@@ -53,7 +53,7 @@ class ConstantLC(LightCurve):
     def _postprocess(self, delta_k, k0, ax, trace, pmt,actual_x):
         print(trace)
         e0 = trace.get_estimation("E0")
-        ax.plot([actual_x[0], actual_x[-1]], [e0, e0], **PLOT_STYLES[pmt[0]])
+        return ax.plot([actual_x[0], actual_x[-1]], [e0, e0], **PLOT_STYLES[pmt[0]])
         # hline1, = ax.hlines(e0, actual_x[0], actual_x[-1], **HLINE_STYLES[pmt[0]])
         # hline1.set_label(HLINE_STYLES[pmt[0]]["label"][:])
 
@@ -71,8 +71,9 @@ class LinearLC(LightCurve):
         e0 = trace.get_estimation("E0")
         # coeff = trace.get_estimation("K_LC")
         # offset = trace.get_estimation("B_LC")
-
-        ax.plot(actual_x, e0*(1+delta_k/tau), **PLOT_STYLES[pmt[0]])
+        ys = e0*(1+delta_k/tau)
+        ax.plot(actual_x, ys, **PLOT_STYLES[pmt[0]])
+        return ys
 
 class GaussianLC(LightCurve):
     E0 = E0_field()
@@ -91,7 +92,9 @@ class GaussianLC(LightCurve):
         e0 = trace.get_estimation("E0")
         mu_k0 = trace.get_estimation("mu_LC_k0")
         tau = trace.get_estimation("τ_LC")
-        ax.plot(actual_x, e0*np.exp(-(delta_k-mu_k0)**2/(2*tau**2)), **PLOT_STYLES[pmt[0]])
+        ys = e0*np.exp(-(delta_k-mu_k0)**2/(2*tau**2))
+        ax.plot(actual_x, ys, **PLOT_STYLES[pmt[0]])
+        return ys
 
 
 class ExponentialLC(LightCurve):
@@ -106,7 +109,9 @@ class ExponentialLC(LightCurve):
     def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
         e0 = trace.get_estimation("E0")
         tau = trace.get_estimation("τ_LC")
-        ax.plot(actual_x, e0*np.exp(delta_k/tau), **PLOT_STYLES[pmt[0]])
+        ys = e0*np.exp(delta_k/tau)
+        ax.plot(actual_x, ys, **PLOT_STYLES[pmt[0]])
+        return ys
 
 
 class ExpolinearLC(LightCurve):
@@ -136,9 +141,10 @@ class ExpolinearLC(LightCurve):
         rpart = e0 * (1 - delta_k_centered / tau2)
         res = np.where(delta_k_centered < 0, lpart, rpart)
         ax.plot(actual_x, res, **PLOT_STYLES[pmt[0]])
+        return res
 
 
-# class TriangularLC(LightCurve):
+    # class TriangularLC(LightCurve):
 #     E_max = E0_field()
 #     E_start = E0_field()
 #     E_end = E0_field()
