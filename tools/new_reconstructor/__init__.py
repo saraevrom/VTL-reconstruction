@@ -399,18 +399,19 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.show_event()
 
     def get_current_reconstruction(self):
+        res = []
         if self._loaded_data0 is not None:
             modes = self.get_pmt_modes()
             for mode in modes:
                 identifier = f"{self._filelist[self.pointer]}_{mode[0]}"
                 if identifier in self._traces.keys():
-                    return self._traces[identifier]
-        return None
+                    res.append((mode[0], self._traces[identifier]))
+        return res
 
     def plot_overlay(self, axes_proxy):
-        obj = self.get_current_reconstruction()
-        if obj:
-            obj.reconstruction_overlay(axes_proxy)
+        objs = self.get_current_reconstruction()
+        for obj in objs:
+            obj[1].reconstruction_overlay(axes_proxy)
 
     def redraw_tracks(self):
         self.track_plotter.clear_added_patches()
@@ -512,26 +513,73 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             xs = self._loaded_ut0 - self._loaded_ut0[0]
         else:
             xs = np.arange(self._loaded_data0.shape[0])
-        return xs, self._loaded_data0
+        aux_data = {
+            "time_s": self._loaded_ut0 - self._loaded_ut0[0]
+        }
+        return xs, self._loaded_data0, aux_data
 
     def postprocess_plot(self, axes):
         modes = self.get_pmt_modes()
+        reco_results = dict()
         for mode in modes:
             identifier = f"{self._filelist[self.pointer]}_{mode[0]}"
             if identifier in self._traces.keys():
+                obj:ModelWithParameters
                 obj = self._traces[identifier]
                 if self._use_time.get():
                     xs = self._loaded_ut0 - self._loaded_ut0[0]
                 else:
                     xs = np.arange(self._loaded_data0.shape[0])
                 res_xs, res_ys = obj.postprocess(axes, xs)
-                self.plot_add_attribute("lc_xs", res_xs)
-                self.plot_add_attribute("lc_ys", res_ys)
+                reco_results[mode[0]] = {
+                    "lc": (res_xs, res_ys),
+                    "summary_pair":obj.get_summary(),
+                    "cut_range":obj.cut_range
+                }
+                # self.plot_add_attribute("lc_xs", res_xs)
+                # self.plot_add_attribute("lc_ys", res_ys)
+                #self.plot_add_attribute("summary_pair", obj.get_summary())
+                #self.plot_add_attribute("cutter_range", obj.cut_range)
+        self.plot_add_attribute("reco_results", reco_results)
 
-    def postprocess_plot_export(self, h5file:h5py.File, caller_window:ChoosablePlotter):
-        if hasattr(caller_window, "lc_xs"):
-            lc_xs = caller_window.lc_xs
-            h5file.create_dataset("lc_xs", data=lc_xs)
-        if hasattr(caller_window, "lc_ys"):
-            lc_ys = caller_window.lc_ys
-            h5file.create_dataset("lc_ys", data=lc_ys)
+
+
+        origin, target = self.track_plotter.get_pointer_data()
+        self.plot_add_attribute("astro_origin", origin)
+        self.plot_add_attribute("astro_target", target)
+
+
+    def postprocess_plot_export(self, h5filename:str, caller_window:ChoosablePlotter):
+
+        if hasattr(caller_window, "reco_results"):
+            reco_results: dict = caller_window.reco_results
+            for mode in reco_results.keys():
+                entry = reco_results[mode]
+                summary:pd.DataFrame
+                consts:dict
+                consts, summary = entry["summary_pair"]
+                reco_group = "RECO_"+mode
+                with h5py.File(h5filename, "a") as h5file:
+                    h5_node = h5file.create_group(reco_group)
+                    res_xs, res_ys = entry["lc"]
+                    start, end = entry["cut_range"]
+                    h5_node.create_dataset("lc_xs", data=res_xs)
+                    h5_node.create_dataset("lc_ys", data=res_ys)
+                    h5_node.attrs["cut_start"] = start
+                    h5_node.attrs["cut_end"] = end
+                    consts_node = h5_node.create_group("consts")
+                    for k in consts.keys():
+                        consts_node.attrs[k] = consts[k]
+                summary.to_hdf(h5filename, key=reco_group+"/summary", mode="a")
+
+        with h5py.File(h5filename, "a") as h5file:
+            if hasattr(caller_window, "astro_origin"):
+                origin = caller_window.astro_origin
+                h5file.attrs["astro_origin_x"] = origin[0]
+                h5file.attrs["astro_origin_y"] = origin[1]
+            if hasattr(caller_window, "astro_target"):
+                target = caller_window.astro_target
+                h5file.attrs["astro_target_x"] = target[0]
+                h5file.attrs["astro_target_y"] = target[1]
+            time_s = caller_window.aux_data["time_s"]
+            h5file.create_dataset("time_s", data=time_s)

@@ -98,6 +98,15 @@ class LinearTrackModel(ReconstructionModelWrapper):
     def ask_phi0(self, model_params: ModelWithParameters):
         return model_params.get_estimation("Phi0")
 
+    def ask_x0(self, model_params: ModelWithParameters):
+        return model_params.get_estimation("X0")
+
+    def ask_y0(self, model_params: ModelWithParameters):
+        return model_params.get_estimation("Y0")
+
+    def ask_sigma_psf(self, model_params:ModelWithParameters):
+        return model_params.get_estimation('SigmaPSF')
+
     def reconstruction_overlay(self, plotter, model_params: ModelWithParameters):
         print("DRAW_CALL")
         i_trace = model_params.idata

@@ -1,6 +1,7 @@
 import inspect
 from pprint import pprint
 
+import arviz as az
 import numpy as np
 import pymc as pm
 from vtl_common.common_GUI.tk_forms_assist import FormNode
@@ -62,6 +63,7 @@ class ModelWithParameters(object):
         self.pmt = None
         self.idata = None
         self.parent = None
+        self.cut_range = None
         self.consts = consts
         print("PARAMETERS SET")
         pprint(parameters)
@@ -95,6 +97,12 @@ class ModelWithParameters(object):
             return getattr(self.parent,callable_name)(self)
         return None
 
+    def get_summary(self):
+        whole_summary = az.summary(self.idata.posterior, stat_focus="median")
+        whole_summary.insert(0, 'parameter', whole_summary.index)
+        whole_summary = whole_summary.reset_index(drop=True)
+        return self.consts.copy(), whole_summary
+
 
 class ReconstructionModelWrapper(FormPrototype):
     '''
@@ -120,6 +128,7 @@ class ReconstructionModelWrapper(FormPrototype):
         res = self.generate_pymc_model(observed, cut_start, cut_end, b, pmt, reconstructor_main)
         res.pmt = pmt
         res.parent = self
+        res.cut_range = cut_start, cut_end
         return res
 
     def reconstruction_overlay(self, plotter, model_params: ModelWithParameters):

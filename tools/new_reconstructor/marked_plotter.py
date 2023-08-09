@@ -133,11 +133,15 @@ class HighlightingPlotter(GridPlotter, PlotProxy):
                 s += f"ψ [°]: {round(psi, 2)}\n"
                 s += f"γ (relative) [°]: {round(angsep1, 2)}\n"
                 s += f"ψ (relative) [°]: {round(psi1, 2)}\n"
-                reco = self._controller.get_current_reconstruction()
-                if reco:
-                    phi0 = reco.ask_parameter("phi0")
+                recos = self._controller.get_current_reconstruction()
+                for reco in recos:
+                    mode, obj = reco
+                    phi0 = obj.ask_parameter("phi0")
+                    delta_psi = round((180+psi1)-phi0,2)
+                    if delta_psi>360:
+                        delta_psi = delta_psi%360
                     if phi0 is not None:
-                        s += f"Δψ [°]: {round((180+psi1)-phi0,2)}\n"
+                        s += f"Δψ ({mode}) [°]: {delta_psi}\n"
 
                 v_obs = radec_to_ocef(ra, dec,
                                        MAIN_LATITUDE*np.pi/180,
@@ -179,6 +183,9 @@ class HighlightingPlotter(GridPlotter, PlotProxy):
     def point_to(self,x,y, view_enable=True):
         self._point_target = (x,y)
         self.update_point_arrow(view_enable)
+
+    def get_pointer_data(self):
+        return self._origin, self._point_target
 
     def update_point_arrow(self, view_enable=False):
         x0 = self._origin[0]
