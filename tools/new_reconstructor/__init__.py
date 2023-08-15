@@ -562,6 +562,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
                 with h5py.File(h5filename, "a") as h5file:
                     h5_node = h5file.create_group(reco_group)
                     res_xs, res_ys = entry["lc"]
+                    print("RES_YS", res_ys)
                     start, end = entry["cut_range"]
                     h5_node.create_dataset("lc_xs", data=res_xs)
                     h5_node.create_dataset("lc_ys", data=res_ys)

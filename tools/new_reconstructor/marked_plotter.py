@@ -140,6 +140,8 @@ class HighlightingPlotter(GridPlotter, PlotProxy):
                     delta_psi = round((180+psi1)-phi0,2)
                     if delta_psi>360:
                         delta_psi = delta_psi%360
+                    if delta_psi>180:
+                        delta_psi -= 360
                     if phi0 is not None:
                         s += f"Δψ ({mode}) [°]: {delta_psi}\n"
 
