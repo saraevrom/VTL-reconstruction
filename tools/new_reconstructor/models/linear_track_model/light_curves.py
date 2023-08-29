@@ -2,7 +2,7 @@ import numpy as np
 import pymc as pm
 import pytensor.tensor as pt
 
-from ..model_base import FormPrototype
+from ..model_base import FormPrototype, create_deterministic
 from ..form_prototypes import DistributionField
 from vtl_common.common_GUI.tk_forms_assist import AlternatingNode
 
@@ -84,7 +84,8 @@ class GaussianLC(LightCurve):
     def get_lc(self, delta_k, k0, const_storage):
         e0 = self.E0("E0", const_storage)
         mu_k0 = self.mu_k0("mu_LC_k0", const_storage)
-        mu = pm.Deterministic("mu_LC", k0+mu_k0)  # Maximum position from start of frame
+        mu = create_deterministic("mu_LC", k0+mu_k0, const_storage)
+        #mu = pm.Deterministic("mu_LC", k0+mu_k0)  # Maximum position from start of frame
         tau = self.tau("τ_LC", const_storage)
         return e0 * pm.math.exp(-(delta_k-mu_k0)**2/(2*tau**2))
 
@@ -125,7 +126,9 @@ class ExpolinearLC(LightCurve):
         tau1 = self.tau_left("τ_L")
         tau2 = self.tau_right("τ_R")
         mu_k0 = self.mu_k0("mu_LC_k0", const_storage)
-        mu = pm.Deterministic("mu_LC", k0 + mu_k0)  # Maximum position from start of frame
+
+        mu = create_deterministic("mu_LC", k0+mu_k0, const_storage)
+        #mu = pm.Deterministic("mu_LC", k0 + mu_k0)  # Maximum position from start of frame
         e0 = self.E0("E0", const_storage)
         delta_k_centered = (delta_k-mu_k0)
         lpart = e0*pm.math.exp(delta_k_centered/tau1)

@@ -8,6 +8,13 @@ from vtl_common.common_GUI.tk_forms_assist import FormNode
 from .form_prototypes import FinalDistributionField
 
 
+def create_deterministic(varname, value, consts):
+    if isinstance(value, float):
+        consts[varname] = value
+        return value
+    else:
+        return pm.Deterministic(varname, value)
+
 def pmt_break_mask(pmt: str):
     res = np.full(shape=(16, 16), fill_value=True)
     if "A" in pmt:

@@ -29,6 +29,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("source_dir", type=str)
 parser.add_argument("dest_dir", type=str)
 parser.add_argument('--stack_plot', action='store_true')
+parser.add_argument('--enable_legend', action='store_true')
 
 def load_conf(srcdir):
     srcfile = os.path.join(srcdir,"config.json")
@@ -305,11 +306,11 @@ if __name__=="__main__":
                             y=y_com, dy=dy,
                             color="green", width=sigma_psf * PIXEL_SIZE/4, length_includes_head=True)
 
-
-            if inv_legend:
-                ax.legend(loc="upper center")
-            else:
-                ax.legend(loc="upper right")
+            if args.enable_legend:
+                if inv_legend:
+                    ax.legend(loc="upper center")
+                else:
+                    ax.legend(loc="upper right")
             postprocess_conf(conf,key,fig,ax)
             fig.tight_layout()
             fig.savefig(os.path.join(pngs, filename[:-3])+".png", dpi=250)

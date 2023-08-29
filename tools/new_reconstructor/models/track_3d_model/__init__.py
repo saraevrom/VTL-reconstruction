@@ -4,7 +4,7 @@ import pytensor.tensor as pt
 from utils import binsearch_tgt
 from vtl_common.common_GUI.tk_forms import TkDictForm
 
-from ..model_base import ModelWithParameters, ReconstructionModelWrapper
+from ..model_base import ModelWithParameters, ReconstructionModelWrapper, create_deterministic
 from ..form_prototypes import DistributionField, PassthroughField
 from ..linear_track_model.light_curves import create_lc_alter
 from ..linear_track_model import x0_from_pmt, y0_from_pmt
@@ -78,9 +78,12 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             point0 = detector_plane_to_ocef_f(pdm0, f)*dist
 
             x0,y0,z0 = point0.unpack()
-            pm.Deterministic("z0_dev", x0)
-            pm.Deterministic("x0_dev", y0)
-            pm.Deterministic("y0_dev", z0)
+            create_deterministic("z0_dev", x0, consts)
+            create_deterministic("x0_dev", y0, consts)
+            create_deterministic("y0_dev", z0, consts)
+            # pm.Deterministic("z0_dev", x0)
+            # pm.Deterministic("x0_dev", y0)
+            # pm.Deterministic("y0_dev", z0)
 
             # x0 = self.x0("x0", consts)
             # y0 = self.y0("y0", consts)
@@ -108,9 +111,13 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             dev2surf = eci2dev.inverse()*eci2surf
             surf_point0 = dev2surf*point0
             s0x, s0y,s0z = surf_point0.unpack()
-            pm.Deterministic("z0_surf", s0x)
-            pm.Deterministic("x0_surf", s0y)
-            pm.Deterministic("y0_surf", s0z)
+
+            create_deterministic("z0_surf", s0x, consts)
+            create_deterministic("x0_surf", s0y, consts)
+            create_deterministic("y0_surf", s0z, consts)
+            # pm.Deterministic("z0_surf", s0x)
+            # pm.Deterministic("x0_surf", s0y)
+            # pm.Deterministic("y0_surf", s0z)
             #surf_3d = dev2surf*dev_3d
 
             # dev_3d = surf2dev*surf_3d
