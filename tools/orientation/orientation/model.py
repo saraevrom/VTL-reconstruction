@@ -125,9 +125,9 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
             energy = star.energy_u()
             eci2ocef = eci_to_ocef(eras, lat=view_latitude * np.pi / 180, lon=view_longitude * np.pi / 180)
             eci2ocef = Quaternion.rotate_yz(self_rotation * np.pi / 180, backend=pt)*eci2ocef
-            x_pdf, y_pdf, v = ocef_to_detector_plane(eci2ocef*eci, focal_distance)
-            x_pdf = pt.expand_dims(x_pdf, (1, 2))
-            y_pdf = pt.expand_dims(y_pdf, (1, 2))
+            pdf_vec, v = ocef_to_detector_plane(eci2ocef*eci, focal_distance)
+            x_pdf = pt.expand_dims(pdf_vec.x, (1, 2))
+            y_pdf = pt.expand_dims(pdf_vec.y, (1, 2))
             v = pt.expand_dims(v, (1, 2))
 
             energy_dist = energy*v*ensquared_energy_full(x_mesh, y_mesh, x_pdf, y_pdf, psf)
@@ -151,10 +151,9 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         view_ecef = Vector3(x_view_ecef, y_view_ecef, z_view_ecef)
 
         ecef2ocef = ecef_to_ocef(MAIN_LATITUDE * np.pi / 180, MAIN_LONGITUDE * np.pi / 180)
-        view_alt, view_az = ocef_to_altaz(ecef2ocef*view_ecef)
+        view_alt, view_az = ocef_to_altaz(ecef2ocef*view_ecef, backend=pt)
         view_azimuth = pm.Deterministic("AZ", view_az*180/np.pi)
         view_altangle = pm.Deterministic("ALT", view_alt*180/np.pi)
-
         alive = np.logical_not(broken)
         broken_model = nonbroken_model[:,alive]
         broken_observed = observed[:,alive]

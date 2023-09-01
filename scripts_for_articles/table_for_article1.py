@@ -55,7 +55,7 @@ if __name__=="__main__":
 
     # Prepare table header
     table = "\\begin{tabular}{|l|*{8}{c|}}\n"
-    table += "Event & LC & UTC & $\\gamma_\\mathrm{sh}$, $\\,^\\circ$ & $\\Delta\\Phi$, $\\,^\\circ$ & $U_0$, px/fr & $A$, px/fr$^2$ & $\\sigma_\\mathrm{psf}$, px & $\\tau$, fr \\\\\n"
+    table += "Event & LC & UTC & ($\\gamma$, $\\gamma_\mathrm{sh}$), $\\,^\\circ$  & $\\alpha$, $\\,^\\circ$ & $\\Delta\\Phi$, $\\,^\\circ$ & $U_0$, px/fr & $\\sigma_\\mathrm{psf}$, px & $\\tau$, fr \\\\\n"
     table += "\\hline\n"
     rows = []
 
@@ -91,9 +91,15 @@ if __name__=="__main__":
                         phi0 = get_parameter_estimation(summary, "Phi0")
                         u0 = get_parameter_estimation(summary, "U0")
                         sigma_psf = get_parameter_estimation(summary, "SigmaPSF")
-                        if "τ_LC" in np.array(summary["parameter"]):
+                        parameters = np.array(summary["parameter"])
+                        print(parameters)
+                        if "τ_LC" in parameters:
                             tau = get_parameter_estimation(summary, "τ_LC")
-                            tau = round(tau,3)
+                            tau = f"{tau:.3f}"
+                        elif "τ_L" in parameters:
+                            tau1 = get_parameter_estimation(summary, "τ_L")
+                            tau2 = get_parameter_estimation(summary, "τ_R")
+                            tau = f"{tau1:.3f}/{tau2:.3f}"
                         else:
                             tau = ""
 
@@ -102,17 +108,32 @@ if __name__=="__main__":
                         dot = (x0*astro_tgt_x+y0*astro_tgt_y+FOCUS**2)
                         norm0 = (x0**2+y0**2+FOCUS**2)**0.5
                         norm_astro = (astro_tgt_x**2+astro_tgt_y**2+FOCUS**2)**0.5
-                        cos_gamma = dot/(norm0*norm_astro)
-                        gamma = np.arccos(cos_gamma)*180/np.pi
-                        gamma = round(gamma,2)
+                        cos_alpha = dot/(norm0*norm_astro)
+                        alpha = np.arccos(cos_alpha) * 180 / np.pi
+                        alpha = round(alpha, 3)
 
-                        delta_phi = phi0-phi_sh
-                        delta_phi = round(delta_phi,2)
-                        u0 = round(u0,3)
-                        sigma_psf = round(sigma_psf,3)
+                        cos_gamma = FOCUS/norm0
+                        gamma = np.arccos(cos_gamma)*180/np.pi
+
+                        cos_gamma_sh = FOCUS/norm_astro
+                        gamma_sh = np.arccos(cos_gamma_sh)*180/np.pi
+
+
+                        delta_phi = phi_sh-phi0
+                        # delta_phi = round(delta_phi,3)
+                        # u0 = round(u0,3)
+                        # sigma_psf = round(sigma_psf,3)
                         utc = conf[filename[:-3]]["utc"]
+                        # gamma = round(gamma,3)
+                        # gamma_sh = round(gamma_sh,3)
+
                         # Add new row
-                        table += f"{event_disp} & {TABLE_MATCH[lc]} & {utc} & {gamma} & {delta_phi} & {u0} & & {sigma_psf} & {tau}\\\\\n"
+                        table += f"{event_disp} & {TABLE_MATCH[lc]} & {utc} & "
+                        table += f"({gamma:.3f},{gamma_sh:.3f}) & {alpha:.3f} & {delta_phi:.3f} & {u0:.3f} & "
+                        table += f"{sigma_psf:.3f} & "
+                        if tau:
+                            table += tau+" "
+                        table += f"\\\\\n"
             table += "\\hline\n"
 
     # Finish table

@@ -41,6 +41,7 @@ def radec_to_eci(ra, dec):
 def eci_to_radec(v:Vector3):
     dec = np.arcsin(v.z)
     ra = np.arctan2(v.y, v.x)
+
     return ra, dec
 
 
@@ -102,7 +103,7 @@ def ocef_to_detector_plane(v_local:Vector3, focal_distance):
     return Vector2(x_p, y_p), v
 
 
-def ocef_to_altaz(v_local:Vector3):
+def ocef_to_altaz(v_local:Vector3, backend=None):
     '''
     Transform direction from OCEF to altitude/azimuth
     :param x_local: x coordinate OCEF
@@ -113,9 +114,11 @@ def ocef_to_altaz(v_local:Vector3):
     x_local = v_local.x
     y_local = v_local.y
     z_local = v_local.z
-    horizontal = np.sqrt(y_local**2 + z_local**2)
-    alt = np.arctan2(x_local, horizontal)
-    az = (np.arctan2(y_local, z_local) + 2*np.pi) % (2*np.pi)
+    if backend is None:
+        backend = np
+    horizontal = backend.sqrt(y_local**2 + z_local**2)
+    alt = backend.arctan2(x_local, horizontal)
+    az = (backend.arctan2(y_local, z_local) + 2*np.pi) % (2*np.pi)
     return alt, az
 
 def altaz_to_ocef(alt, az):
@@ -141,6 +144,11 @@ def radec_to_ocef(ra, dec, lat, lon, self_rotation, era) -> Vector3:
     q_ocef = eci_to_ocef(era, lat, lon)
     return Quaternion.rotate_yz(self_rotation)*q_ocef*v_eci
 
+def ocef_to_radec(ocef:Vector3,lat,lon,self_rotation,era):
+    q = Quaternion.rotate_yz(self_rotation)*eci_to_ocef(era, lat, lon)
+    q_rev = q.inverse()
+    v_eci:Vector3 = q_rev*ocef
+    return eci_to_radec(v_eci)
 
 def ecef_to_ocef(lat, lon, self_rot=0):
     '''

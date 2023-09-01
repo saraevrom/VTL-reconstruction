@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from matplotlib.patches import Rectangle
+
+from fixed_rotator import Vector2
 from vtl_common.localized_GUI import GridPlotter
 from vtl_common.parameters import HALF_PIXELS, PIXEL_SIZE, HALF_GAP_SIZE
 from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
@@ -12,6 +14,7 @@ from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 
 from fixed_rotator.astro_math import radec_to_eci, eci_to_ocef, ocef_to_detector_plane, unixtime_to_era, Quaternion
 from fixed_rotator.astro_math import ocef_to_altaz, radec_to_ocef, Vector3
+from fixed_rotator.astro_math import ocef_to_eci, ocef_to_radec, detector_plane_to_ocef_f
 
 
 SPAN = HALF_PIXELS*PIXEL_SIZE+HALF_GAP_SIZE
@@ -51,6 +54,49 @@ class PlotProxy(object):
 
 
 ARROW_ARGS = dict(width=0.2, length_includes_head=True, edgecolor="green", facecolor="green")
+
+
+def detector_point_to_radec(orientation, direction_ocef, era):
+    v_lat = orientation["VIEW_LATITUDE"] * np.pi / 180
+    v_lon = orientation["VIEW_LONGITUDE"] * np.pi / 180
+    self_rotation = orientation["SELF_ROTATION"] * np.pi / 180
+
+    ra,dec = ocef_to_radec(direction_ocef,v_lat, v_lon,self_rotation,era)
+    return ra,dec
+
+def display_radec(ra,dec, era, orientation):
+    v_lat = orientation["VIEW_LATITUDE"] * np.pi / 180
+    v_lon = orientation["VIEW_LONGITUDE"] * np.pi / 180
+    self_rotation = orientation["SELF_ROTATION"] * np.pi / 180
+    f = orientation["FOCAL_DISTANCE"]
+
+    v_ocef = radec_to_ocef(ra, dec, v_lat, v_lon, self_rotation, era)
+    xy, v = ocef_to_detector_plane(v_ocef, f)
+    xy, v = ocef_to_detector_plane(v_ocef, f)
+    x, y = xy.x, xy.y
+
+    s = ""
+    angsep = np.arctan((x * x + y * y) ** 0.5 / f) * 180 / np.pi
+    if not v:
+        angsep = 180 - angsep
+    s += f"γ [°]: {round(angsep, 2)}\n"
+
+    psi = np.arctan2(y, x) * 180 / np.pi
+    s += f"ψ [°]: {round(psi, 2)}\n"
+    s += "-"*10 + "\n"
+    v_obs = radec_to_ocef(ra, dec,
+                          MAIN_LATITUDE * np.pi / 180,
+                          MAIN_LONGITUDE * np.pi / 180,
+                          0.0, era)
+
+    alt, az = ocef_to_altaz(v_obs)
+    alt *= 180 / np.pi
+    az *= 180 / np.pi
+
+    zang = 90 - alt
+    s += f"θ [°]: {round(zang, 2)}\n"
+    s += f"φ [°]: {round(az, 2)}\n"
+    return s
 
 
 class HighlightingPlotter(GridPlotter, PlotProxy):
@@ -106,33 +152,40 @@ class HighlightingPlotter(GridPlotter, PlotProxy):
                 x,y = xy.x, xy.y
                 print(self._origin)
 
-
-                x1 = x-self._origin[0]
-                y1 = y-self._origin[1]
-
                 if v:
                     self._not_visible.set_visible(False)
                     self.point_to(x, y)
                 else:
                     self.set_nv()
 
-                s = ""
-                angsep = np.arctan((x*x+y*y)**0.5/f)*180/np.pi
-                if not v:
-                    angsep = 180-angsep
-                s += f"γ [°]: {round(angsep,2)}\n"
+                s = "STELLAR\n"
+                s += display_radec(ra,dec,era, orientation)
 
+                s2 = "ORIGIN DEPENDENT\n"
                 origin_dir = Vector3(self._origin[0], self._origin[1], f).normalized()
+                origin_ocef = detector_plane_to_ocef_f(Vector2(self._origin[0], self._origin[1]),f)
+                ra_origin, dec_origin = detector_point_to_radec(orientation,origin_ocef,era)
+                if ra_origin<0:
+                    ra_origin += np.pi*2
+                s2 += f"DEC [°]: {dec_origin*180/np.pi:.2f}\n"
+                s2 += f"RA [°]: {ra_origin*180/np.pi:.2f}\n"
+                s2 += f"RA [h]: {ra_origin*12/np.pi:.2f}\n"
+                s2 += "-" * 10 + "\n"
+                s2 += display_radec(ra_origin,dec_origin,era, orientation)
+                s2 += "-" * 10 + "\n"
+
                 tgtdir = Vector3(x, y, f).normalized()
                 if not v:
                     tgtdir = -tgtdir
-                angsep1 = np.arccos(tgtdir.dot(origin_dir))*180/np.pi
 
-                psi = np.arctan2(y, x)*180/np.pi
+                x1 = x-self._origin[0]
+                y1 = y-self._origin[1]
+
+                angsep1 = np.arccos(tgtdir.dot(origin_dir))*180/np.pi
                 psi1 = np.arctan2(y1, x1)*180/np.pi
-                s += f"ψ [°]: {round(psi, 2)}\n"
-                s += f"γ (relative) [°]: {round(angsep1, 2)}\n"
-                s += f"ψ (relative) [°]: {round(psi1, 2)}\n"
+                s2 += f"γ (relative) [°]: {round(angsep1, 2)}\n"
+                s2 += f"ψ (relative) [°]: {round(psi1, 2)}\n"
+                s2 += "-" * 10
                 recos = self._controller.get_current_reconstruction()
                 for reco in recos:
                     mode, obj = reco
@@ -143,26 +196,13 @@ class HighlightingPlotter(GridPlotter, PlotProxy):
                     if delta_psi>180:
                         delta_psi -= 360
                     if phi0 is not None:
-                        s += f"Δψ ({mode}) [°]: {delta_psi}\n"
+                        s2 += f"Δψ ({mode}) [°]: {delta_psi}\n"
 
-                v_obs = radec_to_ocef(ra, dec,
-                                       MAIN_LATITUDE*np.pi/180,
-                                       MAIN_LONGITUDE*np.pi/180,
-                                       0.0, era)
 
-                alt, az = ocef_to_altaz(v_obs)
-                alt *= 180/np.pi
-                az *= 180/np.pi
-
-                zang = 90-alt
-                s += "-"*10+'\n'
-                s += f"θ [°]: {round(zang, 2)}\n"
-                s += f"φ [°]: {round(az, 2)}"
-
-                return s
+                return s,s2
             else:
                 self.hide_pointer()
-        return NA_TEXT
+        return NA_TEXT, NA_TEXT
 
     def set_nv(self):
         self._direction_arrow.set_visible(False)

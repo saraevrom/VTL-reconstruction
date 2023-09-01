@@ -119,11 +119,22 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         lpanel.config(width=500)
         lpanel.pack_propagate(0)
 
-        self._pointparams = tk.StringVar()
-        self._pointparams.set(NA_TEXT)
+        self._stellar_pointparams = tk.StringVar()
+        self._stellar_pointparams.set(NA_TEXT)
+        self._local_pointparams = tk.StringVar()
+        self._local_pointparams.set(NA_TEXT)
 
-        angshow = tk.Label(lpanel, textvariable=self._pointparams, anchor="w")
-        angshow.pack(side="top", fill="both", anchor="nw")
+        angshow = tk.Frame(lpanel)
+        angshow.pack(side="top", fill="both")
+        angshow1 = tk.Label(angshow, textvariable=self._stellar_pointparams, anchor="nw")
+        angshow1.grid(row=0,column=0,sticky="nsew")
+
+        angshow2 = tk.Label(angshow, textvariable=self._local_pointparams, anchor="nw")
+        angshow2.grid(row=0, column=1, sticky="nsew")
+
+        angshow.rowconfigure(0,weight=1)
+        angshow.columnconfigure(0,weight=1)
+        angshow.columnconfigure(1,weight=1)
 
         self._show_point_var = tk.IntVar(self)
         self._show_point_var.trace("w", self.on_orientation_update)
@@ -253,9 +264,12 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             formdata = self.point_parser.get_data()
             formdata["show"] = self._show_point_var.get()
             formdata["orientation"] = formdata_orient
-            self._pointparams.set(self.track_plotter.set_point_direction(formdata, self._loaded_ut0))
+            stellar, reco = self.track_plotter.set_point_direction(formdata, self._loaded_ut0)
+            self._stellar_pointparams.set(stellar)
+            self._local_pointparams.set(reco)
         else:
-            self._pointparams.set(NA_TEXT)
+            self._stellar_pointparams.set(NA_TEXT)
+            self._local_pointparams.set(NA_TEXT)
 
     def on_vars_change(self, *args):
         self.track_plotter.set_mask_vars(bl=self._pmt_c,
