@@ -72,3 +72,20 @@ class Multiform(tk.Frame):
         for i, k in enumerate(TABS):
             res[k] = self._tabs[i].get_data()
         return res
+
+    def activate_tabs_tabs(self,*args):
+        current_i = self.notebook.index(self.notebook.select())
+        candidate = None
+        needs_switch = False
+        for i,v in enumerate(args):
+            if v:
+                self.notebook.tab(i,state="normal")
+                if candidate is None:
+                    candidate = i
+            else:
+                self.notebook.tab(i,state="disabled")
+                if i==current_i:
+                    needs_switch = True
+
+        if needs_switch and candidate is not None:
+            self.notebook.select(self._tabs[candidate])

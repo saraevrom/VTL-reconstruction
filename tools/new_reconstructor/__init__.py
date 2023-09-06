@@ -280,6 +280,8 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.mod_notebook.propagate_master_change = bool(self._propagate_formchange.get())
         self.redraw_traces()
         self.redraw_tracks()
+        self.mod_notebook.activate_tabs_tabs(True, self._pmt_a.get(), self._pmt_b.get(),
+                                                   self._pmt_c.get(), self._pmt_d.get())
 
     def on_var_invalidate(self,*args):
         self.invalidate_popup_plot()
