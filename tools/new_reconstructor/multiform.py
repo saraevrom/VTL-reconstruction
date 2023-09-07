@@ -50,7 +50,8 @@ class Multiform(tk.Frame):
 
     def on_master_change(self):
         if self.propagate_master_change:
-            self.reset_individuals()
+            pass
+            # self.reset_individuals()
 
     def reset_individuals(self):
         mdata = self._tabs[0].get_values()
