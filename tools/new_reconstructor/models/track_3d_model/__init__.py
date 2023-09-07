@@ -100,7 +100,8 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             # pm.Deterministic("x0_pdm", x0p)
             # pm.Deterministic("y0_pdm", y0p)
 
-            vel_dev = -radec_to_ocef(ra,dec,v_lat, v_lon, self_rotation,unixtime_to_era(pixel_uts[0]))*v0
+            interp_t = get_interpolated_time(pixel_uts,len(pixel_uts)/2)
+            vel_dev = -radec_to_ocef(ra,dec,v_lat, v_lon, self_rotation,unixtime_to_era(interp_t))*v0
             dev_3d = point0 + vel_dev*delta_t
 
             eci2surf = eci_to_ocef(0.0, main_lat, main_lon, 0.0)
@@ -185,6 +186,33 @@ class SpatialTrackModel(ReconstructionModelWrapper):
         r = model_params.get_estimation("SigmaPSF")*PIXEL_SIZE
         plotter.plot_lines(fs_x, fs_y, "-o", color="red", linewidth=r*2)
 
+    def ask_phi0(self, model_params: ModelWithParameters):
+        params = model_params.parameters
+        k0 = params["k0"]
+        v_lat = params["v_lat"]
+        v_lon = params["v_lon"]
+        f = params["f"]
+        pixel_uts = params["times"]
+        self_rotation = params["self_rotation"]
+
+        x0 = float(model_params.get_estimation("z0_dev"))
+        y0 = float(model_params.get_estimation("x0_dev"))
+        z0 = float(model_params.get_estimation("y0_dev"))
+        ra = float(model_params.get_estimation("RA")) * np.pi / 180
+        dec = float(model_params.get_estimation("DEC")) * np.pi / 180
+        v0 = float(model_params.get_estimation("V0"))
+
+        vel_dev = -radec_to_ocef(ra, dec, v_lat, v_lon, self_rotation, unixtime_to_era(pixel_uts)[0]) * v0
+        vx = vel_dev.x
+        vy = vel_dev.y
+        vz = vel_dev.z
+
+        u_x = f*(y0*vx-x0*vy)/x0**2
+        u_y = f*(vz*x0-vx*z0)/x0**2
+        phi = np.arctan2(u_y, u_x)
+        return float(phi)*180/np.pi
+
+
     def postprocess(self, ax, model_params: ModelWithParameters, actual_x):
         trace = model_params.idata
         k_start = model_params.parameters["k_start"]
@@ -194,6 +222,6 @@ class SpatialTrackModel(ReconstructionModelWrapper):
 
         kk = np.arange(k_start, k_end)
         k0 = model_params.parameters["k0"]
-        self.LC.postprocess_plot(t-UT0, UT0, ax, model_params, model_params.pmt, actual_x=actual_x[kk])
+        return self.LC.postprocess_plot(t-UT0, UT0, ax, model_params, model_params.pmt, actual_x=actual_x[kk])
 
 TRACK_3d_FORM = SpatialTrackModel()
