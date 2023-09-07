@@ -185,7 +185,7 @@ class HighlightingPlotter(GridPlotter, PlotProxy):
                 psi1 = np.arctan2(y1, x1)*180/np.pi
                 s2 += f"γ (relative) [°]: {round(angsep1, 2)}\n"
                 s2 += f"ψ (relative) [°]: {round(psi1, 2)}\n"
-                s2 += "-" * 10
+                s2 += "-" * 10 + "\n"
                 recos = self._controller.get_current_reconstruction()
                 for reco in recos:
                     mode, obj = reco
