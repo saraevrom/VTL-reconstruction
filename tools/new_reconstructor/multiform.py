@@ -40,7 +40,7 @@ class Multiform(tk.Frame):
         self._tabs = []
 
         for tab in TABS:
-            tab_frame = FormUnit(self, form_conf_cls_creator(), protection=(tab != "M"))
+            tab_frame = FormUnit(self, form_conf_cls_creator(), protection=False)
             self.notebook.add(tab_frame, text=tab)
             self._tabs.append(tab_frame)
 
