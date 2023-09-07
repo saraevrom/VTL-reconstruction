@@ -133,7 +133,9 @@ class ExpolinearLC(LightCurve):
         delta_k_centered = (delta_k-mu_k0)
         lpart = e0*pm.math.exp(delta_k_centered/tau1)
         rpart = e0*(1 - delta_k_centered/tau2)
-        return pt.switch(delta_k_centered < 0, lpart, rpart)
+        raw = pt.switch(delta_k_centered < 0, lpart, rpart)
+        mapped = pt.switch(raw>0, raw, 0)
+        return mapped
 
     def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
         tau1 = trace.get_estimation("τ_L")
@@ -143,7 +145,8 @@ class ExpolinearLC(LightCurve):
         e0 = trace.get_estimation("E0")
         lpart = e0 * np.exp(delta_k_centered / tau1)
         rpart = e0 * (1 - delta_k_centered / tau2)
-        res = np.where(delta_k_centered < 0, lpart, rpart)
+        raw = np.where(delta_k_centered < 0, lpart, rpart)
+        res = np.where(raw>0, raw, 0)
         ax.plot(actual_x, res, **PLOT_STYLES[pmt[0]])
         return res
 
