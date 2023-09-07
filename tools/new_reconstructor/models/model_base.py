@@ -8,6 +8,23 @@ from vtl_common.common_GUI.tk_forms_assist import FormNode
 from .form_prototypes import FinalDistributionField
 
 
+def print_pixelmap(pixmap):
+    '''
+    Print pixelmap. # means 1; . means 0
+    :param pixmap:
+    :return:
+    '''
+    s = ""
+    for j in range(15,-1,-1):
+        for i in range(16):
+            if pixmap[i,j]:
+                s += "#"
+            else:
+                s += "."
+        s += "\n"
+    print(s)
+
+
 def create_deterministic(varname, value, consts):
     if isinstance(value, float):
         consts[varname] = value
@@ -18,12 +35,16 @@ def create_deterministic(varname, value, consts):
 def pmt_break_mask(pmt: str):
     res = np.full(shape=(16, 16), fill_value=True)
     if "A" in pmt:
+        print("INCLUDING A")
         res[:8, 8:] = False
-    elif "B" in pmt:
+    if "B" in pmt:
+        print("INCLUDING B")
         res[8:, 8:] = False
-    elif "C" in pmt:
+    if "C" in pmt:
+        print("INCLUDING C")
         res[:8, :8] = False
-    elif "D" in pmt:
+    if "D" in pmt:
+        print("INCLUDING D")
         res[8:, :8] = False
     return res
 
@@ -132,6 +153,8 @@ class ReconstructionModelWrapper(FormPrototype):
 
     def get_pymc_model(self, observed, cut_start, cut_end, broken, pmt, reconstructor_main):
         b = self.process_mask(broken, pmt)
+        print("Break mask:")
+        print_pixelmap(b)
         res = self.generate_pymc_model(observed, cut_start, cut_end, b, pmt, reconstructor_main)
         res.pmt = pmt
         res.parent = self

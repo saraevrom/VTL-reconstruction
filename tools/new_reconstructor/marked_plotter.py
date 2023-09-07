@@ -190,13 +190,14 @@ class HighlightingPlotter(GridPlotter, PlotProxy):
                 for reco in recos:
                     mode, obj = reco
                     phi0 = obj.ask_parameter("phi0")
-                    delta_psi = round((180+psi1)-phi0,2)
-                    if delta_psi>360:
-                        delta_psi = delta_psi%360
-                    if delta_psi>180:
-                        delta_psi -= 360
                     if phi0 is not None:
-                        s2 += f"Δψ ({mode}) [°]: {delta_psi}\n"
+                        delta_psi = round((180+psi1)-phi0,2)
+                        if delta_psi>360:
+                            delta_psi = delta_psi%360
+                        if delta_psi>180:
+                            delta_psi -= 360
+                        if phi0 is not None:
+                            s2 += f"Δψ ({mode}) [°]: {delta_psi}\n"
 
 
                 return s,s2
