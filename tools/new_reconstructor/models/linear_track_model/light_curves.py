@@ -151,6 +151,8 @@ class ExpolinearLC(LightCurve):
         return res
 
 
+
+
     # class TriangularLC(LightCurve):
 #     E_max = E0_field()
 #     E_start = E0_field()
@@ -165,6 +167,40 @@ class ExpolinearLC(LightCurve):
 #         sigma = self.sigma("sigma_LC")
 #         return e0 * pm.math.exp(-(delta_k-mu_k0)**2/(2*sigma**2))
 
+class ExpExpLC(LightCurve):
+    E0 = E0_field()
+    tau_left = tau_field()
+    tau_right = tau_field()
+    mu_k0 = DistributionField("normal", mu=0, sigma=1.0)
+
+    def get_lc(self, delta_k, k0, const_storage):
+        tau1 = self.tau_left("τ_L")
+        tau2 = self.tau_right("τ_R")
+        mu_k0 = self.mu_k0("mu_LC_k0", const_storage)
+
+        mu = create_deterministic("mu_LC", k0+mu_k0, const_storage)
+        #mu = pm.Deterministic("mu_LC", k0 + mu_k0)  # Maximum position from start of frame
+        e0 = self.E0("E0", const_storage)
+        delta_k_centered = (delta_k-mu_k0)
+        lpart = e0*pm.math.exp(delta_k_centered/tau1)
+        rpart = e0*pm.math.exp(-delta_k_centered/tau2)
+        raw = pt.switch(delta_k_centered < 0, lpart, rpart)
+        mapped = pt.switch(raw>0, raw, 0)
+        return mapped
+
+    def _postprocess(self, delta_k, k0, ax, trace, pmt, actual_x):
+        tau1 = trace.get_estimation("τ_L")
+        tau2 = trace.get_estimation("τ_R")
+        mu_k0 = trace.get_estimation("mu_LC_k0")
+        delta_k_centered = delta_k - mu_k0
+        e0 = trace.get_estimation("E0")
+        lpart = e0 * np.exp(delta_k_centered / tau1)
+        rpart = e0 * np.exp(-delta_k_centered / tau2)
+        raw = np.where(delta_k_centered < 0, lpart, rpart)
+        res = np.where(raw>0, raw, 0)
+        ax.plot(actual_x, res, **PLOT_STYLES[pmt[0]])
+        return res
+
 
 def create_lc_alter():
     class LC_Alter(AlternatingNode):
@@ -174,5 +210,6 @@ def create_lc_alter():
         SEL__gauss = GaussianLC().generate_subform()
         SEL__exp = ExponentialLC().generate_subform()
         SEL__expolinear = ExpolinearLC().generate_subform()
+        SEL__expexp = ExpExpLC().generate_subform()
 
     return LC_Alter
