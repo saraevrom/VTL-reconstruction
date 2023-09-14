@@ -6,6 +6,7 @@ import zipfile
 from datetime import datetime
 import traceback
 
+import matplotlib.pyplot as plt
 from pandastable import Table
 import h5py
 import numpy as np
@@ -37,6 +38,7 @@ ORIENTATION_WORKSPACE = Workspace("orientation")
 SKY_CATALOG = Workspace("sky_catalog")
 TRACKS_WORKSPACE = Workspace("tracks")
 RECO_PARAMETERS_WORKSPACE = Workspace("reconstruction_parameters")
+
 
 
 def create_checkbox(parent, label_key, variable):
@@ -530,7 +532,8 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         else:
             xs = np.arange(self._loaded_data0.shape[0])
         aux_data = {
-            "time_s": self._loaded_ut0 - self._loaded_ut0[0]
+            "time_s": self._loaded_ut0 - self._loaded_ut0[0],
+            "unixtime": self._loaded_ut0[0]
         }
         return xs, self._loaded_data0, aux_data
 
@@ -598,5 +601,16 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
                 target = caller_window.astro_target
                 h5file.attrs["astro_target_x"] = target[0]
                 h5file.attrs["astro_target_y"] = target[1]
+            axes:plt.Axes = caller_window.plotter.axes
+            x_min, x_max = axes.get_xlim()
+            y_min, y_max = axes.get_ylim()
+            print("AXES LIMITS")
+            print("X", x_min, x_max)
+            print("Y", y_min, y_max)
+            h5file.attrs["lim_x_min"] = x_min
+            h5file.attrs["lim_x_max"] = x_max
+            h5file.attrs["lim_y_min"] = y_min
+            h5file.attrs["lim_y_max"] = y_max
+            h5file.attrs["unixtime"] = caller_window.aux_data["unixtime"]
             time_s = caller_window.aux_data["time_s"]
             h5file.create_dataset("time_s", data=time_s)
