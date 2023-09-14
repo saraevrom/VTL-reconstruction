@@ -36,7 +36,7 @@ class SpatialTrackModel(ReconstructionModelWrapper):
     dec_deg = DistributionField("const", 33.0)
     ra_deg = DistributionField("const", 112.0)
     LC = PassthroughField(create_lc_alter)
-    distance0 = DistributionField("uniform", lower=70, upper=100)
+    event_plane_distance = DistributionField("uniform", lower=70, upper=100)
     # x_pdm0 = DistributionField("uniform", lower=-SPAN, upper=SPAN)
     # y_pdm0 = DistributionField("uniform", lower=-SPAN, upper=SPAN)
 
@@ -69,7 +69,7 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             delta_k = pixel_ks - k0
 
             #pixel_era = unixtime_to_era(pixel_uts)
-            dist = self.distance0("distance", consts)
+            dist = self.event_plane_distance("event_plane_distance", consts)
             x0p = x0_from_pmt(pmt)
             y0p = y0_from_pmt(pmt)
             # x0p = self.x_pdm0("x0_pdm", consts)
@@ -81,24 +81,12 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             create_deterministic("z0_dev", x0, consts)
             create_deterministic("x0_dev", y0, consts)
             create_deterministic("y0_dev", z0, consts)
-            # pm.Deterministic("z0_dev", x0)
-            # pm.Deterministic("x0_dev", y0)
-            # pm.Deterministic("y0_dev", z0)
 
-            # x0 = self.x0("x0", consts)
-            # y0 = self.y0("y0", consts)
-            # z0 = self.z0("z0", consts)
             ra = self.ra_deg("RA", consts)*np.pi/180
             dec = self.dec_deg("DEC", consts)*np.pi/180
             v0 = self.V0("V0", consts)
             delta_t = (pixel_uts - UT0)
 
-
-
-            # point_0_proj, vis = ocef_to_detector_plane(point0, f)
-            # x0p, y0p = point_0_proj.unpack()
-            # pm.Deterministic("x0_pdm", x0p)
-            # pm.Deterministic("y0_pdm", y0p)
 
             interp_t = get_interpolated_time(pixel_uts,len(pixel_uts)/2)
             vel_dev = -radec_to_ocef(ra,dec,v_lat, v_lon, self_rotation,unixtime_to_era(interp_t))*v0
@@ -111,14 +99,11 @@ class SpatialTrackModel(ReconstructionModelWrapper):
 
             dev2surf = eci2dev.inverse()*eci2surf
             surf_point0 = dev2surf*point0
-            s0x, s0y,s0z = surf_point0.unpack()
+            s0x, s0y, s0z = surf_point0.unpack()
 
-            create_deterministic("z0_surf", s0x, consts)
-            create_deterministic("x0_surf", s0y, consts)
-            create_deterministic("y0_surf", s0z, consts)
-            # pm.Deterministic("z0_surf", s0x)
-            # pm.Deterministic("x0_surf", s0y)
-            # pm.Deterministic("y0_surf", s0z)
+            create_deterministic("height", s0x, consts)
+            #create_deterministic("x0_surf", s0y, consts)
+            #create_deterministic("y0_surf", s0z, consts)
             #surf_3d = dev2surf*dev_3d
 
             # dev_3d = surf2dev*surf_3d
