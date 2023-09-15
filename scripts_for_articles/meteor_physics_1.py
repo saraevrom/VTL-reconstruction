@@ -38,7 +38,7 @@ parser.add_argument("--tweak_map_y", type=float, default=0.0, help="Tweak y plac
 parser.add_argument("--map_width", type=float, default=0.35, help="width of pixelmap (default=0.35)")
 parser.add_argument("--map_height", type=float, default=0.35, help="height of pixelmap (default=0.35)")
 parser.add_argument("--min_y", type=float, default=None, help="Minimal value of y axis")
-parser.add_argument("--max_y", type=float, default=None, help="Minimal value of y axis")
+parser.add_argument("--max_y", type=float, default=None, help="Maximal value of y axis")
 
 
 def create_grid(axes):
