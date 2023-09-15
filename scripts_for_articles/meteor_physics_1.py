@@ -37,6 +37,8 @@ parser.add_argument("--tweak_map_x", type=float, default=0.0, help="Tweak x plac
 parser.add_argument("--tweak_map_y", type=float, default=0.0, help="Tweak y placement of pixel map")
 parser.add_argument("--map_width", type=float, default=0.35, help="width of pixelmap (default=0.35)")
 parser.add_argument("--map_height", type=float, default=0.35, help="height of pixelmap (default=0.35)")
+parser.add_argument("--min_y", type=float, default=None, help="Minimal value of y axis")
+parser.add_argument("--max_y", type=float, default=None, help="Minimal value of y axis")
 
 
 def create_grid(axes):
@@ -321,6 +323,7 @@ if __name__=="__main__":
         x_min = index_to_time(xs,h5file.attrs["lim_x_min"])
         x_max = index_to_time(xs, h5file.attrs["lim_x_max"])
         ax.set_xlim(x_min, x_max)
+        ax.set_ylim(args.min_y, args.max_y)
         fig.tight_layout()
 
         if dest_file.endswith(".png"):
