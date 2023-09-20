@@ -382,8 +382,14 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
 
 
     def _show_h5(self, h5file, filename):
-        self._loaded_data0 = h5file["data0"][:]
-        self._loaded_ut0 = h5file["UT0"][:]
+        if "data0" in h5file.keys():
+            self._loaded_data0 = h5file["data0"][:]
+        else:
+            self._loaded_data0 = h5file["pdm_2d_rot_global"][:]
+        if "UT0" in h5file.keys():
+            self._loaded_ut0 = h5file["UT0"][:]
+        else:
+            self._loaded_ut0 = h5file["unixtime_dbl_global"][:]
         flattened = np.max(self._loaded_data0, axis=0)
         alive_pixels = (flattened != 0)
 
@@ -399,7 +405,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         resolution = (self._loaded_ut0[1] - self._loaded_ut0[0]) * 1000
 
         self.track_plotter.axes.set_title(filename + "\n" +
-                                          datetime.utcfromtimestamp(self._loaded_ut0[0]).strftime(
+                                          datetime.utcfromtimestamp(int(self._loaded_ut0[0])).strftime(
                                               DATETIME_FORMAT) + "\n" +
                                           f"Δt={round(resolution, 3)}ms")
 
