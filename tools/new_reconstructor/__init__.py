@@ -78,6 +78,9 @@ def render_event(idata_0, split):
         #posterior_collapsed = posterior_collapsed.expand_dims(dim={"chain": 1})
         #whole_summary = az.summary(posterior_collapsed)
         whole_summary.insert(0, 'parameter', whole_summary.index)
+        sd = whole_summary["mad"] * 1.4826022185056018
+        whole_summary.insert(3,"sd",sd)
+
         whole_summary = whole_summary.reset_index(drop=True)
 
 
@@ -282,8 +285,13 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.mod_notebook.propagate_master_change = bool(self._propagate_formchange.get())
         self.redraw_traces()
         self.redraw_tracks()
-        self.mod_notebook.activate_tabs_tabs(True, self._pmt_a.get(), self._pmt_b.get(),
-                                                   self._pmt_c.get(), self._pmt_d.get())
+        if self._pmt_m.get():
+            # If M mode selected disable other tabs
+            self.mod_notebook.activate_tabs_tabs(True, False, False, False, False)
+        else:
+            any_selected = self._pmt_a.get() or self._pmt_b.get() or self._pmt_c.get() or self._pmt_d.get()
+            self.mod_notebook.activate_tabs_tabs(not any_selected, self._pmt_a.get(), self._pmt_b.get(),
+                                                                   self._pmt_c.get(), self._pmt_d.get())
 
     def on_var_invalidate(self,*args):
         self.invalidate_popup_plot()
