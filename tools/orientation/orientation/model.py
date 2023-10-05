@@ -1,6 +1,7 @@
 import numpy as np
 import pymc as pm
 import pytensor.tensor as pt
+import h5py
 
 # from .stellar_tensor_math import eci_to_ocef_pt, ocef_to_detector_plane_pt, rotate_yz_pt, ecef_to_ocef_pt
 # from .stellar_tensor_math import ocef_to_altaz_pt
@@ -16,6 +17,17 @@ from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 from common_functions import create_coord_mesh
 from common_functions import d_erf
 
+def get_dual(h5file:h5py.File, primary, secondary):
+    if primary in h5file.keys():
+        return h5file[primary]
+    else:
+        return h5file[secondary]
+
+def get_signal(h5file):
+    return get_dual(h5file,"data0","pdm_2d_rot_global")
+
+def get_time(h5file):
+    return get_dual(h5file,"UT0","unixtime_dbl_global")
 
 
 def ensquared_energy_full(x_mesh, y_mesh, x0, y0, psf):
@@ -25,7 +37,7 @@ def ensquared_energy_full(x_mesh, y_mesh, x0, y0, psf):
 
 def create_model(datafile, intervals, stars, known_params, unixtime, tuner, broken, ffmodel):
     era = unixtime_to_era(unixtime)
-    ut0 = np.array(datafile["UT0"])
+    ut0 = np.array(get_time(datafile))
     times = []
     observed = []
     for interval in intervals:
@@ -34,7 +46,7 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         i_start = binsearch_tgt(ut0, ut_start)
         i_end = binsearch_tgt(ut0, ut_end)
         times.append(ut0[i_start:i_end:interval.stride])
-        observed.append(datafile["data0"][i_start:i_end:interval.stride])
+        observed.append(get_signal(datafile)[i_start:i_end:interval.stride])
         print("INTERVAL SRC", interval.name())
         print(f"INTERVAL {i_start} - {i_end}")
     times = np.concatenate(times)

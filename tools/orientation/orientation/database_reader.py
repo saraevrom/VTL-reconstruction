@@ -4,10 +4,13 @@ import gc
 from vtl_common.parameters import MAX_STAR_MAGNITUDE
 from .stellar_math import radec_to_eci
 import numpy as np
-from .stellar_math import eci_to_ocef, rotate_yz, ocef_to_detector_plane
+from fixed_rotator.slowmath import Vector3, Quaternion
+from fixed_rotator.astro_math import eci_to_ocef
+from fixed_rotator.astro_math import ocef_to_detector_plane
 from vtl_common.parameters import APERTURE # in mm^2
+from vtl_common.localized_GUI.plotter import PIXEL_SIZE,HALF_GAP_SIZE,HALF_PIXELS
 
-
+SPAN = HALF_GAP_SIZE+PIXEL_SIZE*HALF_PIXELS
 LIGHTSPEED = 299792458. # m/s
 NU1 = LIGHTSPEED/300e-9 # Hz
 NU2 = LIGHTSPEED/400e-9 # Hz
@@ -119,10 +122,30 @@ class StarEntry(object):
 
     def position_on_plane(self, params, era):
         x_eci, y_eci, z_eci = self.get_eci()
-        x_ocef, y_ocef, z_ocef = eci_to_ocef(x_eci, y_eci, z_eci, era,
-                                             lat=params["VIEW_LATITUDE"] * np.pi / 180,
-                                             lon=params["VIEW_LONGITUDE"] * np.pi / 180)
-        x_ocef, y_ocef, z_ocef = rotate_yz(x_ocef, y_ocef, z_ocef, params["SELF_ROTATION"] * np.pi / 180)
-        x_pdf, y_pdf, visible = ocef_to_detector_plane(x_ocef, y_ocef, z_ocef, params["FOCAL_DISTANCE"])
-        return x_pdf, y_pdf, visible
+        eci = Vector3(x_eci, y_eci, z_eci)
+        ocef = eci_to_ocef(era,
+                                               lat=params["VIEW_LATITUDE"] * np.pi / 180,
+                                               lon=params["VIEW_LONGITUDE"] * np.pi / 180,
+                                               self_rot=params["SELF_ROTATION"] * np.pi / 180)*eci
+        pdf, visible = ocef_to_detector_plane(ocef,params["FOCAL_DISTANCE"])
+        x_pdm, y_pdm = pdf.unpack()
+        return x_pdm, y_pdm, visible
 
+
+def gather_inside_fov(orientation,era):
+    database = get_database()
+    eci = Vector3(database["eci_x"],database["eci_y"],database["eci_z"])
+    ocef = eci_to_ocef(era,
+                       lat=orientation["VIEW_LATITUDE"] * np.pi / 180,
+                       lon=orientation["VIEW_LONGITUDE"] * np.pi / 180,
+                       self_rot=orientation["SELF_ROTATION"] * np.pi / 180) * eci
+    pdm, visible = ocef_to_detector_plane(ocef, orientation["FOCAL_DISTANCE"])
+    pdm_x, pdm_y = pdm.unpack()
+    got_stars = (np.abs(pdm_x)<SPAN) & (np.abs(pdm_y)<SPAN) & visible
+    stars = pd.DataFrame({
+        "pdm_x": pdm_x[got_stars],
+        "pdm_y": pdm_y[got_stars],
+        "star_name": database["star_name"][got_stars]
+    })
+
+    return stars

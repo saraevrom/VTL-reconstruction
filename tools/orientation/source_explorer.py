@@ -2,6 +2,7 @@ import json
 from pprint import pprint
 
 from vtl_common.localized_GUI import GridPlotter
+from vtl_common.localized_GUI.signal_plotter.binsearch import binsearch_tgt
 import tkinter as tk
 from vtl_common.workspace_manager import Workspace
 import h5py
@@ -11,14 +12,16 @@ from vtl_common.common_flatfielding.models import FlatFieldingModel
 from .astronomy_display import DETECTOR_SPAN
 from .gui_lists.star_list import StarEntry
 from .orientation.stellar_math import unixtime_to_era
+from .orientation.model import get_time,get_signal
 from vtl_common.parameters import PIXEL_SIZE
 from vtl_common.localized_GUI.signal_plotter import PopupPlotable
+from fixed_rotator.astro_math import unixtime_to_era
+from .orientation.database_reader import gather_inside_fov
 
 from utils import binsearch_tgt
 
 DATA_FILES_WORKSPACE = Workspace("merged_data")
 FF_WORKSPACE = Workspace("ff_calibration")
-
 
 
 
@@ -32,8 +35,6 @@ class StarDot(object):
         era = unixtime_to_era(unixtime)
         lum = self.star_entry.energy_u()*params["MULTIPLIER"]+params["OFFSET"]
         x, y, visible = self.star_entry.position_on_plane(params, era)
-
-
         radius = params["PSF"]*PIXEL_SIZE
 
         if self._circle is None:
@@ -59,11 +60,19 @@ class StarDot(object):
         if self._text is not None:
             self._text.remove()
 
+class PointingGridPlotter(GridPlotter):
+    def __init__(self,master, pointer_getter):
+        super().__init__(master)
+        self.pointer_getter = pointer_getter
+
+    def pointer_additional_text(self,x,y):
+        return self.pointer_getter(x,y)
 
 class SourceExplorer(tk.Frame, PopupPlotable):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
-        self.frame_plotter = GridPlotter(self)
+        self._inner_stars = None
+        self.frame_plotter = PointingGridPlotter(self, self.what_in_sky)
         self.frame_plotter.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
         self.frame_plotter.axes.arrow(x=0.0, y=0.0, dx=DETECTOR_SPAN, dy=0.0, color="red")
         self.frame_plotter.axes.arrow(x=0.0, y=0.0, dx=0.0, dy=DETECTOR_SPAN, color="blue")
@@ -78,6 +87,17 @@ class SourceExplorer(tk.Frame, PopupPlotable):
         self._intervals = None
         PopupPlotable.__init__(self, self.frame_plotter)
 
+    def what_in_sky(self,x,y):
+        if self._inner_stars is not None:
+            pdm_x = np.array(self._inner_stars["pdm_x"])
+            pdm_y = np.array(self._inner_stars["pdm_y"])
+            names = np.array(self._inner_stars["star_name"])
+            lengths = ((pdm_x-x)**2+(pdm_y-y)**2)**2
+            index = np.argmin(lengths)
+            min_len = lengths[index]
+            if min_len< 2.0:
+                return names[index]
+        return ""
 
     def set_intervals(self,v):
         self._intervals = v
@@ -102,7 +122,7 @@ class SourceExplorer(tk.Frame, PopupPlotable):
             if self._loaded_file is not None:
                 self._loaded_file.close()
             self._loaded_file = h5py.File(filename, "r+")
-            self._ut0 = np.array(self._loaded_file["UT0"])
+            self._ut0 = np.array(get_time(self._loaded_file))
             if "ffmodel" in self._loaded_file.attrs.keys():
                 jsd = json.loads(self._loaded_file.attrs["ffmodel"])
                 self.set_ffmodel(jsd)
@@ -135,7 +155,7 @@ class SourceExplorer(tk.Frame, PopupPlotable):
 
     def update_plot(self, use_ff=True):
         if self._loaded_file and self._index>=0:
-            frame = self._loaded_file["data0"][self._index]
+            frame = get_signal(self._loaded_file)[self._index]
             if use_ff and self._ffmodel:
                 frame = self._ffmodel.apply(frame)
             self.frame_plotter.buffer_matrix = frame
@@ -143,6 +163,10 @@ class SourceExplorer(tk.Frame, PopupPlotable):
         if self._orientation is not None and self._star_list:
             for star in self._star_list:
                 star.draw_at(self.frame_plotter.axes, self._orientation, self._unixtime)
+
+        era = unixtime_to_era(self._unixtime)
+        self._inner_stars = gather_inside_fov(self._orientation,era)
+
         self.frame_plotter.draw()
 
     def get_frame_by_unixtime(self, unixtime):
@@ -163,7 +187,7 @@ class SourceExplorer(tk.Frame, PopupPlotable):
         if self._loaded_file and self._intervals:
             datafile = self._loaded_file
             intervals = self._intervals
-            ut0 = np.array(datafile["UT0"])
+            ut0 = np.array(get_time(datafile))
             times = []
             observed = []
             for interval in intervals:
@@ -171,7 +195,7 @@ class SourceExplorer(tk.Frame, PopupPlotable):
                 i_start = binsearch_tgt(ut0, ut_start)
                 i_end = binsearch_tgt(ut0, ut_end)
                 times.append(ut0[i_start:i_end:interval.stride])
-                observed.append(datafile["data0"][i_start:i_end:interval.stride])
+                observed.append(get_signal(datafile)[i_start:i_end:interval.stride])
                 print("INTERVAL SRC", interval.name())
                 print(f"INTERVAL {i_start} - {i_end}")
             times = np.concatenate(times)
