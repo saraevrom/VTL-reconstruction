@@ -179,6 +179,6 @@ class LinearEstimator(ToolBase):
         r_dev = z_dev/F * S_3d
         r_hor = Rt_quat*r_dev
         h = r_hor.z
-        self.output_panel.add_entry(f"v_dev [{M_KM}]", f"[{v_dev.x:.3f}, {v_dev.y:.3f}, {v_dev.z:.3f}]")
-        self.output_panel.add_entry(f"z_dev [{M_KM}]", z_dev)
+        #self.output_panel.add_entry(f"v_dev [{M_KM}]", f"[{v_dev.x:.3f}, {v_dev.y:.3f}, {v_dev.z:.3f}]")
+        #self.output_panel.add_entry(f"z_dev [{M_KM}]", z_dev)
         self.output_panel.add_entry(f"H [{M_KM}]", h)
