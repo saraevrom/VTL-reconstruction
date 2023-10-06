@@ -329,6 +329,9 @@ class Vector3(object):
         '''
         return (self.dot(self)) ** 0.5
 
+    def sqr_len(self):
+        return self.dot(self)
+
     def normalized(self):
         '''
         Get unit vector with same direction.

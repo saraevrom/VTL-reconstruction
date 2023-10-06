@@ -140,10 +140,14 @@
   "tools.trajectory_calculator.DETECTOR": "ДЕТЕКТОР",
   "tools.trajectory_calculator.radiant": "Радиант",
   "tools.trajectory_calculator.temporal_resolution": "Временное разрешение [с]",
+  "tools.trajectory_calculator.datetime": "Дата/время в k0",
+  "tools.trajectory_calculator.import_reco": "импортировать результат реконструкции",
+
 
   "measurements.mrad": "мрад",
   "measurements.s": "с",
   "measurements.mm": "мм",
+  "measurements.km": "км",
   "measurements.pix": "пикс",
   "measurements.fr": "такт"
 }

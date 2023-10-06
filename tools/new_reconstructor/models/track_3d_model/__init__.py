@@ -180,9 +180,9 @@ class SpatialTrackModel(ReconstructionModelWrapper):
         pixel_uts = params["times"]
         self_rotation = params["self_rotation"]
 
-        x0 = float(model_params.get_estimation("z0_dev"))
-        y0 = float(model_params.get_estimation("x0_dev"))
-        z0 = float(model_params.get_estimation("y0_dev"))
+        z0 = float(model_params.get_estimation("z0_dev"))
+        x0 = float(model_params.get_estimation("x0_dev"))
+        y0 = float(model_params.get_estimation("y0_dev"))
         ra = float(model_params.get_estimation("RA")) * np.pi / 180
         dec = float(model_params.get_estimation("DEC")) * np.pi / 180
         v0 = float(model_params.get_estimation("V0"))
@@ -192,8 +192,8 @@ class SpatialTrackModel(ReconstructionModelWrapper):
         vy = vel_dev.y
         vz = vel_dev.z
 
-        u_x = f*(y0*vx-x0*vy)/x0**2
-        u_y = f*(vz*x0-vx*z0)/x0**2
+        u_x = f*(x0*vz-z0*vx)/z0**2
+        u_y = f*(vy*z0-vz*y0)/z0**2
         phi = np.arctan2(u_y, u_x)
         return float(phi)*180/np.pi
 

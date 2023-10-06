@@ -45,6 +45,11 @@ def create_checkbox(parent, label_key, variable):
     check = tk.Checkbutton(parent,text=get_locale(label_key), variable=variable, justify="left", anchor="w")
     check.pack(side="bottom", fill="x")
 
+def include_if_exists(dst:dict,obj:ModelWithParameters,parameter):
+    r = obj.ask_parameter(parameter)
+    if r is None:
+        return
+    dst[parameter] = r
 
 def get_track_attr(fp, attr):
     if attr in fp.attrs.keys():
@@ -574,9 +579,6 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
                 #self.plot_add_attribute("summary_pair", obj.get_summary())
                 #self.plot_add_attribute("cutter_range", obj.cut_range)
         self.plot_add_attribute("reco_results", reco_results)
-
-
-
         origin, target = self.track_plotter.get_pointer_data()
         self.plot_add_attribute("astro_origin", origin)
         self.plot_add_attribute("astro_target", target)
@@ -628,3 +630,29 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             h5file.attrs["unixtime"] = caller_window.aux_data["unixtime"]
             time_s = caller_window.aux_data["time_s"]
             h5file.create_dataset("time_s", data=time_s)
+
+    def ask_reco_result(self):
+        modes = self.get_pmt_modes()
+        result = dict()
+        dt = None
+        for mode in modes:
+            identifier = f"{self._filelist[self.pointer]}_{mode[0]}"
+            if identifier in self._traces.keys():
+                obj: ModelWithParameters
+                obj = self._traces[identifier]
+                inner = dict()
+                include_if_exists(inner,obj,"a")
+                include_if_exists(inner,obj,"u0")
+                include_if_exists(inner,obj,"phi0")
+                include_if_exists(inner,obj,"x0")
+                include_if_exists(inner,obj,"y0")
+                include_if_exists(inner,obj,"k0")
+                if self._loaded_ut0 is not None:
+                    if "k0" in inner.keys():
+                        k0 = int(inner["k0"])
+                        inner["k"] = k0
+                        if 0 <= k0 < self._loaded_ut0.shape[0]:
+                            dt = datetime.utcfromtimestamp(self._loaded_ut0[k0])
+                    inner["tres"] = self._loaded_ut0[1]-self._loaded_ut0[0]
+                result[mode[0]] = inner
+        return result, dt

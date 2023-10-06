@@ -139,10 +139,13 @@
   "tools.trajectory_calculator.DETECTOR": "DETECTOR",
   "tools.trajectory_calculator.radiant": "Radiant",
   "tools.trajectory_calculator.temporal_resolution": "Temporal resolution [s]",
+  "tools.trajectory_calculator.datetime": "Date/time for k0",
+  "tools.trajectory_calculator.import_reco": "Import reconstruction result",
 
   "measurements.mrad": "mrad",
   "measurements.s": "s",
   "measurements.mm": "mm",
+  "measurements.km": "km",
   "measurements.pix": "pix",
   "measurements.fr": "fr"
 }

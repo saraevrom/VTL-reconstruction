@@ -95,6 +95,15 @@ class LinearTrackModel(ReconstructionModelWrapper):
             "k_end": k_end,
         }, consts)
 
+    def ask_k0(self, model_params: ModelWithParameters):
+        return model_params.parameters["k0"]
+
+    def ask_a(self, model_params: ModelWithParameters):
+        return model_params.get_estimation("accel")
+
+    def ask_u0(self, model_params: ModelWithParameters):
+        return model_params.get_estimation("U0")
+
     def ask_phi0(self, model_params: ModelWithParameters):
         return model_params.get_estimation("Phi0")
 
