@@ -133,5 +133,16 @@
   "form.orientation.save": "Save orientation",
   "form.orientation.load": "Load orientation",
   "form.point.save": "Save point",
-  "form.point.load": "Load point"
+  "form.point.load": "Load point",
+
+  "tools.trajectory_calculator": "Track parameters calculator",
+  "tools.trajectory_calculator.DETECTOR": "DETECTOR",
+  "tools.trajectory_calculator.radiant": "Radiant",
+  "tools.trajectory_calculator.temporal_resolution": "Temporal resolution [s]",
+
+  "measurements.mrad": "mrad",
+  "measurements.s": "s",
+  "measurements.mm": "mm",
+  "measurements.pix": "pix",
+  "measurements.fr": "fr"
 }

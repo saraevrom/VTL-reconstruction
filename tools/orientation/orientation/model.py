@@ -5,8 +5,8 @@ import h5py
 
 # from .stellar_tensor_math import eci_to_ocef_pt, ocef_to_detector_plane_pt, rotate_yz_pt, ecef_to_ocef_pt
 # from .stellar_tensor_math import ocef_to_altaz_pt
-from fixed_rotator import eci_to_ocef, ocef_to_detector_plane, Quaternion, ecef_to_ocef, Vector3, altaz_to_ocef
-from fixed_rotator import ocef_to_altaz, unixtime_to_era
+from fixed_rotator.astro_math_z_aligned import eci_to_ocef, ocef_to_detector_plane, Quaternion, ecef_to_ocef, Vector3, altaz_to_ocef
+from fixed_rotator.astro_math_z_aligned import ocef_to_altaz, unixtime_to_era
 
 from utils import binsearch_tgt
 from .time_interval import TimeRange

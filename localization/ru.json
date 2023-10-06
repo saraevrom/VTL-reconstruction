@@ -133,5 +133,17 @@
   "form.orientation.save": "Сохранить ориентацию",
   "form.orientation.load": "Загрузить ориентацию",
   "form.point.save": "Сохранить точку",
-  "form.point.load": "Загрузить точку"
+  "form.point.load": "Загрузить точку",
+
+
+  "tools.trajectory_calculator": "Калькулятор параметров трека",
+  "tools.trajectory_calculator.DETECTOR": "ДЕТЕКТОР",
+  "tools.trajectory_calculator.radiant": "Радиант",
+  "tools.trajectory_calculator.temporal_resolution": "Временное разрешение [с]",
+
+  "measurements.mrad": "мрад",
+  "measurements.s": "с",
+  "measurements.mm": "мм",
+  "measurements.pix": "пикс",
+  "measurements.fr": "такт"
 }

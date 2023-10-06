@@ -12,9 +12,9 @@ from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 # from tools.orientation.orientation.stellar_math import ocef_to_detector_plane, unixtime_to_era, rotate_yz
 # from tools.orientation.orientation.stellar_math import ocef_to_altaz
 
-from fixed_rotator.astro_math import radec_to_eci, eci_to_ocef, ocef_to_detector_plane, unixtime_to_era, Quaternion
-from fixed_rotator.astro_math import ocef_to_altaz, radec_to_ocef, Vector3
-from fixed_rotator.astro_math import ocef_to_eci, ocef_to_radec, detector_plane_to_ocef_f
+from fixed_rotator.astro_math_z_aligned import radec_to_eci, eci_to_ocef, ocef_to_detector_plane, unixtime_to_era, Quaternion
+from fixed_rotator.astro_math_z_aligned import ocef_to_altaz, radec_to_ocef, Vector3
+from fixed_rotator.astro_math_z_aligned import ocef_to_eci, ocef_to_radec, detector_plane_to_ocef_f
 
 
 SPAN = HALF_PIXELS*PIXEL_SIZE+HALF_GAP_SIZE

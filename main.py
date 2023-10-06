@@ -36,9 +36,14 @@ class App(tk.Tk):
 
         self.main_notebook = ttk.Notebook(self)
         self.main_notebook.pack(side="top", fill="both", expand=True)
-        self.tools = add_tools(self.main_notebook)
+        self.tools = add_tools(self.main_notebook,self)
 
         Workspace.initialize_workspace()
+
+    def ask_from_tool(self, index, what):
+        if hasattr(self.tools[index],"ask_"+what):
+            asker = getattr(self.tools[index],"ask_"+what)
+            return asker()
 
 
 if __name__ == "__main__":

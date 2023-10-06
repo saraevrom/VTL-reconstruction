@@ -11,11 +11,11 @@ import matplotlib.pyplot as plt
 from vtl_common.common_flatfielding.models import FlatFieldingModel
 from .astronomy_display import DETECTOR_SPAN
 from .gui_lists.star_list import StarEntry
-from .orientation.stellar_math import unixtime_to_era
+from fixed_rotator.astro_math_z_aligned import unixtime_to_era
 from .orientation.model import get_time,get_signal
 from vtl_common.parameters import PIXEL_SIZE
 from vtl_common.localized_GUI.signal_plotter import PopupPlotable
-from fixed_rotator.astro_math import unixtime_to_era
+from fixed_rotator.astro_math_z_aligned import unixtime_to_era
 from .orientation.database_reader import gather_inside_fov
 
 from utils import binsearch_tgt

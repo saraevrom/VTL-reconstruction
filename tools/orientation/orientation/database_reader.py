@@ -2,11 +2,10 @@ import pandas as pd
 import os.path as ospath
 import gc
 from vtl_common.parameters import MAX_STAR_MAGNITUDE
-from .stellar_math import radec_to_eci
 import numpy as np
 from fixed_rotator.slowmath import Vector3, Quaternion
-from fixed_rotator.astro_math import eci_to_ocef
-from fixed_rotator.astro_math import ocef_to_detector_plane
+from fixed_rotator.astro_math_z_aligned import eci_to_ocef, radec_to_eci
+from fixed_rotator.astro_math_z_aligned import ocef_to_detector_plane
 from vtl_common.parameters import APERTURE # in mm^2
 from vtl_common.localized_GUI.plotter import PIXEL_SIZE,HALF_GAP_SIZE,HALF_PIXELS
 
@@ -57,7 +56,8 @@ def get_database():
         CWD = ospath.dirname(__file__)
         DATABASE = pd.read_csv(CWD+"/hygdata_v3_photometric_mod.csv", sep=",")
         DATABASE = DATABASE[(DATABASE["mag"] < MAX_STAR_MAGNITUDE) & (DATABASE["id"] != 0)]  # Remove Sun
-        x,y,z = radec_to_eci(DATABASE["ra"].to_numpy()*np.pi/12, DATABASE["dec"].to_numpy()*np.pi/180)
+        vec = radec_to_eci(DATABASE["ra"].to_numpy()*np.pi/12, DATABASE["dec"].to_numpy()*np.pi/180)
+        x, y, z = vec.unpack()
 
         DATABASE["eci_x"] = x
         DATABASE["eci_y"] = y
@@ -124,9 +124,9 @@ class StarEntry(object):
         x_eci, y_eci, z_eci = self.get_eci()
         eci = Vector3(x_eci, y_eci, z_eci)
         ocef = eci_to_ocef(era,
-                                               lat=params["VIEW_LATITUDE"] * np.pi / 180,
-                                               lon=params["VIEW_LONGITUDE"] * np.pi / 180,
-                                               self_rot=params["SELF_ROTATION"] * np.pi / 180)*eci
+                           dec=params["VIEW_LATITUDE"] * np.pi / 180,
+                           gha=params["VIEW_LONGITUDE"] * np.pi / 180,
+                           self_rot=params["SELF_ROTATION"] * np.pi / 180)*eci
         pdf, visible = ocef_to_detector_plane(ocef,params["FOCAL_DISTANCE"])
         x_pdm, y_pdm = pdf.unpack()
         return x_pdm, y_pdm, visible
@@ -136,8 +136,8 @@ def gather_inside_fov(orientation,era):
     database = get_database()
     eci = Vector3(database["eci_x"],database["eci_y"],database["eci_z"])
     ocef = eci_to_ocef(era,
-                       lat=orientation["VIEW_LATITUDE"] * np.pi / 180,
-                       lon=orientation["VIEW_LONGITUDE"] * np.pi / 180,
+                       dec=orientation["VIEW_LATITUDE"] * np.pi / 180,
+                       gha=orientation["VIEW_LONGITUDE"] * np.pi / 180,
                        self_rot=orientation["SELF_ROTATION"] * np.pi / 180) * eci
     pdm, visible = ocef_to_detector_plane(ocef, orientation["FOCAL_DISTANCE"])
     pdm_x, pdm_y = pdm.unpack()

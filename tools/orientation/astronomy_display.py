@@ -5,8 +5,8 @@ from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 from vtl_common.parameters import HALF_PIXELS, PIXEL_SIZE, HALF_GAP_SIZE
 #from .orientation.stellar_math import unixtime_to_era, eci_to_ocef, ocef_to_altaz, detector_plane_to_ocef
 #from .orientation.stellar_math import rotate_yz, rotate_xz, rotate_xy
-from fixed_rotator import Vector3, Quaternion, unixtime_to_era, eci_to_ocef, ocef_to_altaz, detector_plane_to_ocef
-from fixed_rotator import Vector2
+from fixed_rotator.astro_math_z_aligned import Vector3, Quaternion, unixtime_to_era, eci_to_ocef, ocef_to_altaz, detector_plane_to_ocef
+from fixed_rotator.astro_math_z_aligned import Vector2, ocef_to_eci, eci_to_ocef
 
 DETECTOR_SPAN = HALF_PIXELS*PIXEL_SIZE+HALF_GAP_SIZE
 
@@ -20,11 +20,15 @@ def params_rotate(xs,ys,  params):
     lat = params["VIEW_LATITUDE"]
     lon = params["VIEW_LONGITUDE"]
 
-    q1 = Quaternion.rotate_yz(-self_rotation)
-    q2 = Quaternion.rotate_xz(lat * np.pi / 180)
-    q3 = Quaternion.rotate_xy((lon - MAIN_LONGITUDE) * np.pi / 180)
-    q4 = Quaternion.rotate_xz(-MAIN_LATITUDE * np.pi / 180)
-    alt, az = ocef_to_altaz(q4*q3*q2*q1*v_ocef)
+    q1 = ocef_to_eci(0, lat * np.pi / 180, lon*np.pi/180, self_rotation)
+    q2 = eci_to_ocef(0,
+                     MAIN_LATITUDE * np.pi / 180,
+                     MAIN_LONGITUDE*np.pi/180)
+    # q1 = Quaternion.rotate_yz(-self_rotation)
+    # q2 = Quaternion.rotate_xz(lat * np.pi / 180)
+    # q3 = Quaternion.rotate_xy((lon - MAIN_LONGITUDE) * np.pi / 180)
+    # q4 = Quaternion.rotate_xz(-MAIN_LATITUDE * np.pi / 180)
+    alt, az = ocef_to_altaz(q2*q1*v_ocef)
     rs = 90 - alt * 180 / np.pi
     return az, rs
 

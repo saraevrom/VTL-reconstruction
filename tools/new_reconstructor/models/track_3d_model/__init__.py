@@ -11,8 +11,8 @@ from ..linear_track_model import x0_from_pmt, y0_from_pmt
 from vtl_common.parameters import PIXEL_SIZE, HALF_GAP_SIZE, HALF_PIXELS, MAIN_LATITUDE,MAIN_LONGITUDE
 from common_functions import create_coord_mesh, ensquared_energy_full, create_temporal_part
 
-from fixed_rotator import Vector3, radec_to_ocef, unixtime_to_era, eci_to_ocef, ocef_to_detector_plane, detector_plane_to_ocef_f
-from fixed_rotator import Vector2
+from fixed_rotator.astro_math_z_aligned import Vector3, radec_to_ocef, unixtime_to_era, eci_to_ocef, ocef_to_detector_plane, detector_plane_to_ocef_f
+from fixed_rotator.astro_math_z_aligned import Vector2
 
 SPAN = HALF_GAP_SIZE + HALF_PIXELS*PIXEL_SIZE
 
@@ -78,9 +78,9 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             point0 = detector_plane_to_ocef_f(pdm0, f)*dist
 
             x0,y0,z0 = point0.unpack()
-            create_deterministic("z0_dev", x0, consts)
-            create_deterministic("x0_dev", y0, consts)
-            create_deterministic("y0_dev", z0, consts)
+            create_deterministic("x0_dev", x0, consts)
+            create_deterministic("y0_dev", y0, consts)
+            create_deterministic("z0_dev", z0, consts)
 
             ra = self.ra_deg("RA", consts)*np.pi/180
             dec = self.dec_deg("DEC", consts)*np.pi/180
@@ -101,9 +101,9 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             surf_point0 = dev2surf*point0
             s0x, s0y, s0z = surf_point0.unpack()
 
-            create_deterministic("height", s0x, consts)
-            #create_deterministic("x0_surf", s0y, consts)
-            #create_deterministic("y0_surf", s0z, consts)
+            create_deterministic("height", s0z, consts)
+            #create_deterministic("y0_surf", s0y, consts)
+            #create_deterministic("x0_surf", s0x, consts)
             #surf_3d = dev2surf*dev_3d
 
             # dev_3d = surf2dev*surf_3d
@@ -145,9 +145,9 @@ class SpatialTrackModel(ReconstructionModelWrapper):
         UT0 = params["UT0"]
         f = params["f"]
         self_rotation = params["self_rotation"]
-        x0 = float(model_params.get_estimation("z0_dev"))
-        y0 = float(model_params.get_estimation("x0_dev"))
-        z0 = float(model_params.get_estimation("y0_dev"))
+        z0 = float(model_params.get_estimation("z0_dev"))
+        x0 = float(model_params.get_estimation("x0_dev"))
+        y0 = float(model_params.get_estimation("y0_dev"))
         ra = float(model_params.get_estimation("RA"))*np.pi/180
         dec = float(model_params.get_estimation("DEC"))*np.pi/180
         v0 = float(model_params.get_estimation("V0"))
