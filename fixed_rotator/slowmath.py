@@ -102,6 +102,9 @@ class Vector2(object):
     def __repr__(self):
         return f"V2[{self.x}, {self.y}]"
 
+    def __str__(self):
+        return f"[{self.x:.3f}, {self.y:.3f}]"
+
     def __add__(self, other):
         return Vector2(
             self.x + other.x,
@@ -264,6 +267,10 @@ class Vector3(object):
 
     def __repr__(self):
         return f"V3[{self.x},{self.y},{self.z}]"
+
+    def __str__(self):
+        return f"[{self.x:.3f}, {self.y:.3f}, {self.z:.3f}]"
+
 
     def __add__(self, other):
         if isinstance(other, Vector3):

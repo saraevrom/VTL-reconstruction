@@ -22,6 +22,9 @@ class CoordSystem(object):
         self.schedule = schedule
         self.build_menu()
 
+    def __repr__(self):
+        return type(self).__name__
+
     def build_menu(self):
         pass
 
@@ -121,8 +124,8 @@ class DeviceSystem(CoordSystem):
         self.gamma_deg = self.settings_frame.add_setting(DoubleValue, "ang_sep", "γ [°]", 0.0)
         self.psi_deg = self.settings_frame.add_setting(DoubleValue, "psi", "ψ [°]", 0.0)
 
-        self.add_tracer("psi_deg")
-        self.add_tracer("gamma_deg")
+        self.add_tracer("psi")
+        self.add_tracer("ang_sep")
 
     def get_eci(self, location, orientation, dt):
         lat = orientation["VIEW_LATITUDE"]*np.pi/180

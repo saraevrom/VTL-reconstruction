@@ -17,10 +17,17 @@ class DataOutput(tk.Frame):
         display.grid(row=row,column=1,sticky="nsew")
         self.entries.append((label, display))
 
+    def add_separator(self, label_text):
+        label = tk.Label(self.scrollview.contents, text=label_text, padx=10, anchor="w", font="TkDefaultFont 10 bold")
+        row = len(self.entries)
+        label.grid(row=row, column=0,columnspan=2,sticky="nsew")
+        self.entries.append((label, None))
+
     def clear(self):
         for left,right in self.entries:
             left.destroy()
-            right.destroy()
+            if right is not None:
+                right.destroy()
         self.entries.clear()
 
     def add_dict(self, entries:dict):

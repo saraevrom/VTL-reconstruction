@@ -26,6 +26,30 @@ W_DETECTOR = get_locale("tools.trajectory_calculator.DETECTOR")
 ORIENTATION_WORKSPACE = Workspace("orientation")
 SKY_CATALOG = Workspace("sky_catalog")
 
+def calculate_omega_proj(tres,F,X,Y, u_x,u_y):
+    S = Vector3(-X, Y, 0)
+    ez = Vector3.back()
+    V = Vector3(-u_x, u_y, 0)
+    omega = F ** 2 / (F ** 2 + S.sqr_len()) * (1 / F ** 2 * S.cross(V) + 1 / F * ez.cross(V)) / tres
+    return omega
+
+def calculate_dev_vector(F, x, y, omega, v_dev):
+    direction = Vector3(-x,y,F).normalized()
+    length = (direction.cross(v_dev)).length()/omega.length()
+    return direction*length
+    # S_0_3d = Vector3(-x, y, F)
+    # omega_sqr = omega.sqr_len()
+    # z_dev = F / (omega_sqr * S_0_3d.sqr_len()) * omega.dot(S_0_3d.cross(v_dev))
+    # r_dev = z_dev / F * S_0_3d
+    # return r_dev
+
+def calculate_dev_vector_bypass(U,R,F,v_dev):
+    print("BYPASS",U,R,F,v_dev)
+    z_dev_1 = (-F*v_dev.x-v_dev.z*R.x)/U.x
+    z_dev_2 = (F*v_dev.y - v_dev.z*R.y)/U.y
+    S_0_3d = Vector3(-R.x, R.y, F)
+    return z_dev_1/F*S_0_3d, z_dev_2/F*S_0_3d
+
 class LinearEstimator(ToolBase):
     TOOL_KEY = "tools.trajectory_calculator"
 
@@ -125,6 +149,7 @@ class LinearEstimator(ToolBase):
         y0 = self._parameters["y0"]
         k0 = self._parameters["k0"]
         k = self._parameters["k"]
+        u_z = self._parameters["u_z"]
         tres = self._parameters["tres"] # Temporal resolution
         v = self._parameters["v"]
 
@@ -134,22 +159,24 @@ class LinearEstimator(ToolBase):
         era = datetime_to_era(dt+datetime.timedelta(seconds=(k-k0)*tres))
 
         delta_k = k-k0
-        X = x0+np.cos(phi0)*(u0*delta_k+a*(delta_k**2)/2)
-        Y = y0+np.sin(phi0)*(u0*delta_k+a*(delta_k**2)/2)
-        u = u0+a*delta_k
+        X = (x0+np.cos(phi0)*(u0*delta_k+a*(delta_k**2)/2))/(1+u_z*delta_k)
+        Y = (y0+np.sin(phi0)*(u0*delta_k+a*(delta_k**2)/2))/(1+u_z*delta_k)
+        #u = u0+a*delta_k
+        u_x = ((u0+a*delta_k+(a*u_z*delta_k**2)/2)*np.cos(phi0)-x0*u_z)/(1+u_z*delta_k)**2
+        u_y = ((u0+a*delta_k+(a*u_z*delta_k**2)/2)*np.sin(phi0)-y0*u_z)/(1+u_z*delta_k)**2
 
         self.output_panel.clear()
+        self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.focal_plane"))
         self.output_panel.add_entry("x",f"{X:.3f}")
         self.output_panel.add_entry("y",f"{Y:.3f}")
-        self.output_panel.add_entry("U",f"{u/PIXEL_SIZE:.3f}")
+        self.output_panel.add_entry("U",f"{((u_x**2+u_y**2)**0.5)/PIXEL_SIZE:.3f}")
 
         F = self._orientation["FOCAL_DISTANCE"]
-        S = Vector3(-X, Y,0)
-        V = Vector3(-u*np.cos(phi0), u*np.sin(phi0),0)
-        ez = Vector3(0,0,1)
-        omega = F**2/(F**2+S.sqr_len())*(1/F**2*S.cross(V)+1/F*ez.cross(V))/tres
+        # omega = calculate_omega(tres, F, X, Y, u, phi0)
+        omega = calculate_omega_proj(tres, F, X, Y, u_x, u_y)
         wx,wy,wz = (1000*omega).unpack() #mrad/s
         # self.output_panel.add_entry("omega vector (DETECTOR VIEW) [mrad/t]", f"[{wx:.3f}, {wy:.3f}, {wz:.3f}]")
+        self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.omega"))
         self.output_panel.add_entry(f"ω ({W_DETECTOR}), [{M_MRAD}/{M_S}]", f"[{wx:.3f}, {wy:.3f}, {wz:.3f}]")
         self.output_panel.add_entry(f"ω [{M_MRAD}/{M_S}]", f"{1000*omega.length():.3f}")
 
@@ -173,12 +200,39 @@ class LinearEstimator(ToolBase):
         # Velocity in detector frame
         v_dev = eci_to_ocef(era,dev_dec,dev_gha,self_rot) * v_eci
 
-        S_3d = Vector3(-X, Y, F)
-        omega_sqr = omega.sqr_len()
-        z_dev = F/(omega_sqr*S_3d.sqr_len()) * omega.dot(S_3d.cross(v_dev))
-        r_dev = z_dev/F * S_3d
+        u_k0_x = u0*np.cos(phi0)-x0*u_z
+        u_k0_y = u0*np.sin(phi0)-y0*u_z
+
+        omega_0 = calculate_omega_proj(tres, F, x0, y0, u_k0_x, u_k0_y)
+
+        r_dev = calculate_dev_vector(F, x0, y0, omega_0, v_dev)
+        r_dev = r_dev + v_dev*(k-k0)*tres
         r_hor = Rt_quat*r_dev
         h = r_hor.z
-        #self.output_panel.add_entry(f"v_dev [{M_KM}]", f"[{v_dev.x:.3f}, {v_dev.y:.3f}, {v_dev.z:.3f}]")
-        #self.output_panel.add_entry(f"z_dev [{M_KM}]", z_dev)
+        self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.distances"))
+        self.output_panel.add_entry(f"v_dev [{M_KM}/{M_S}]", str(v_dev))
+        self.output_panel.add_entry(f"dev [{M_KM}]", str(r_dev))
         self.output_panel.add_entry(f"H [{M_KM}]", h)
+
+        # r_dev = calculate_dev_vector(F, X, Y, omega, v_dev)
+        # r_hor = Rt_quat * r_dev
+        # h = r_hor.z
+        # self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.distances_alt"))
+        # self.output_panel.add_entry(f"dev [{M_KM}]", str(r_dev))
+        # self.output_panel.add_entry(f"H [{M_KM}]", h)
+
+        # ALT
+
+        U = Vector2(u_x, u_y)/tres
+        R = Vector2(X,Y)
+        dev_1, dev_2 = calculate_dev_vector_bypass(U,R,F,v_dev)
+        r_hor_1 = Rt_quat * dev_1
+        r_hor_2 = Rt_quat * dev_2
+        self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.distances_alt"))
+        self.output_panel.add_entry("U [mm/s]", str(U))
+        self.output_panel.add_entry("R [mm]", str(R))
+        self.output_panel.add_entry("dev1 [km]", str(dev_1))
+        self.output_panel.add_entry("dev2 [km]", str(dev_2))
+        h1 = r_hor_1.z
+        h2 = r_hor_2.z
+        self.output_panel.add_entry("h [km]", f'{h1:.3f}; {h2:.3f}')

@@ -1,13 +1,11 @@
 import numpy as np
 import pymc as pm
-import pytensor.tensor as pt
-from utils import binsearch_tgt
 from vtl_common.common_GUI.tk_forms import TkDictForm
 
 from ..model_base import ModelWithParameters, ReconstructionModelWrapper, create_deterministic
 from ..form_prototypes import DistributionField, PassthroughField
-from ..linear_track_model.light_curves import create_lc_alter
-from ..linear_track_model import x0_from_pmt, y0_from_pmt
+from tools.new_reconstructor.models.light_curves import create_lc_alter
+from ..base_flat_model import x0_from_pmt, y0_from_pmt
 from vtl_common.parameters import PIXEL_SIZE, HALF_GAP_SIZE, HALF_PIXELS, MAIN_LATITUDE,MAIN_LONGITUDE
 from common_functions import create_coord_mesh, ensquared_energy_full, create_temporal_part
 
@@ -36,7 +34,8 @@ class SpatialTrackModel(ReconstructionModelWrapper):
     dec_deg = DistributionField("const", 33.0)
     ra_deg = DistributionField("const", 112.0)
     LC = PassthroughField(create_lc_alter)
-    event_plane_distance = DistributionField("uniform", lower=70, upper=100)
+    distance = DistributionField("uniform", lower=70, upper=100)
+    SigmaPSF = DistributionField("exponential", lam={"selection_type": "lambda", "value":1.0})
     # x_pdm0 = DistributionField("uniform", lower=-SPAN, upper=SPAN)
     # y_pdm0 = DistributionField("uniform", lower=-SPAN, upper=SPAN)
 
@@ -69,7 +68,7 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             delta_k = pixel_ks - k0
 
             #pixel_era = unixtime_to_era(pixel_uts)
-            dist = self.event_plane_distance("event_plane_distance", consts)
+            dist = self.distance("distance", consts)
             x0p = x0_from_pmt(pmt)
             y0p = y0_from_pmt(pmt)
             # x0p = self.x_pdm0("x0_pdm", consts)
@@ -78,8 +77,8 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             point0 = detector_plane_to_ocef_f(pdm0, f)*dist
 
             x0,y0,z0 = point0.unpack()
-            create_deterministic("x0_dev", x0, consts)
-            create_deterministic("y0_dev", y0, consts)
+            create_deterministic("x0_dev_", x0, consts)
+            create_deterministic("y0_dev_", y0, consts)
             create_deterministic("z0_dev", z0, consts)
 
             ra = self.ra_deg("RA", consts)*np.pi/180
@@ -117,7 +116,8 @@ class SpatialTrackModel(ReconstructionModelWrapper):
             # YFS_VAR = pm.Deterministic("Y_fs_mm", y_fs)
 
 
-            sigmaPSF = pm.HalfNormal('SigmaPSF', 1.) * PIXEL_SIZE
+            #sigmaPSF = pm.HalfNormal('SigmaPSF', 1.) * PIXEL_SIZE
+            sigmaPSF = self.SigmaPSF('SigmaPSF',consts) * PIXEL_SIZE
             lc = self.LC.get_lc(delta_t, UT0, consts)
             intensity = lc * ensquared_energy_full(pixel_xs, pixel_ys, x_fs, y_fs, sigmaPSF)
             obs = observed_signal[k_start:k_end]
@@ -146,8 +146,8 @@ class SpatialTrackModel(ReconstructionModelWrapper):
         f = params["f"]
         self_rotation = params["self_rotation"]
         z0 = float(model_params.get_estimation("z0_dev"))
-        x0 = float(model_params.get_estimation("x0_dev"))
-        y0 = float(model_params.get_estimation("y0_dev"))
+        x0 = float(model_params.get_estimation("x0_dev_"))
+        y0 = float(model_params.get_estimation("y0_dev_"))
         ra = float(model_params.get_estimation("RA"))*np.pi/180
         dec = float(model_params.get_estimation("DEC"))*np.pi/180
         v0 = float(model_params.get_estimation("V0"))
@@ -181,8 +181,8 @@ class SpatialTrackModel(ReconstructionModelWrapper):
         self_rotation = params["self_rotation"]
 
         z0 = float(model_params.get_estimation("z0_dev"))
-        x0 = float(model_params.get_estimation("x0_dev"))
-        y0 = float(model_params.get_estimation("y0_dev"))
+        x0 = float(model_params.get_estimation("x0_dev_"))
+        y0 = float(model_params.get_estimation("y0_dev_"))
         ra = float(model_params.get_estimation("RA")) * np.pi / 180
         dec = float(model_params.get_estimation("DEC")) * np.pi / 180
         v0 = float(model_params.get_estimation("V0"))

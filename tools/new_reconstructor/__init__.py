@@ -61,13 +61,14 @@ def render_event(idata_0, split):
     split_chains = split
     #print(idata_0)
     post = idata_0.posterior
+    keep = [x for x in post.keys() if not x.endswith("_")]
     chains = idata_0.posterior["chain"]
     if split_chains:
         summaries = []
         for chain_ in chains:
             chain = int(chain_)
             chained = post.isel(chain=slice(chain, chain+1)) # Needed for summary
-            subsum = arviz.summary(chained)
+            subsum = arviz.summary(chained,var_names=keep)
             subsum.insert(0, 'parameter', subsum.index)
             subsum = subsum.reset_index(drop=True)
             subsum.insert(0, 'chain', chain)
@@ -78,7 +79,7 @@ def render_event(idata_0, split):
 
         # summary['parameter'] = summary.index
     else:
-        whole_summary = arviz.summary(post,stat_focus="median")
+        whole_summary = arviz.summary(post,var_names=keep,stat_focus="median")
         #posterior_collapsed = post.median(dim="chain")
         #posterior_collapsed = posterior_collapsed.expand_dims(dim={"chain": 1})
         #whole_summary = az.summary(posterior_collapsed)
@@ -470,7 +471,8 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         label = self.ask_trace()
         if label:
             trace = self._traces[label].idata
-            axs = arviz.plot_trace(trace).flatten()
+            keep = [x for x in trace.posterior.keys() if not x.endswith("_")]
+            axs = arviz.plot_trace(trace,keep).flatten()
             #print(axs)
             fig = axs[0].get_figure()
             fig.canvas.manager.set_window_title(f'Trace {label}')
@@ -486,6 +488,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             reco_result:ModelWithParameters = self._traces[label]
             trace = reco_result.idata
             needed_keys = reco_result.get_posterior_variables()
+            needed_keys = [x for x in needed_keys if not x.endswith("_")]
             selected_vars = CheckListDialog(self, needed_keys)
             if selected_vars.result:
                 print("KEYS:", needed_keys)
@@ -647,10 +650,11 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
                 include_if_exists(inner,obj,"x0")
                 include_if_exists(inner,obj,"y0")
                 include_if_exists(inner,obj,"k0")
+                include_if_exists(inner,obj,"u_z")
                 if self._loaded_ut0 is not None:
                     if "k0" in inner.keys():
                         k0 = int(inner["k0"])
-                        inner["k"] = k0
+                        inner["k"] = float(inner["k0"])
                         if 0 <= k0 < self._loaded_ut0.shape[0]:
                             dt = datetime.utcfromtimestamp(self._loaded_ut0[k0])
                     inner["tres"] = self._loaded_ut0[1]-self._loaded_ut0[0]

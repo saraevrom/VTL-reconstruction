@@ -25,11 +25,16 @@ class DistParameterCreator(object):
         raise NotImplementedError()
 
 class DistCreator(DistParameterCreator):
-    def __init__(self, dist_cls, **kwargs):
+    def __init__(self, dist_cls,negative=False, **kwargs):
         self.kwargs = kwargs
         self.dist_cls = dist_cls
+        self.apply_negate = negative
 
     def __call__(self, name, const_storage=None):
+        if self.apply_negate:
+            neg = self.dist_cls(name+"_neg_", **self.kwargs)
+            res = pm.Deterministic(name,-neg)
+            return res
         return self.dist_cls(name, **self.kwargs)
 
     def get_dist(self):
@@ -76,6 +81,7 @@ class CauchyBuilder(FormNode):
 class HalfNormalBuilder(FormNode):
     DISPLAY_NAME = "HalfNormal"
     FIELD__sigma = SIGMA
+    FIELD__negative = create_value_field(BoolNode,"Negative",False)
 
 
 @kwarg_builder(DistFactory(pm.Uniform))
@@ -84,6 +90,25 @@ class UniformBuilder(FormNode):
     FIELD__lower = LOWER
     FIELD__upper = UPPER
 
+
+class ExponentialReverse(FloatNode):
+    DISPLAY_NAME = "mu"
+    DEFAULT_VALUE = 1.0
+
+    def get_data(self):
+        data = super().get_data()
+        return 1/data
+
+class ExponentialAlt(AlternatingNode):
+    DISPLAY_NAME = "parameter"
+    SEL__mu = ExponentialReverse
+    SEL__lambda = create_value_field(FloatNode,"lambda",1.0)
+
+@kwarg_builder(DistFactory(pm.Exponential))
+class ExponentialBuilder(FormNode):
+    DISPLAY_NAME = "Exponent"
+    FIELD__lam = ExponentialAlt
+    FIELD__negative = create_value_field(BoolNode,"Negative",False)
 
 class TruncatedBuilder(FormNode):
     DISPLAY_NAME = "Truncated"
@@ -109,13 +134,13 @@ class ConstantBuilder(FloatNode):
 
 
 class DistBuilder(AlternatingNode):
-    DISPLAY_NAME = "dist"
+    DISPLAY_NAME = ""
     SEL__const = ConstantBuilder
     SEL__normal = NormalBuilder
     SEL__halfnormal = HalfNormalBuilder
     SEL__uniform = UniformBuilder
     SEL__cauchy = CauchyBuilder
+    SEL__exponential = ExponentialBuilder
     SEL__truncated = TruncatedBuilder
-
 
 TruncatedBuilder.FIELD__dist = DistBuilder

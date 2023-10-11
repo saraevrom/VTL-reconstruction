@@ -2,6 +2,7 @@ from vtl_common.common_GUI.tk_forms_assist import AlternatingNode
 from vtl_common.localization import get_locale
 from .linear_track_model import LinearTrackModel
 from .track_3d_model import SpatialTrackModel
+from .pseudo_acc_track_model import LinearTrackModelPseudoAcceleration
 
 #
 # class ModelSelect(AlternatingNode):
@@ -13,5 +14,6 @@ def create_selector():
     class ModelSelect(AlternatingNode):
         DISPLAY_NAME = get_locale("reconstruction_model")
         SEL__linear = LinearTrackModel().generate_subform()
+        SEL__linear_pseudo_acceleration = LinearTrackModelPseudoAcceleration().generate_subform()
         SEL__linear_3d = SpatialTrackModel().generate_subform()
     return ModelSelect

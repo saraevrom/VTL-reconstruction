@@ -5,23 +5,27 @@ from ..form_prototypes import DistributionField
 from ..model_base import ModelWithParameters
 from vtl_common.parameters import PIXEL_SIZE, HALF_GAP_SIZE, HALF_PIXELS
 
-class LinearTrackModel(BaseLinearPlanarTrackModel):
-    accel = DistributionField("const", 0.0)
+
+def calculate_position(x0,y0,u0,u_z,phi0,delta_k):
+    X = (x0 + u0 * delta_k * np.cos(phi0)) / (1 + u_z * delta_k)
+    Y = (y0 + u0 * delta_k * np.sin(phi0)) / (1 + u_z * delta_k)
+    return X,Y
+
+class LinearTrackModelPseudoAcceleration(BaseLinearPlanarTrackModel):
+    u_z = DistributionField("const", 0.0)
     U0 = DistributionField("uniform", lower=0.05, upper=0.5)
     Phi0 = DistributionField("uniform", lower=-180.0, upper=180.0)
 
     def get_kinematics(self,consts,delta_k,x0,y0):
-        u0 = self.U0("U0", consts)
-        a = self.accel("accel", consts)
+        u0 = self.U0("U0", consts)*PIXEL_SIZE
+        u_z = self.u_z("u_z", consts)
         phi0_deg = self.Phi0("Phi0", consts)
         phi0 = phi0_deg * np.pi / 180.0
-        u = (u0 + a * delta_k)*PIXEL_SIZE
-        u_int = (u0*delta_k + a*delta_k**2/2)*PIXEL_SIZE
 
-        X = x0 + u_int * pm.math.cos(phi0)
-        Y = y0 + u_int * pm.math.sin(phi0)
-        dX = u * pm.math.cos(phi0)
-        dY = u * pm.math.sin(phi0)
+        X = (x0+u0*delta_k*pm.math.cos(phi0))/(1+u_z*delta_k)
+        Y = (y0+u0*delta_k*pm.math.sin(phi0))/(1+u_z*delta_k)
+        dX =(u0*pm.math.cos(phi0)-x0*u_z)/(1+u_z*delta_k)**2
+        dY =(u0*pm.math.sin(phi0)-y0*u_z)/(1+u_z*delta_k)**2
         return X,Y,dX,dY
 
     def get_overlay_two_points(self,model_params: ModelWithParameters):
@@ -30,27 +34,23 @@ class LinearTrackModel(BaseLinearPlanarTrackModel):
         y0 = model_params.get_estimation("Y0")
         phi = model_params.get_estimation("Phi0")*np.pi/180
         u0 = model_params.get_estimation("U0")
-        a = model_params.get_estimation("accel")
+        u_z = model_params.get_estimation("u_z")
 
         k0 = params["k0"]
         k_start = params["k_start"]
         k_end = params["k_end"]
 
-        u_int_start = (u0 * (k_start-k0) + a * (k_start-k0) ** 2 / 2) * PIXEL_SIZE
-        u_int_end = (u0 * (k_end - k0) + a * (k_end - k0) ** 2 / 2) * PIXEL_SIZE
 
+        x_start, y_start = calculate_position(x0,y0,u0,u_z,phi,k_start-k0)
+        x_end, y_end = calculate_position(x0,y0,u0,u_z,phi,k_end-k0)
 
-        x_start = x0+np.cos(phi)*u_int_start
-        y_start = y0+np.sin(phi)*u_int_start
-        x_end = x0+np.cos(phi)*u_int_end
-        y_end = y0+np.sin(phi)*u_int_end
         return x_start,x_end,y_start,y_end
 
-    def ask_u_z(selfself, model_params: ModelWithParameters):
-        return 0.0
+    def ask_u_z(self, model_params: ModelWithParameters):
+        return model_params.get_estimation("u_z")
 
     def ask_a(self, model_params: ModelWithParameters):
-        return model_params.get_estimation("accel")
+        return 0.0
 
     def ask_u0(self, model_params: ModelWithParameters):
         return model_params.get_estimation("U0")
@@ -59,4 +59,4 @@ class LinearTrackModel(BaseLinearPlanarTrackModel):
         return model_params.get_estimation("Phi0")
 
 
-LINEAR_TRACK_FORM = LinearTrackModel()
+LINEAR_TRACK_FORM_PSEUDO_A = LinearTrackModelPseudoAcceleration()

@@ -2,8 +2,8 @@ import numpy as np
 import pymc as pm
 import pytensor.tensor as pt
 
-from ..model_base import FormPrototype, create_deterministic
-from ..form_prototypes import DistributionField
+from tools.new_reconstructor.models.model_base import FormPrototype, create_deterministic
+from tools.new_reconstructor.models.form_prototypes import DistributionField
 from vtl_common.common_GUI.tk_forms_assist import AlternatingNode
 
 LC_COLOR = "#536878"
