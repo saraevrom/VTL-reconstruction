@@ -44,7 +44,7 @@ def create_z_alter():
 
     class ZAlter(AlternatingNode):
         DISPLAY_NAME = "z_correction"
-        SEL__nu_z = NuField
+        SEL__nu = NuField
         SEL__tau = TauField
 
     return ZAlter
