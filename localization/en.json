@@ -137,6 +137,7 @@
 
   "tools.trajectory_calculator": "Track parameters calculator",
   "tools.trajectory_calculator.DETECTOR": "DETECTOR",
+  "tools.trajectory_calculator.HORIZON": "HORIZON",
   "tools.trajectory_calculator.radiant": "Radiant",
   "tools.trajectory_calculator.temporal_resolution": "Temporal resolution [s]",
   "tools.trajectory_calculator.datetime": "Date/time for k0",

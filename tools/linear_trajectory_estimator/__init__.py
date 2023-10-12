@@ -22,6 +22,7 @@ from .input_form import M_S, M_MRAD, M_MM, M_KM, DT_DEFAULT
 from .mode_asker import OptionDialog
 
 W_DETECTOR = get_locale("tools.trajectory_calculator.DETECTOR")
+W_HORIZON = get_locale("tools.trajectory_calculator.HORIZON")
 
 ORIENTATION_WORKSPACE = Workspace("orientation")
 SKY_CATALOG = Workspace("sky_catalog")
@@ -176,24 +177,29 @@ class LinearEstimator(ToolBase):
         F = self._orientation["FOCAL_DISTANCE"]
         # omega = calculate_omega(tres, F, X, Y, u, phi0)
         omega = calculate_omega_proj(tres, F, X, Y, u_x, u_y)
-        wx,wy,wz = (1000*omega).unpack() #mrad/s
-        # self.output_panel.add_entry("omega vector (DETECTOR VIEW) [mrad/t]", f"[{wx:.3f}, {wy:.3f}, {wz:.3f}]")
-        self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.omega"))
-        self.output_panel.add_entry(f"ω ({W_DETECTOR}), [{M_MRAD}/{M_S}]", f"[{wx:.3f}, {wy:.3f}, {wz:.3f}]")
-        self.output_panel.add_entry(f"ω [{M_MRAD}/{M_S}]", f"{1000*omega.length():.3f}")
 
-        self_rot = self._orientation["SELF_ROTATION"]*np.pi/180
-        dev_dec = self._orientation["VIEW_LATITUDE"]*np.pi/180
-        dev_gha = self._orientation["VIEW_LONGITUDE"]*np.pi/180
-        dev_lat = MAIN_LATITUDE*np.pi/180
-        dev_lon = MAIN_LONGITUDE*np.pi/180
+        self_rot = self._orientation["SELF_ROTATION"] * np.pi / 180
+        dev_dec = self._orientation["VIEW_LATITUDE"] * np.pi / 180
+        dev_gha = self._orientation["VIEW_LONGITUDE"] * np.pi / 180
+        dev_lat = MAIN_LATITUDE * np.pi / 180
+        dev_lon = MAIN_LONGITUDE * np.pi / 180
 
         # R matrix from article
         R_quat = Quaternion.rotate_xy(self_rot) * \
-                 latlon_quaternion(dev_dec,dev_gha).conj() * \
-                 latlon_quaternion(dev_lat,dev_lon)
+                 latlon_quaternion(dev_dec, dev_gha).conj() * \
+                 latlon_quaternion(dev_lat, dev_lon)
 
         Rt_quat = R_quat.conj()
+
+        omega_hor = Rt_quat*omega
+
+        # self.output_panel.add_entry("omega vector (DETECTOR VIEW) [mrad/t]", f"[{wx:.3f}, {wy:.3f}, {wz:.3f}]")
+        self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.omega"))
+        self.output_panel.add_entry(f"ω ({W_DETECTOR}), [{M_MRAD}/{M_S}]", str(1000*omega))
+        self.output_panel.add_entry(f"ω ({W_HORIZON}), [{M_MRAD}/{M_S}]", str(1000*omega_hor))
+        self.output_panel.add_entry(f"ω [{M_MRAD}/{M_S}]", f"{1000*omega.length():.3f}")
+
+
 
         ra = self._parameters["radiant"]["ra"]
         dec = self._parameters["radiant"]["dec"]
