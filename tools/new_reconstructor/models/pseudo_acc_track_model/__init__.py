@@ -7,8 +7,8 @@ from vtl_common.parameters import PIXEL_SIZE, HALF_GAP_SIZE, HALF_PIXELS
 from .velocity_alter import create_z_alter
 
 def calculate_position(x0,y0,u0,u_z,phi0,delta_k):
-    X = (x0 + u0 * delta_k * np.cos(phi0)) / (1 + u_z * delta_k)
-    Y = (y0 + u0 * delta_k * np.sin(phi0)) / (1 + u_z * delta_k)
+    X = x0 + ( u0 * delta_k * np.cos(phi0)) / (1 + u_z * delta_k)
+    Y = y0 + ( u0 * delta_k * np.sin(phi0)) / (1 + u_z * delta_k)
     return X,Y
 
 
@@ -21,14 +21,17 @@ class LinearTrackModelPseudoAcceleration(BaseLinearPlanarTrackModel):
     def get_kinematics(self,consts,delta_k,x0,y0):
         u0 = self.U0("U0", consts)*PIXEL_SIZE
         #u_z = self.u_z("u_z", consts)
-        u_z = self.z_correction()
+        nu = self.z_correction()
+        u_z = -nu
         phi0_deg = self.Phi0("Phi0", consts)
         phi0 = phi0_deg * np.pi / 180.0
 
-        X = (x0+u0*delta_k*pm.math.cos(phi0))/(1+u_z*delta_k)
-        Y = (y0+u0*delta_k*pm.math.sin(phi0))/(1+u_z*delta_k)
-        dX =(u0*pm.math.cos(phi0)-x0*u_z)/(1+u_z*delta_k)**2
-        dY =(u0*pm.math.sin(phi0)-y0*u_z)/(1+u_z*delta_k)**2
+        X = x0+(u0*delta_k*pm.math.cos(phi0))/(1+u_z*delta_k)
+        Y = y0+(u0*delta_k*pm.math.sin(phi0))/(1+u_z*delta_k)
+        dX = u0*pm.math.cos(phi0)/(1+u_z*delta_k)**2
+        dY = u0*pm.math.sin(phi0)/(1+u_z*delta_k)**2
+        #dX =(u0*pm.math.cos(phi0)-x0*u_z)/(1+u_z*delta_k)**2
+        #dY =(u0*pm.math.sin(phi0)-y0*u_z)/(1+u_z*delta_k)**2
         return X,Y,dX,dY
 
     def get_overlay_two_points(self,model_params: ModelWithParameters):
@@ -36,8 +39,9 @@ class LinearTrackModelPseudoAcceleration(BaseLinearPlanarTrackModel):
         x0 = model_params.get_estimation("X0")
         y0 = model_params.get_estimation("Y0")
         phi = model_params.get_estimation("Phi0")*np.pi/180
-        u0 = model_params.get_estimation("U0")
-        u_z = model_params.get_estimation("u_z_")
+        u0 = model_params.get_estimation("U0")*PIXEL_SIZE
+        nu = model_params.get_estimation("nu_")
+        u_z = -nu
 
         k0 = params["k0"]
         k_start = params["k_start"]
@@ -49,8 +53,8 @@ class LinearTrackModelPseudoAcceleration(BaseLinearPlanarTrackModel):
 
         return x_start,x_end,y_start,y_end
 
-    def ask_u_z(self, model_params: ModelWithParameters):
-        return model_params.get_estimation("u_z_")
+    def ask_nu(self, model_params: ModelWithParameters):
+        return model_params.get_estimation("nu_")
 
     def ask_a(self, model_params: ModelWithParameters):
         return 0.0

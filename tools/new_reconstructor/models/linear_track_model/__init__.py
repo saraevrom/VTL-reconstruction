@@ -46,7 +46,7 @@ class LinearTrackModel(BaseLinearPlanarTrackModel):
         y_end = y0+np.sin(phi)*u_int_end
         return x_start,x_end,y_start,y_end
 
-    def ask_u_z(selfself, model_params: ModelWithParameters):
+    def ask_nu(selfself, model_params: ModelWithParameters):
         return 0.0
 
     def ask_a(self, model_params: ModelWithParameters):

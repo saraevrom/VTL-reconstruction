@@ -650,7 +650,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
                 include_if_exists(inner,obj,"x0")
                 include_if_exists(inner,obj,"y0")
                 include_if_exists(inner,obj,"k0")
-                include_if_exists(inner,obj,"u_z")
+                include_if_exists(inner,obj,"nu")
                 if self._loaded_ut0 is not None:
                     if "k0" in inner.keys():
                         k0 = int(inner["k0"])

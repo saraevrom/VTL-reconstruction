@@ -23,7 +23,7 @@ M_FR = get_locale("measurements.fr")
 class DataForm(FormNode):
     FIELD__tres = create_value_field(FloatNode,get_locale("tools.trajectory_calculator.temporal_resolution"),0.2)
     FIELD__a = create_value_field(FloatNode,f"A [{M_PIX}/{M_FR}^2]",0.0)
-    FIELD__u_z = create_value_field(FloatNode,f"u_z [1/{M_FR}]",0.0)
+    FIELD__nu = create_value_field(FloatNode,f"nu [1/{M_FR}]",0.0)
     FIELD__u0=create_value_field(FloatNode,f"U0 [{M_PIX}/{M_FR}]",0.1)
     FIELD__phi0=create_value_field(FloatNode,"phi_0 [°]",0.0)
     FIELD__x0=create_value_field(FloatNode,f"x0 [{M_MM}]",0.0)

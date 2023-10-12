@@ -20,13 +20,13 @@ class FixedCaller(object):
 class TauCaller(FixedCaller):
     def call(self):
         tau = self.data("tau")
-        return pymc.Deterministic("u_z_", -1 / tau)
+        return pymc.Deterministic("nu_", 1 / tau)
 
 
-class UzCaller(FixedCaller):
+class NuCaller(FixedCaller):
     def call(self):
-        u_z = self.data("u_z")
-        return pymc.Deterministic("u_z_",u_z)
+        nu = self.data("nu")
+        return pymc.Deterministic("nu_",nu)
 
 
 def create_z_alter():
@@ -36,15 +36,15 @@ def create_z_alter():
             data = super().get_data()
             return TauCaller(data)
 
-    class UzField(DistBuilder):
-        DISPLAY_NAME = "u_z"
+    class NuField(DistBuilder):
+        DISPLAY_NAME = "nu"
         def get_data(self):
             data = super().get_data()
-            return UzCaller(data)
+            return NuCaller(data)
 
     class ZAlter(AlternatingNode):
         DISPLAY_NAME = "z_correction"
-        SEL__u_z = UzField
+        SEL__nu_z = NuField
         SEL__tau = TauField
 
     return ZAlter

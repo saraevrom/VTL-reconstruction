@@ -149,7 +149,7 @@ class LinearEstimator(ToolBase):
         y0 = self._parameters["y0"]
         k0 = self._parameters["k0"]
         k = self._parameters["k"]
-        u_z = self._parameters["u_z"]
+        u_z = -self._parameters["nu"]
         tres = self._parameters["tres"] # Temporal resolution
         v = self._parameters["v"]
 
@@ -159,11 +159,13 @@ class LinearEstimator(ToolBase):
         era = datetime_to_era(dt+datetime.timedelta(seconds=(k-k0)*tres))
 
         delta_k = k-k0
-        X = (x0+np.cos(phi0)*(u0*delta_k+a*(delta_k**2)/2))/(1+u_z*delta_k)
-        Y = (y0+np.sin(phi0)*(u0*delta_k+a*(delta_k**2)/2))/(1+u_z*delta_k)
+        X = x0+(np.cos(phi0)*(u0*delta_k))/(1+u_z*delta_k) + np.cos(phi0)*a*(delta_k**2)/2
+        Y = y0+(np.sin(phi0)*(u0*delta_k))/(1+u_z*delta_k) + np.sin(phi0)*a*(delta_k**2)/2
         #u = u0+a*delta_k
-        u_x = ((u0+a*delta_k+(a*u_z*delta_k**2)/2)*np.cos(phi0)-x0*u_z)/(1+u_z*delta_k)**2
-        u_y = ((u0+a*delta_k+(a*u_z*delta_k**2)/2)*np.sin(phi0)-y0*u_z)/(1+u_z*delta_k)**2
+        # u_x = ((u0+a*delta_k+(a*u_z*delta_k**2)/2)*np.cos(phi0)-x0*u_z)/(1+u_z*delta_k)**2
+        # u_y = ((u0+a*delta_k+(a*u_z*delta_k**2)/2)*np.sin(phi0)-y0*u_z)/(1+u_z*delta_k)**2
+        u_x = u0 * np.cos(phi0) / (1 + u_z * delta_k) ** 2 + a*delta_k*np.cos(phi0)
+        u_y = u0 * np.sin(phi0) / (1 + u_z * delta_k) ** 2 + a*delta_k*np.sin(phi0)
 
         self.output_panel.clear()
         self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.focal_plane"))
