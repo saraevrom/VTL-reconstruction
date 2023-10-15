@@ -92,7 +92,7 @@ def ocef_to_detector_plane(v_local:Vector3, focal_distance):
     return Vector2(x_p, y_p), v
 
 
-def ocef_to_altaz(v_local:Vector3, backend=None):
+def ocef_to_altaz(v_local:Vector3, backend=None, allow_neg=False):
     '''
     Transform direction from OCEF to altitude/azimuth
     :param x_local: x coordinate OCEF
@@ -107,7 +107,9 @@ def ocef_to_altaz(v_local:Vector3, backend=None):
         backend = np
     horizontal = backend.sqrt(x_local**2 + y_local**2)
     alt = backend.arctan2(z_local, horizontal)
-    az = (backend.arctan2(x_local, y_local) + 2*np.pi) % (2*np.pi)
+    az = backend.arctan2(x_local, y_local)
+    if not allow_neg:
+        az = (az+2*np.pi) % (2*np.pi)
     return alt, az
 
 

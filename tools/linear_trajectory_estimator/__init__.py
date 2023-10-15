@@ -1,6 +1,7 @@
 import datetime
 import json
 import tkinter as tk
+import tkinter.messagebox as messagebox
 
 import numpy as np
 
@@ -14,7 +15,7 @@ from tools.orientation.parameters import ParametersForm
 from specific_ui import DataOutput
 from vtl_common.parameters import PIXEL_SIZE, MAIN_LATITUDE, MAIN_LONGITUDE
 from fixed_rotator.astro_math_z_aligned import Vector2, Vector3, Quaternion, latlon_quaternion
-from fixed_rotator.astro_math_z_aligned import radec_to_eci, eci_to_ocef
+from fixed_rotator.astro_math_z_aligned import radec_to_eci, eci_to_ocef, ocef_to_altaz
 from fixed_rotator import datetime_to_era
 from vtl_common.localization import get_locale
 from vtl_common.common_GUI.button_panel import ButtonPanel
@@ -44,6 +45,17 @@ def calculate_dev_vector(F, x, y, omega, v_dev):
     # r_dev = z_dev / F * S_0_3d
     # return r_dev
 
+def hor_to_dev(orientation):
+    self_rot = orientation["SELF_ROTATION"] * np.pi / 180
+    dev_dec = orientation["VIEW_LATITUDE"] * np.pi / 180
+    dev_gha = orientation["VIEW_LONGITUDE"] * np.pi / 180
+    dev_lat = MAIN_LATITUDE * np.pi / 180
+    dev_lon = MAIN_LONGITUDE * np.pi / 180
+    # R matrix from article
+    return Quaternion.rotate_xy(self_rot) * \
+             latlon_quaternion(dev_dec, dev_gha).conj() * \
+             latlon_quaternion(dev_lat, dev_lon)
+
 def calculate_dev_vector_bypass(U,R,F,v_dev):
     print("BYPASS",U,R,F,v_dev)
     z_dev_1 = (-F*v_dev.x-v_dev.z*R.x)/U.x
@@ -62,8 +74,10 @@ class LinearEstimator(ToolBase):
 
         bpanel = ButtonPanel(rpanel)
         bpanel.add_button(get_locale("tools.trajectory_calculator.import_reco"), self.on_import_reco, 0)
-        bpanel.add_button(get_locale("form.point.load"), self.on_point_load, 1)
-        bpanel.add_button(get_locale("form.point.save"), self.on_point_save, 1)
+        bpanel.add_button(get_locale("tools.trajectory_calculator.align_az"), self.on_balance_azimuth, 1)
+        bpanel.add_button(get_locale("tools.trajectory_calculator.align_hor"), self.on_horizontal_align, 1)
+        bpanel.add_button(get_locale("form.point.load"), self.on_point_load, 2)
+        bpanel.add_button(get_locale("form.point.save"), self.on_point_save, 2)
         bpanel.pack(side="top", fill="x")
 
         self.orientation_form = SaveableTkDictForm(rpanel,
@@ -88,7 +102,13 @@ class LinearEstimator(ToolBase):
         self.on_commit()
 
     def on_point_save(self):
-        radiant = self._raw_parameters["radiant"]
+        #radiant = self._raw_parameters["radiant"]
+        direction = self._raw_parameters["direction"]
+        if not direction["selection_type"]=="sky":
+            return
+
+        radiant = direction["value"]
+
         filename = SKY_CATALOG.asksaveasfilename(title=get_locale("app.filedialog.save_settings.title"),
                                                      filetypes=[
                                                          (get_locale("app.filedialog_formats.form_json"), "*.json")],
@@ -109,7 +129,10 @@ class LinearEstimator(ToolBase):
                 jsd = json.load(fp)
 
             r = {
-                "radiant": jsd,
+                "direction": {
+                    "selection_type":"sky",
+                    "value":jsd,
+                }
             }
             self.parameter_form.set_values(r, force=True)
             self.parameter_form.trigger_change()
@@ -143,30 +166,22 @@ class LinearEstimator(ToolBase):
         self._parameters = self.parameter_parser.get_data()
         self._orientation = orientation
 
-        a = self._parameters["a"]*PIXEL_SIZE
         u0 = self._parameters["u0"]*PIXEL_SIZE
         phi0 = self._parameters["phi0"]*np.pi/180
         x0 = self._parameters["x0"]
         y0 = self._parameters["y0"]
         k0 = self._parameters["k0"]
         k = self._parameters["k"]
-        u_z = -self._parameters["nu"]
         tres = self._parameters["tres"] # Temporal resolution
         v = self._parameters["v"]
+        F = self._orientation["FOCAL_DISTANCE"]
 
         base_dt = datetime.datetime.now()
         base_dt = base_dt.replace(microsecond=0)
         dt = parse_datetimes_dt(self._parameters["k0_datetime"], base_dt)
         era = datetime_to_era(dt+datetime.timedelta(seconds=(k-k0)*tres))
 
-        delta_k = k-k0
-        X = x0+(np.cos(phi0)*(u0*delta_k))/(1+u_z*delta_k) + np.cos(phi0)*a*(delta_k**2)/2
-        Y = y0+(np.sin(phi0)*(u0*delta_k))/(1+u_z*delta_k) + np.sin(phi0)*a*(delta_k**2)/2
-        #u = u0+a*delta_k
-        # u_x = ((u0+a*delta_k+(a*u_z*delta_k**2)/2)*np.cos(phi0)-x0*u_z)/(1+u_z*delta_k)**2
-        # u_y = ((u0+a*delta_k+(a*u_z*delta_k**2)/2)*np.sin(phi0)-y0*u_z)/(1+u_z*delta_k)**2
-        u_x = u0 * np.cos(phi0) / (1 + u_z * delta_k) ** 2 + a*delta_k*np.cos(phi0)
-        u_y = u0 * np.sin(phi0) / (1 + u_z * delta_k) ** 2 + a*delta_k*np.sin(phi0)
+        X,Y,u_x, u_y = self.get_kinematics()
 
         self.output_panel.clear()
         self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.focal_plane"))
@@ -174,21 +189,11 @@ class LinearEstimator(ToolBase):
         self.output_panel.add_entry("y",f"{Y:.3f}")
         self.output_panel.add_entry("U",f"{((u_x**2+u_y**2)**0.5)/PIXEL_SIZE:.3f}")
 
-        F = self._orientation["FOCAL_DISTANCE"]
         # omega = calculate_omega(tres, F, X, Y, u, phi0)
         omega = calculate_omega_proj(tres, F, X, Y, u_x, u_y)
 
-        self_rot = self._orientation["SELF_ROTATION"] * np.pi / 180
-        dev_dec = self._orientation["VIEW_LATITUDE"] * np.pi / 180
-        dev_gha = self._orientation["VIEW_LONGITUDE"] * np.pi / 180
-        dev_lat = MAIN_LATITUDE * np.pi / 180
-        dev_lon = MAIN_LONGITUDE * np.pi / 180
-
         # R matrix from article
-        R_quat = Quaternion.rotate_xy(self_rot) * \
-                 latlon_quaternion(dev_dec, dev_gha).conj() * \
-                 latlon_quaternion(dev_lat, dev_lon)
-
+        R_quat = hor_to_dev(self._orientation)
         Rt_quat = R_quat.conj()
 
         omega_hor = Rt_quat*omega
@@ -199,17 +204,11 @@ class LinearEstimator(ToolBase):
         self.output_panel.add_entry(f"ω ({W_HORIZON}), [{M_MRAD}/{M_S}]", str(1000*omega_hor))
         self.output_panel.add_entry(f"ω [{M_MRAD}/{M_S}]", f"{1000*omega.length():.3f}")
 
+        v_dev = v*self._parameters["direction"].calculate(orientation,era)
+        v_hor = Rt_quat*v_dev
 
-
-        ra = self._parameters["radiant"]["ra"]
-        dec = self._parameters["radiant"]["dec"]
-        v_eci = -v*radec_to_eci(ra,dec)
-
-        # Velocity in detector frame
-        v_dev = eci_to_ocef(era,dev_dec,dev_gha,self_rot) * v_eci
-
-        u_k0_x = u0*np.cos(phi0)-x0*u_z
-        u_k0_y = u0*np.sin(phi0)-y0*u_z
+        u_k0_x = u0*np.cos(phi0)
+        u_k0_y = u0*np.sin(phi0)
 
         omega_0 = calculate_omega_proj(tres, F, x0, y0, u_k0_x, u_k0_y)
 
@@ -219,15 +218,9 @@ class LinearEstimator(ToolBase):
         h = r_hor.z
         self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.distances"))
         self.output_panel.add_entry(f"v_dev [{M_KM}/{M_S}]", str(v_dev))
+        self.output_panel.add_entry(f"v_hor [{M_KM}/{M_S}]", str(v_hor))
         self.output_panel.add_entry(f"dev [{M_KM}]", str(r_dev))
         self.output_panel.add_entry(f"H [{M_KM}]", h)
-
-        # r_dev = calculate_dev_vector(F, X, Y, omega, v_dev)
-        # r_hor = Rt_quat * r_dev
-        # h = r_hor.z
-        # self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.distances_alt"))
-        # self.output_panel.add_entry(f"dev [{M_KM}]", str(r_dev))
-        # self.output_panel.add_entry(f"H [{M_KM}]", h)
 
         # ALT
 
@@ -244,3 +237,101 @@ class LinearEstimator(ToolBase):
         h1 = r_hor_1.z
         h2 = r_hor_2.z
         self.output_panel.add_entry("h [km]", f'{h1:.3f}; {h2:.3f}')
+
+    def pseudo_acc_solve_dev(self):
+        tres = self._parameters["tres"]  # Temporal resolution
+        F = self._orientation["FOCAL_DISTANCE"]
+        u0 = self._parameters["u0"] * PIXEL_SIZE / tres
+        phi0 = self._parameters["phi0"] * np.pi / 180
+        v = self._parameters["v"]
+        nu = self._parameters["nu"]
+        x0 = self._parameters["x0"]
+        y0 = self._parameters["y0"]
+
+        z0 = F*v/np.sqrt((u0*np.cos(phi0)-nu*x0)**2 + (u0*np.sin(phi0)-nu*y0)**2)
+        v_z = -nu*z0
+        v_x = -z0/F*(u0*np.cos(phi0)-nu*x0)
+        v_y = z0/F*(u0*np.sin(phi0)-nu*y0)
+        v_dev = Vector3(v_x,v_y,v_z)
+        return v_dev,z0
+
+    def on_horizontal_align(self):
+        v_dev, z0 = self.pseudo_acc_solve_dev()
+        print("ESTIMATED V_DEV", v_dev)
+        Rt_quat = hor_to_dev(self._orientation).conj()
+        v_hor = Rt_quat*v_dev
+        alt, az = ocef_to_altaz(v_hor, allow_neg=True)
+        dat = {
+            "direction": {
+                "selection_type": "horizon",
+                "value": {
+                    "az":   az*180/np.pi,
+                    "alt": alt*180/np.pi
+                },
+            }
+        }
+        self.parameter_form.set_values(dat)
+        self.on_commit()
+
+    def on_balance_azimuth(self):
+        direction = self._raw_parameters["direction"]
+        if direction["selection_type"] != "horizon":
+            messagebox.showwarning(title=get_locale("tools.trajectory_calculator.warning.no_hor.title"),
+                                   message=get_locale("tools.trajectory_calculator.warning.no_hor.message"),
+                                   )
+        tres = self._parameters["tres"]  # Temporal resolution
+        F = self._orientation["FOCAL_DISTANCE"]
+        alt = direction["value"]["alt"]*np.pi/180
+        X, Y, u_x, u_y = self.get_kinematics()
+        u_x /= tres
+        u_y /= tres
+        Ax = F*u_y
+        Ay = F*u_x
+        Az = X*u_y - Y*u_x
+        Rt_quat = hor_to_dev(self._orientation).conj()
+        A = Vector3(Ax,Ay,Az)
+        B = Rt_quat*A
+        C1 = B.x*np.cos(alt)
+        C2 = B.y*np.cos(alt)
+        C3 = B.z*np.sin(alt)
+        if C2==C3:
+            if C1 == 0:
+                return
+            t = -C2/C1
+        else:
+            s = np.sqrt(C1**2-C3**2+C2**2)
+            if s<0:
+                return
+            t = (s-C1)/(C3-C2)
+        az = 2*np.arctan(t)*180/np.pi
+        dat = {
+            "direction": {
+                "selection_type": "horizon",
+                "value": {
+                    "az": az
+                },
+            }
+        }
+        self.parameter_form.set_values(dat)
+        self.on_commit()
+
+
+
+
+    def get_kinematics(self):
+        a = self._parameters["a"] * PIXEL_SIZE
+        u0 = self._parameters["u0"] * PIXEL_SIZE
+        phi0 = self._parameters["phi0"] * np.pi / 180
+        x0 = self._parameters["x0"]
+        y0 = self._parameters["y0"]
+        k0 = self._parameters["k0"]
+        k = self._parameters["k"]
+        u_z = -self._parameters["nu"]
+
+
+        delta_k = k - k0
+        X = x0 + (np.cos(phi0) * (u0 * delta_k)) / (1 + u_z * delta_k) + np.cos(phi0) * a * (delta_k ** 2) / 2
+        Y = y0 + (np.sin(phi0) * (u0 * delta_k)) / (1 + u_z * delta_k) + np.sin(phi0) * a * (delta_k ** 2) / 2
+        u_x = u0 * np.cos(phi0) / (1 + u_z * delta_k) ** 2 + a * delta_k * np.cos(phi0)
+        u_y = u0 * np.sin(phi0) / (1 + u_z * delta_k) ** 2 + a * delta_k * np.sin(phi0)
+        return X,Y,u_x, u_y

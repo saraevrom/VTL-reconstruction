@@ -8,6 +8,8 @@ from tools.new_reconstructor.orientation_pointing_form import OrientedPoint
 from vtl_common.localization import get_locale
 from vtl_common.workspace_manager import Workspace
 
+from .radiant import ExtendedDirection
+
 TRACK2D_PARAMETERS = Workspace("track_2d_parameters")
 
 DT_DEFAULT = "%Y-%m-%d %H:%M:%S:0"
@@ -31,7 +33,7 @@ class DataForm(FormNode):
     FIELD__k0 = create_value_field(FloatNode,f"k0 [{M_FR}]",0.0)
     FIELD__k = create_value_field(FloatNode,f"k [{M_FR}]",0.0)
     FIELD__v = create_value_field(FloatNode,f"v [{M_KM}/{M_S}]",35.0)
-    FIELD__radiant = create_value_field(OrientedPoint, get_locale("tools.trajectory_calculator.radiant"))
+    FIELD__direction = ExtendedDirection
     FIELD__k0_datetime = create_value_field(StringNode, get_locale("tools.trajectory_calculator.datetime"),
                                             DEFAULT_DATETIME)
 

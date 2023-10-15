@@ -139,6 +139,11 @@
   "tools.trajectory_calculator.DETECTOR": "DETECTOR",
   "tools.trajectory_calculator.HORIZON": "HORIZON",
   "tools.trajectory_calculator.radiant": "Radiant",
+  "tools.trajectory_calculator.horizontal": "Horizontal",
+  "tools.trajectory_calculator.direction": "Direction",
+  "tools.trajectory_calculator.align_az": "Align azimuth",
+  "tools.trajectory_calculator.align_hor": "Align alt/az",
+
   "tools.trajectory_calculator.temporal_resolution": "Temporal resolution [s]",
   "tools.trajectory_calculator.datetime": "Date/time for k0",
   "tools.trajectory_calculator.import_reco": "Import reconstruction result",
@@ -147,6 +152,9 @@
   "tools.trajectory_calculator.section.omega": "Angular velocity",
   "tools.trajectory_calculator.section.distances": "Distances",
   "tools.trajectory_calculator.section.distances_alt": "Distances (alternative)",
+
+  "tools.trajectory_calculator.warning.no_hor.title": "AZ alignment: parameters",
+  "tools.trajectory_calculator.warning.no_hor.message": "Parameters are not set to horizontal system",
 
 
   "measurements.mrad": "mrad",

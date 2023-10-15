@@ -140,15 +140,22 @@
   "tools.trajectory_calculator.DETECTOR": "ДЕТЕКТОР",
   "tools.trajectory_calculator.HORIZON": "ГОРИЗОНТ",
   "tools.trajectory_calculator.radiant": "Радиант",
+  "tools.trajectory_calculator.horizontal": "Горизонтальная СК",
+  "tools.trajectory_calculator.direction": "Направление",
   "tools.trajectory_calculator.temporal_resolution": "Временное разрешение [с]",
   "tools.trajectory_calculator.datetime": "Дата/время в k0",
   "tools.trajectory_calculator.import_reco": "Импортировать результат реконструкции",
+  "tools.trajectory_calculator.align_az": "Выравнять азимут",
+  "tools.trajectory_calculator.align_hor": "Выравнять азимут/высоту",
 
 
   "tools.trajectory_calculator.section.focal_plane": "Фокальная поверхность",
   "tools.trajectory_calculator.section.omega": "Угловая скорость",
   "tools.trajectory_calculator.section.distances": "Расстояния",
   "tools.trajectory_calculator.section.distances_alt": "Расстояния(другой метод)",
+
+  "tools.trajectory_calculator.warning.no_hor.title": "Параметры для азимута",
+  "tools.trajectory_calculator.warning.no_hor.message": "В параметрах не задана горизонтальная система координат",
 
   "measurements.mrad": "мрад",
   "measurements.s": "с",
