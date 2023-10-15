@@ -19,7 +19,7 @@ from fixed_rotator.astro_math_z_aligned import radec_to_eci, eci_to_ocef, ocef_t
 from fixed_rotator import datetime_to_era
 from vtl_common.localization import get_locale
 from vtl_common.common_GUI.button_panel import ButtonPanel
-from .input_form import M_S, M_MRAD, M_MM, M_KM, DT_DEFAULT
+from .input_form import M_S, M_MRAD, M_MM, M_KM, DT_DEFAULT, M_PIX, M_FR
 from .mode_asker import OptionDialog
 
 W_DETECTOR = get_locale("tools.trajectory_calculator.DETECTOR")
@@ -28,15 +28,15 @@ W_HORIZON = get_locale("tools.trajectory_calculator.HORIZON")
 ORIENTATION_WORKSPACE = Workspace("orientation")
 SKY_CATALOG = Workspace("sky_catalog")
 
-def calculate_omega_proj(tres,F,X,Y, u_x,u_y):
-    S = Vector3(-X, Y, 0)
-    ez = Vector3.back()
-    V = Vector3(-u_x, u_y, 0)
-    omega = F ** 2 / (F ** 2 + S.sqr_len()) * (1 / F ** 2 * S.cross(V) + 1 / F * ez.cross(V)) / tres
+def calculate_omega_proj(X,Y, u_x,u_y):
+    S = Vector3(X, Y, 0)
+    ez = Vector3(0,0,1)
+    V = Vector3(u_x, u_y, 0)
+    omega = 1 / (1 + S.sqr_len()) * (S.cross(V) + ez.cross(V))
     return omega
 
-def calculate_dev_vector(F, x, y, omega, v_dev):
-    direction = Vector3(-x,y,F).normalized()
+def calculate_dev_vector(x, y, omega, v_dev):
+    direction = Vector3(x,y,1.0).normalized()
     length = (direction.cross(v_dev)).length()/omega.length()
     return direction*length
     # S_0_3d = Vector3(-x, y, F)
@@ -52,16 +52,18 @@ def hor_to_dev(orientation):
     dev_lat = MAIN_LATITUDE * np.pi / 180
     dev_lon = MAIN_LONGITUDE * np.pi / 180
     # R matrix from article
-    return Quaternion.rotate_xy(self_rot) * \
-             latlon_quaternion(dev_dec, dev_gha).conj() * \
-             latlon_quaternion(dev_lat, dev_lon)
+    R = Quaternion.rotate_xy(self_rot) * \
+        latlon_quaternion(dev_dec, dev_gha).inverse() * \
+        latlon_quaternion(dev_lat, dev_lon)
+    #assert R*R.inverse() == Quaternion(w=1,x=0,y=0,z=0)
+    return R
 
-def calculate_dev_vector_bypass(U,R,F,v_dev):
-    print("BYPASS",U,R,F,v_dev)
-    z_dev_1 = (-F*v_dev.x-v_dev.z*R.x)/U.x
-    z_dev_2 = (F*v_dev.y - v_dev.z*R.y)/U.y
-    S_0_3d = Vector3(-R.x, R.y, F)
-    return z_dev_1/F*S_0_3d, z_dev_2/F*S_0_3d
+def calculate_dev_vector_bypass(U,R,v_dev):
+    #print("BYPASS",U,R,F,v_dev)
+    z_dev_1 = (v_dev.x - v_dev.z*R.x)/U.x
+    z_dev_2 = (v_dev.y - v_dev.z*R.y)/U.y
+    S_0_3d = Vector3(R.x, R.y, 1.0)
+    return z_dev_1*S_0_3d, z_dev_2*S_0_3d
 
 class LinearEstimator(ToolBase):
     TOOL_KEY = "tools.trajectory_calculator"
@@ -166,55 +168,47 @@ class LinearEstimator(ToolBase):
         self._parameters = self.parameter_parser.get_data()
         self._orientation = orientation
 
-        u0 = self._parameters["u0"]*PIXEL_SIZE
-        phi0 = self._parameters["phi0"]*np.pi/180
-        x0 = self._parameters["x0"]
-        y0 = self._parameters["y0"]
-        k0 = self._parameters["k0"]
-        k = self._parameters["k"]
-        tres = self._parameters["tres"] # Temporal resolution
-        v = self._parameters["v"]
-        F = self._orientation["FOCAL_DISTANCE"]
-
-        base_dt = datetime.datetime.now()
-        base_dt = base_dt.replace(microsecond=0)
-        dt = parse_datetimes_dt(self._parameters["k0_datetime"], base_dt)
-        era = datetime_to_era(dt+datetime.timedelta(seconds=(k-k0)*tres))
-
         X,Y,u_x, u_y = self.get_kinematics()
 
         self.output_panel.clear()
         self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.focal_plane"))
-        self.output_panel.add_entry("x",f"{X:.3f}")
-        self.output_panel.add_entry("y",f"{Y:.3f}")
-        self.output_panel.add_entry("U",f"{((u_x**2+u_y**2)**0.5)/PIXEL_SIZE:.3f}")
+        self.output_panel.add_entry(f"x [{M_MM}]",f"{X:.3f}")
+        self.output_panel.add_entry(f"y [{M_MM}]",f"{Y:.3f}")
+        self.output_panel.add_entry(f"U [{M_PIX}/{M_FR}]",f"{((u_x**2+u_y**2)**0.5)/PIXEL_SIZE:.3f}")
+        self.__draw_kinematics()
 
-        # omega = calculate_omega(tres, F, X, Y, u, phi0)
-        omega = calculate_omega_proj(tres, F, X, Y, u_x, u_y)
+    def __draw_kinematics(self):
+        v = self._parameters["v"]
 
-        # R matrix from article
-        R_quat = hor_to_dev(self._orientation)
-        Rt_quat = R_quat.conj()
+        base_dt = datetime.datetime.now()
+        base_dt = base_dt.replace(microsecond=0)
+        dt = parse_datetimes_dt(self._parameters["k0_datetime"], base_dt)
 
-        omega_hor = Rt_quat*omega
+        k0 = self._parameters["k0"]
+        k = self._parameters["k"]
+        tres = self._parameters["tres"]  # Temporal resolution
+        era = datetime_to_era(dt+datetime.timedelta(seconds=(k-k0)*tres))
+        del k,k0,tres
 
-        # self.output_panel.add_entry("omega vector (DETECTOR VIEW) [mrad/t]", f"[{wx:.3f}, {wy:.3f}, {wz:.3f}]")
+        X, Y, u_x, u_y = self.get_kinematics(use_tres=True, substitute=True)
+
+        omega = calculate_omega_proj(X, Y, u_x, u_y)
+
+        # R^T matrix from article
+        Rt_quat = hor_to_dev(self._orientation).inverse()
+
+        omega_hor = Rt_quat * omega
         self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.omega"))
         self.output_panel.add_entry(f"ω ({W_DETECTOR}), [{M_MRAD}/{M_S}]", str(1000*omega))
         self.output_panel.add_entry(f"ω ({W_HORIZON}), [{M_MRAD}/{M_S}]", str(1000*omega_hor))
         self.output_panel.add_entry(f"ω [{M_MRAD}/{M_S}]", f"{1000*omega.length():.3f}")
 
-        v_dev = v*self._parameters["direction"].calculate(orientation,era)
+        v_dev = v*self._parameters["direction"].calculate(self._orientation, era)
         v_hor = Rt_quat*v_dev
 
-        u_k0_x = u0*np.cos(phi0)
-        u_k0_y = u0*np.sin(phi0)
-
-        omega_0 = calculate_omega_proj(tres, F, x0, y0, u_k0_x, u_k0_y)
-
-        r_dev = calculate_dev_vector(F, x0, y0, omega_0, v_dev)
-        r_dev = r_dev + v_dev*(k-k0)*tres
+        r_dev = calculate_dev_vector(X, Y, omega, v_dev)
         r_hor = Rt_quat*r_dev
+
         h = r_hor.z
         self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.distances"))
         self.output_panel.add_entry(f"v_dev [{M_KM}/{M_S}]", str(v_dev))
@@ -222,11 +216,29 @@ class LinearEstimator(ToolBase):
         self.output_panel.add_entry(f"dev [{M_KM}]", str(r_dev))
         self.output_panel.add_entry(f"H [{M_KM}]", h)
 
+        x0, y0, u_k0_x, u_k0_y = self.get_kinematics(use_tres=True, delta_k_override=0.0, substitute=True)
+
+        omega_0 = calculate_omega_proj(x0, y0, u_k0_x, u_k0_y)
+
+        r_dev_alt = calculate_dev_vector(x0, y0, omega_0, v_dev)
+        k0 = self._parameters["k0"]
+        k = self._parameters["k"]
+        tres = self._parameters["tres"]  # Temporal resolution
+
+        r_dev_alt = r_dev_alt + v_dev * (k - k0) * tres
+        r_hor_alt = Rt_quat*r_dev_alt
+        h_alt = r_hor_alt.z
+
+        del k,k0,tres
+
+        self.output_panel.add_entry(f"dev 2 [{M_KM}]", str(r_dev_alt))
+        self.output_panel.add_entry(f"H 2 [{M_KM}]", h_alt)
+
         # ALT
 
-        U = Vector2(u_x, u_y)/tres
+        U = Vector2(u_x, u_y)
         R = Vector2(X,Y)
-        dev_1, dev_2 = calculate_dev_vector_bypass(U,R,F,v_dev)
+        dev_1, dev_2 = calculate_dev_vector_bypass(U,R,v_dev)
         r_hor_1 = Rt_quat * dev_1
         r_hor_2 = Rt_quat * dev_2
         self.output_panel.add_separator(get_locale("tools.trajectory_calculator.section.distances_alt"))
@@ -239,26 +251,22 @@ class LinearEstimator(ToolBase):
         self.output_panel.add_entry("h [km]", f'{h1:.3f}; {h2:.3f}')
 
     def pseudo_acc_solve_dev(self):
-        tres = self._parameters["tres"]  # Temporal resolution
-        F = self._orientation["FOCAL_DISTANCE"]
-        u0 = self._parameters["u0"] * PIXEL_SIZE / tres
-        phi0 = self._parameters["phi0"] * np.pi / 180
+        x0,y0,ux0,uy0 = self.get_kinematics(True,delta_k_override=0, substitute=True)
         v = self._parameters["v"]
-        nu = self._parameters["nu"]
-        x0 = self._parameters["x0"]
-        y0 = self._parameters["y0"]
-
-        z0 = F*v/np.sqrt((u0*np.cos(phi0)-nu*x0)**2 + (u0*np.sin(phi0)-nu*y0)**2)
-        v_z = -nu*z0
-        v_x = -z0/F*(u0*np.cos(phi0)-nu*x0)
-        v_y = z0/F*(u0*np.sin(phi0)-nu*y0)
+        nu = self._parameters["nu"]/self._parameters["tres"]
+        z0 = v/np.sqrt((ux0-x0*nu)**2+(uy0-y0*nu)**2+nu**2)
+        v_z = -z0*nu
+        v_x = z0*(ux0-x0*nu)
+        v_y = z0*(uy0-y0*nu)
         v_dev = Vector3(v_x,v_y,v_z)
+
         return v_dev,z0
 
     def on_horizontal_align(self):
         v_dev, z0 = self.pseudo_acc_solve_dev()
         print("ESTIMATED V_DEV", v_dev)
-        Rt_quat = hor_to_dev(self._orientation).conj()
+        print("ESTIMATED z0", z0)
+        Rt_quat = hor_to_dev(self._orientation).inverse()
         v_hor = Rt_quat*v_dev
         alt, az = ocef_to_altaz(v_hor, allow_neg=True)
         dat = {
@@ -288,7 +296,7 @@ class LinearEstimator(ToolBase):
         Ax = F*u_y
         Ay = F*u_x
         Az = X*u_y - Y*u_x
-        Rt_quat = hor_to_dev(self._orientation).conj()
+        Rt_quat = hor_to_dev(self._orientation).inverse()
         A = Vector3(Ax,Ay,Az)
         B = Rt_quat*A
         C1 = B.x*np.cos(alt)
@@ -318,20 +326,34 @@ class LinearEstimator(ToolBase):
 
 
 
-    def get_kinematics(self):
-        a = self._parameters["a"] * PIXEL_SIZE
-        u0 = self._parameters["u0"] * PIXEL_SIZE
+    def get_kinematics(self,use_tres=False, delta_k_override=None,substitute=False):
+        if use_tres:
+            tres = self._parameters["tres"]  # Temporal resolution
+        else:
+            tres = 1.0
+        a = self._parameters["a"] * PIXEL_SIZE/tres**2
+        u0 = self._parameters["u0"] * PIXEL_SIZE/tres
         phi0 = self._parameters["phi0"] * np.pi / 180
         x0 = self._parameters["x0"]
         y0 = self._parameters["y0"]
         k0 = self._parameters["k0"]
         k = self._parameters["k"]
-        u_z = -self._parameters["nu"]
+        u_z = -self._parameters["nu"]/tres
 
-
-        delta_k = k - k0
+        if delta_k_override is not None:
+            delta_k = delta_k_override * tres
+        else:
+            delta_k = (k - k0)*tres
         X = x0 + (np.cos(phi0) * (u0 * delta_k)) / (1 + u_z * delta_k) + np.cos(phi0) * a * (delta_k ** 2) / 2
         Y = y0 + (np.sin(phi0) * (u0 * delta_k)) / (1 + u_z * delta_k) + np.sin(phi0) * a * (delta_k ** 2) / 2
         u_x = u0 * np.cos(phi0) / (1 + u_z * delta_k) ** 2 + a * delta_k * np.cos(phi0)
         u_y = u0 * np.sin(phi0) / (1 + u_z * delta_k) ** 2 + a * delta_k * np.sin(phi0)
+
+        if substitute:
+            F = self._orientation["FOCAL_DISTANCE"]
+            X = -X / F
+            Y = Y / F
+            u_x = -u_x / F
+            u_y = u_y / F
+
         return X,Y,u_x, u_y

@@ -45,7 +45,7 @@ class HorizontalDef(DirectionDef):
         dev_lon = MAIN_LONGITUDE * np.pi / 180
 
         R_quat = Quaternion.rotate_xy(self_rot) * \
-                 latlon_quaternion(dev_dec, dev_gha).conj() * \
+                 latlon_quaternion(dev_dec, dev_gha).inverse() * \
                  latlon_quaternion(dev_lat, dev_lon)
 
         z = np.sin(self.alt)

@@ -383,6 +383,13 @@ class Quaternion(object):
         self.y = y
         self.z = z
 
+    def __eq__(self, other):
+        return self.w == other.w and \
+               self.x == other.x and \
+               self.y == other.y and \
+               self.z == other.z
+
+
     def __repr__(self):
         return f"Q[{self.w}, V({self.x}, {self.y}, {self.z})]"
 
