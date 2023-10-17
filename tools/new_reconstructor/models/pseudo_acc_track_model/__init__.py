@@ -1,10 +1,12 @@
 import pymc as pm
 import numpy as np
+from common_functions.hor_to_dev import hor_to_dev
 from ..base_flat_model import BaseLinearPlanarTrackModel
 from ..form_prototypes import DistributionField, PassthroughField
 from ..model_base import ModelWithParameters
 from vtl_common.parameters import PIXEL_SIZE, HALF_GAP_SIZE, HALF_PIXELS
 from .velocity_alter import create_z_alter
+from fixed_rotator.slowmath import Vector2
 
 def calculate_position(x0,y0,u0,u_z,phi0,delta_k):
     X = x0 + ( u0 * delta_k * np.cos(phi0)) / (1 + u_z * delta_k)
@@ -18,13 +20,21 @@ class LinearTrackModelPseudoAcceleration(BaseLinearPlanarTrackModel):
     U0 = DistributionField("uniform", lower=0.05, upper=0.5)
     Phi0 = DistributionField("uniform", lower=-180.0, upper=180.0)
 
-    def get_kinematics(self,consts,delta_k,x0,y0):
+    def get_kinematics(self,consts,delta_k,x0,y0,orientation):
         u0 = self.U0("U0", consts)*PIXEL_SIZE
         #u_z = self.u_z("u_z", consts)
-        nu = self.z_correction()
-        u_z = -nu
+
         phi0_deg = self.Phi0("Phi0", consts)
         phi0 = phi0_deg * np.pi / 180.0
+
+        F = orientation["FOCAL_DISTANCE"]
+        R0_vec = Vector2(-x0, y0)/F # In "SSH" notation
+        U0_vec = Vector2(-u0*np.cos(phi0),u0*np.sin(phi0))/F
+
+        R_quat = hor_to_dev(orientation)
+
+        nu = self.z_correction(R0_vec, U0_vec, R_quat)
+        u_z = -nu
 
         X = x0+(u0*delta_k*pm.math.cos(phi0))/(1+u_z*delta_k)
         Y = y0+(u0*delta_k*pm.math.sin(phi0))/(1+u_z*delta_k)

@@ -3,6 +3,7 @@ import numpy as np
 from ..base_flat_model import BaseLinearPlanarTrackModel
 from ..form_prototypes import DistributionField
 from ..model_base import ModelWithParameters
+from common_functions.hor_to_dev import hor_to_dev
 from vtl_common.parameters import PIXEL_SIZE, HALF_GAP_SIZE, HALF_PIXELS
 
 class LinearTrackModel(BaseLinearPlanarTrackModel):
@@ -10,7 +11,7 @@ class LinearTrackModel(BaseLinearPlanarTrackModel):
     U0 = DistributionField("uniform", lower=0.05, upper=0.5)
     Phi0 = DistributionField("uniform", lower=-180.0, upper=180.0)
 
-    def get_kinematics(self,consts,delta_k,x0,y0):
+    def get_kinematics(self,consts,delta_k,x0,y0,orientation):
         u0 = self.U0("U0", consts)
         a = self.accel("accel", consts)
         phi0_deg = self.Phi0("Phi0", consts)

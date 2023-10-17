@@ -86,7 +86,12 @@ class BaseLinearPlanarTrackModel(ReconstructionModelWrapper):
 
             #u_int = (u0 * delta_k + a * delta_k ** 2 / 2)*PIXEL_SIZE
             #u_int = self.get_displacement(delta_k,t_params)*PIXEL_SIZE
-            X,Y,dX,dY = self.get_kinematics(consts,delta_k,x0,y0)
+
+            orientation_form = reconstructor_main.orientation_form
+            orientation = orientation_form.get_values()
+
+
+            X,Y,dX,dY = self.get_kinematics(consts,delta_k,x0,y0,orientation)
             # X = x0 + u_int * pm.math.cos(phi0)
             # Y = y0 + u_int * pm.math.sin(phi0)
             # dX = u * pm.math.cos(phi0)
@@ -101,7 +106,7 @@ class BaseLinearPlanarTrackModel(ReconstructionModelWrapper):
             "k_end": k_end,
         }, consts)
 
-    def get_kinematics(self,consts,delta_k,x0,y0):
+    def get_kinematics(self,consts,delta_k,x0,y0,orientation):
         raise NotImplementedError
 
     def get_overlay_two_points(self,model_params: ModelWithParameters):

@@ -19,6 +19,7 @@ from fixed_rotator.astro_math_z_aligned import radec_to_eci, eci_to_ocef, ocef_t
 from fixed_rotator import datetime_to_era
 from vtl_common.localization import get_locale
 from vtl_common.common_GUI.button_panel import ButtonPanel
+from common_functions.hor_to_dev import hor_to_dev
 from .input_form import M_S, M_MRAD, M_MM, M_KM, DT_DEFAULT, M_PIX, M_FR
 from .mode_asker import OptionDialog
 
@@ -45,18 +46,7 @@ def calculate_dev_vector(x, y, omega, v_dev):
     # r_dev = z_dev / F * S_0_3d
     # return r_dev
 
-def hor_to_dev(orientation):
-    self_rot = orientation["SELF_ROTATION"] * np.pi / 180
-    dev_dec = orientation["VIEW_LATITUDE"] * np.pi / 180
-    dev_gha = orientation["VIEW_LONGITUDE"] * np.pi / 180
-    dev_lat = MAIN_LATITUDE * np.pi / 180
-    dev_lon = MAIN_LONGITUDE * np.pi / 180
-    # R matrix from article
-    R = Quaternion.rotate_xy(self_rot) * \
-        latlon_quaternion(dev_dec, dev_gha).inverse() * \
-        latlon_quaternion(dev_lat, dev_lon)
-    #assert R*R.inverse() == Quaternion(w=1,x=0,y=0,z=0)
-    return R
+
 
 def calculate_dev_vector_bypass(U,R,v_dev):
     #print("BYPASS",U,R,F,v_dev)
