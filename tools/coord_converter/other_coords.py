@@ -8,12 +8,12 @@ from vtl_common.localization import get_locale
 # from tools.orientation.orientation.stellar_math import eci_to_ocef, ocef_to_detector_plane
 # from tools.orientation.orientation.stellar_math import ocef_to_altaz, radec_to_eci, datetime_to_era
 # from tools.orientation.orientation.stellar_math import ocef_to_eci, detector_plane_to_ocef_f
-# from tools.orientation.orientation.stellar_math import altaz_to_ocef, eci_to_radec, rotate_yz
+# from tools.orientation.orientation.stellar_math import altaz_to_ocef, eci_to_radec
 
 from fixed_rotator import eci_to_ocef, ocef_to_detector_plane
 from fixed_rotator import ocef_to_altaz, radec_to_eci, datetime_to_era
 from fixed_rotator import ocef_to_eci, detector_plane_to_ocef_f
-from fixed_rotator import altaz_to_ocef, eci_to_radec, Quaternion, Vector3, Vector2
+from fixed_rotator import altaz_to_ocef, eci_to_radec, Vector3, Vector2
 
 
 class CoordSystem(object):
@@ -135,9 +135,8 @@ class DeviceSystem(CoordSystem):
         psi = (self.psi_deg.get_value() - 90)*np.pi/180
 
         p0 = altaz_to_ocef(gamma, psi)
-        p0 = Quaternion.rotate_yz(-self_rot)*p0
         era = datetime_to_era(dt)
-        return ocef_to_eci(era,lat,lon)*p0
+        return ocef_to_eci(era,lat,lon,self_rot)*p0
 
     def set_eci(self, eci, location:dict, orientation:dict, dt:datetime.datetime):
         lat = orientation["VIEW_LATITUDE"] * np.pi / 180
@@ -180,9 +179,8 @@ class PlanarSystem(CoordSystem):
         detector_plane = Vector2(x,y)
 
         p0 = detector_plane_to_ocef_f(detector_plane, f)
-        p0 = Quaternion.rotate_yz(-self_rot) * p0
         era = datetime_to_era(dt)
-        return ocef_to_eci(era,lat,lon)*p0
+        return ocef_to_eci(era,lat,lon,self_rot)*p0
 
     def set_eci(self, eci, location:dict, orientation:dict, dt:datetime.datetime):
         lat = orientation["VIEW_LATITUDE"] * np.pi / 180

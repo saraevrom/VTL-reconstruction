@@ -401,6 +401,18 @@ class Quaternion(object):
         '''
         return Quaternion(1, 0, 0, 0)
 
+    def to_matrix(self):
+        x = self.x
+        y = self.y
+        z = self.z
+        w = self.w
+        q = np.array([
+            [1-2*y**2-2*z**2, 2*x*y-2*z*w, 2*x*z+2*y*w],
+            [2*x*y+2*z*w, 1-2*x**2 - 2*z**2, 2*y*z - 2*x*w],
+            [2*x*z - 2*y*w, 2*y*z+2*x*w, 1-2*x**2-2*y**2],
+        ])
+        return q
+
     @staticmethod
     def from_axis_rotation(angle: float, axis: Vector3, backend=numpy):
         '''
