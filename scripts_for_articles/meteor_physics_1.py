@@ -30,6 +30,7 @@ parser.add_argument("source_file", type=str, help="Exported HDF5 file")
 parser.add_argument("plot_file", type=str, help="Target path to plot. Assumes format automatically")
 parser.add_argument('--stack_plot', action='store_true', help="Use stack plot diagram for pixels")
 parser.add_argument('--enable_legend', action='store_true', help="Enable plot legend")
+parser.add_argument('--disable_pixelmap', action='store_true', help="Disable pixel map")
 parser.add_argument('--inv_map', action="store_true", help="Invert location of pixel map")
 parser.add_argument('--full_map', action="store_true", help="Display full pixel map")
 parser.add_argument('--offset', type=float, default=None, help="Time offset")
@@ -42,6 +43,7 @@ parser.add_argument("--max_y", type=float, default=None, help="Maximal value of 
 
 parser.add_argument("--min_x", type=float, default=None, help="Minimal value of x axis")
 parser.add_argument("--max_x", type=float, default=None, help="Maximal value of x axis")
+parser.add_argument('--active_signal_window', type=int, default=None, help="Enable plot legend")
 
 def create_grid(axes):
     axes.vlines(LOWER_EDGES, -SPAN, -HALF_GAP_SIZE, colors="black")
@@ -170,6 +172,16 @@ def argsort_metric(x:np.ndarray):
     smoothed = slide.mean(axis=-1)
     return np.argmax(smoothed, axis=1)
 
+def preprocess_active_window(ys,window):
+    centers = np.expand_dims(np.argmax(ys,axis=0),0)
+    lower = centers-window//2
+    upper = lower+window
+    indices = np.arange(ys.shape[0])
+    indices = np.expand_dims(indices,(1,2))
+    mask = (indices>=lower) & (indices<=upper)
+    return ys*mask.astype(int)
+
+
 if __name__=="__main__":
     args = parser.parse_args()
     src_file = args.source_file
@@ -191,6 +203,8 @@ if __name__=="__main__":
             xs = xs - offset
         origin_xs = np.array(h5file["x_data"])
         ys = np.array(h5file["y_data"])
+        if args.active_signal_window is not None:
+            ys = preprocess_active_window(ys,args.active_signal_window)
         selection = np.array(h5file["selection"])
 
         fig, ax = plt.subplots(figsize=(16, 12))
@@ -217,18 +231,21 @@ if __name__=="__main__":
         w = args.map_width
         h = args.map_height
 
+        if args.disable_pixelmap:
+            axin1 = None
         if inv_legend:
             axin1 = ax.inset_axes([0.70+args.tweak_map_x, 0.65+(1-y_mul)*h+args.tweak_map_y, w*x_mul, h*y_mul])
         else:
             axin1 = ax.inset_axes([0.00+args.tweak_map_x, 0.65+(1-y_mul)*h+args.tweak_map_y, w*x_mul, h*y_mul])
 
-        create_grid(axin1)
-        axin1.get_xaxis().set_visible(False)
-        axin1.get_yaxis().set_visible(False)
-        axin1.set_aspect("equal")
+        if axin1 is not None:
+            create_grid(axin1)
+            axin1.get_xaxis().set_visible(False)
+            axin1.get_yaxis().set_visible(False)
+            axin1.set_aspect("equal")
 
-        axin1.set_xlim(xmin, xmax)
-        axin1.set_ylim(ymin, ymax)
+            axin1.set_xlim(xmin, xmax)
+            axin1.set_ylim(ymin, ymax)
 
         stackplot_data = []
         stackplot_colors = []
@@ -241,7 +258,8 @@ if __name__=="__main__":
                     stackplot_data.append(ys[:, i, j])
                     stackplot_colors.append(get_color(i,j))
                     rect = Rectangle((x, y), PIXEL_SIZE, PIXEL_SIZE, color=get_color(i,j))
-                    axin1.add_patch(rect)
+                    if axin1 is not None:
+                        axin1.add_patch(rect)
 
         if args.stack_plot:
             stackplot_colors = np.array(stackplot_colors)
@@ -299,9 +317,10 @@ if __name__=="__main__":
                 reco_overlay_y = PIXEL_SIZE*u0*ts*np.sin(phi0) + y0
                 dx = reco_overlay_x[1]-reco_overlay_x[0]
                 dy = reco_overlay_y[1]-reco_overlay_y[0]
-                axin1.arrow(x=reco_overlay_x[0], dx=dx,
-                            y=reco_overlay_y[0], dy=dy,
-                            color="red", width=sigma_psf*PIXEL_SIZE,  length_includes_head=True)
+                if axin1 is not None:
+                    axin1.arrow(x=reco_overlay_x[0], dx=dx,
+                                y=reco_overlay_y[0], dy=dy,
+                                color="red", width=sigma_psf*PIXEL_SIZE,  length_includes_head=True)
                 astro_tgt_x = h5file.attrs["astro_target_x"]
                 astro_tgt_y = h5file.attrs["astro_target_y"]
                 x_com += x0
@@ -312,9 +331,10 @@ if __name__=="__main__":
             y_com /= com_cnt
             dx = astro_tgt_x - x_com
             dy = astro_tgt_y - y_com
-            axin1.arrow(x=x_com, dx=dx,
-                        y=y_com, dy=dy,
-                        color="green", width=sigma_psf * PIXEL_SIZE/4, length_includes_head=True)
+            if axin1 is not None:
+                axin1.arrow(x=x_com, dx=dx,
+                            y=y_com, dy=dy,
+                            color="green", width=sigma_psf * PIXEL_SIZE/4, length_includes_head=True)
 
         if args.enable_legend:
             if inv_legend:
@@ -322,12 +342,16 @@ if __name__=="__main__":
             else:
                 ax.legend(loc="upper right")
 
-        x_min = index_to_time(xs,h5file.attrs["lim_x_min"])
-        x_max = index_to_time(xs, h5file.attrs["lim_x_max"])
-        if args.x_min is not None:
-            x_min = args.x_min
-        if args.x_max is not None:
-            x_max = args.x_max
+
+        if args.min_x is not None:
+            x_min = args.min_x
+        else:
+            x_min = index_to_time(xs, h5file.attrs["lim_x_min"])
+
+        if args.max_x is not None:
+            x_max = args.max_x
+        else:
+            x_max = index_to_time(xs, h5file.attrs["lim_x_max"])
 
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(args.min_y, args.max_y)
