@@ -40,6 +40,8 @@ parser.add_argument("--map_height", type=float, default=0.35, help="height of pi
 parser.add_argument("--min_y", type=float, default=None, help="Minimal value of y axis")
 parser.add_argument("--max_y", type=float, default=None, help="Maximal value of y axis")
 
+parser.add_argument("--min_x", type=float, default=None, help="Minimal value of x axis")
+parser.add_argument("--max_x", type=float, default=None, help="Maximal value of x axis")
 
 def create_grid(axes):
     axes.vlines(LOWER_EDGES, -SPAN, -HALF_GAP_SIZE, colors="black")
@@ -322,6 +324,11 @@ if __name__=="__main__":
 
         x_min = index_to_time(xs,h5file.attrs["lim_x_min"])
         x_max = index_to_time(xs, h5file.attrs["lim_x_max"])
+        if args.x_min is not None:
+            x_min = args.x_min
+        if args.x_max is not None:
+            x_max = args.x_max
+
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(args.min_y, args.max_y)
         fig.tight_layout()
