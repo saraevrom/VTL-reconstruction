@@ -31,6 +31,7 @@ parser.add_argument("plot_file", type=str, help="Target path to plot. Assumes fo
 parser.add_argument('--stack_plot', action='store_true', help="Use stack plot diagram for pixels")
 parser.add_argument('--enable_legend', action='store_true', help="Enable plot legend")
 parser.add_argument('--disable_pixelmap', action='store_true', help="Disable pixel map")
+parser.add_argument('--disable_star_direction', action='store_true', help="Disable star girection (green arrow)")
 parser.add_argument('--inv_map', action="store_true", help="Invert location of pixel map")
 parser.add_argument('--full_map', action="store_true", help="Display full pixel map")
 parser.add_argument('--offset', type=float, default=None, help="Time offset")
@@ -331,7 +332,7 @@ if __name__=="__main__":
             y_com /= com_cnt
             dx = astro_tgt_x - x_com
             dy = astro_tgt_y - y_com
-            if axin1 is not None:
+            if axin1 is not None and not args.disable_star_direction:
                 axin1.arrow(x=x_com, dx=dx,
                             y=y_com, dy=dy,
                             color="green", width=sigma_psf * PIXEL_SIZE/4, length_includes_head=True)
