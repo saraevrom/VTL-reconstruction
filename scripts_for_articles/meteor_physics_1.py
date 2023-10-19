@@ -204,7 +204,7 @@ if __name__=="__main__":
         origin_xs = np.array(h5file["x_data"])
         ys = np.array(h5file["y_data"])
         if args.active_signal_window is not None:
-            ys = preprocess_active_window(ys,args.active_signal_window)
+            ys = preprocess_active_window(ys, args.active_signal_window)
         selection = np.array(h5file["selection"])
 
         fig, ax = plt.subplots(figsize=(16, 12))

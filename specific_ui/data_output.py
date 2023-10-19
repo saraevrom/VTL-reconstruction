@@ -13,7 +13,9 @@ class DataOutput(tk.Frame):
         label = tk.Label(self.scrollview.contents, text=label_text,padx=10,anchor="w")
         row = len(self.entries)
         label.grid(row=row,column=0,sticky="nsew")
-        display = tk.Label(self.scrollview.contents, text=str(value), bg="#FFFFFF", width=30, anchor="e")
+        display = tk.Entry(self.scrollview.contents, bg="#FFFFFF", width=30)
+        display.insert(0,str(value))
+        display.configure(state="readonly")
         display.grid(row=row,column=1,sticky="nsew")
         self.entries.append((label, display))
 
