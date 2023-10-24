@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter.simpledialog import askinteger
 
 import numpy as np
@@ -20,6 +21,9 @@ from .gui_lists.time_list import TimeRange
 from vtl_common.localized_GUI.tk_forms import SaveableTkDictForm
 from vtl_common.workspace_manager import Workspace
 from tools.orientation.orientation.model import create_model
+from specific_ui.data_output import DataOutput
+from fixed_rotator.astro_math_z_aligned import ocef_to_altaz, Vector3
+from common_functions.hor_to_dev import hor_to_dev
 
 ORIENTATION_WORKSPACE = Workspace("orientation")
 
@@ -73,9 +77,22 @@ class OrientationTool(ToolBase):
 
         result_panel = tk.Frame(main_panel)
         result_panel.grid(row=1, column=0, sticky="nsew",columnspan=3)
+
+        result_notebook = ttk.Notebook(result_panel)
+        result_notebook.pack(fill="both",expand=True)
+
+        table_tab = tk.Frame(result_notebook)
+        table_tab.pack(fill="both",expand=True)
+
+        self.brief_data = DataOutput(result_notebook)
+        self.brief_data.pack(fill="both",expand=True)
+
+        result_notebook.add(table_tab,text="reco table")
+        result_notebook.add(self.brief_data,text="brief")
+
         #result_panel.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
-        self.result_table = Table(result_panel)
+        self.result_table = Table(table_tab)
         self.result_table.show()
 
         self.source_explorer = SourceExplorer(main_panel)
@@ -109,6 +126,10 @@ class OrientationTool(ToolBase):
                                       row=3)
         self.control_panel.pack(side=tk.TOP,fill=tk.X)
 
+        #self.brief_panel = DataOutput(right_panel)
+        #self.brief_panel.pack(side=tk.BOTTOM,fill=tk.X)
+
+
         self.orientation_form_parser = OrientationForm()
         self.form = TkDictForm(right_panel, self.orientation_form_parser.get_configuration_root(), use_scrollview=True)
         self.form.on_commit = self.on_form_commit
@@ -117,6 +138,7 @@ class OrientationTool(ToolBase):
                                                   use_scrollview=True, file_asker=ORIENTATION_WORKSPACE)
         self.parameters_form.pack(side=tk.BOTTOM, fill=tk.X)
         self.parameters_form.on_commit = self.on_parameters_change
+
         self.form.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
 
@@ -236,6 +258,18 @@ class OrientationTool(ToolBase):
         self.orientation_form_parser.parse_formdata(formdata)
         self._formdata = self.orientation_form_parser.get_data()
 
+    def _display_brief(self):
+        Rt_mat = hor_to_dev(self._orientation).conj()
+        hor_vec = Rt_mat*Vector3(0,0,1)
+        alt, az = ocef_to_altaz(hor_vec,np)
+        alt *= 180/np.pi
+        az *= 180/np.pi
+        self.brief_data.clear()
+        self.brief_data.add_entry("Θ", f"{90-alt:.3f}")
+        self.brief_data.add_entry("ALT", f"{alt:.3f}")
+        self.brief_data.add_entry("AZ", f"{az:.3f}")
+
+
     def on_form_commit(self):
         self._sync_form()
         self.on_date_select()
@@ -249,6 +283,7 @@ class OrientationTool(ToolBase):
     def on_parameters_change(self):
         params = self.parameters_form.get_values()
         self._orientation = params
+        self._display_brief()
         self.sky_plotter.draw_fov(params)
         self.source_explorer.set_orientation(params)
         self.on_form_commit()
