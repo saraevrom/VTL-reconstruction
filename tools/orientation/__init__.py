@@ -189,19 +189,20 @@ class OrientationTool(ToolBase):
                                  broken=self.source_explorer.get_broken_pixels(),
                                  ffmodel=self.source_explorer.get_ffmodel())
             print("Got model")
-            with model:
-                self._trace = pm.sample(**self._formdata["sampler"])
-                df = az.summary(self._trace, stat_focus="median")
-                df.insert(0, "parameters", df.index)
-                df.reset_index(drop=True)
-                self.result_table.model.df = df
-                self.result_table.redraw()
 
-                axs = az.plot_trace(self._trace).flatten()
-                print(axs)
-                fig = axs[0].get_figure()
-                fig.tight_layout()
-                fig.show()
+            self._trace = self._formdata["sampler"].sample(model)
+
+            df = az.summary(self._trace, stat_focus="median")
+            df.insert(0, "parameters", df.index)
+            df.reset_index(drop=True)
+            self.result_table.model.df = df
+            self.result_table.redraw()
+
+            axs = az.plot_trace(self._trace).flatten()
+            print(axs)
+            fig = axs[0].get_figure()
+            fig.tight_layout()
+            fig.show()
 
 
     def on_attach_master(self):

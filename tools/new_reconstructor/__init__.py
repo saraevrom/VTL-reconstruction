@@ -395,7 +395,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             print("CUTTER_WORK",cutter, start,end)
             broken = self.track_plotter.get_broken()
             sampler = model_wrapper.get_pymc_model(observed, start, end, broken, pmt, self)
-            sampler.sample(**sampler_params)
+            sampler.sample(sampler_params)
             self._traces[identifier] = sampler
             self.redraw_traces()
             self.redraw_tracks()

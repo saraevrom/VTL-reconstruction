@@ -98,9 +98,9 @@ class ModelWithParameters(object):
         print("CONSTANTS")
         pprint(consts)
 
-    def sample(self, *args, **kwargs):
-        with self.model:
-            self.idata = pm.sample(*args, **kwargs)
+    def sample(self, sampler_abstraction):
+       self.idata = sampler_abstraction.sample(self.model)
+
 
     def reconstruction_overlay(self, plotter):
         self.parent.reconstruction_overlay(plotter, self)

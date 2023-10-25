@@ -1,7 +1,7 @@
 from vtl_common.common_GUI.tk_forms_assist import AlternatingNode, FormNode, IntNode, FloatNode, OptionNode, ComboNode
 from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from vtl_common.localization import get_locale
-
+from .pymc_sample_abstraction import JustSample
 
 
 class OptInt(OptionNode):
@@ -40,10 +40,13 @@ SAMPLER_PARAMETERS = [
 ]
 
 
-class Sampler(FormNode):
-    DISPLAY_NAME = get_locale("reconstruction.sample")
+class JustSampler(FormNode):
+    DISPLAY_NAME = ""
 
+    def get_data(self):
+        data = super().get_data()
+        return JustSample(**data)
 
 for par_type, par_name, default_value in SAMPLER_PARAMETERS:
-    setattr(Sampler, "FIELD__"+par_name,
+    setattr(JustSampler, "FIELD__"+par_name,
             create_value_field(par_type, get_locale(f"reconstruction.sample.{par_name}"), default_value))
