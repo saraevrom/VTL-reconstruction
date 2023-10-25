@@ -33,6 +33,7 @@ from .models.model_base import ReconstructionModelWrapper, ModelWithParameters
 from .cutters import Cutter
 from .selection_dialog import SelectionDialog, CheckListDialog
 from common_functions import ut0_to_copystr
+from specific_ui.data_output import DataOutput
 
 ORIENTATION_WORKSPACE = Workspace("orientation")
 SKY_CATALOG = Workspace("sky_catalog")
@@ -130,22 +131,22 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         lpanel.config(width=500)
         lpanel.pack_propagate(0)
 
-        self._stellar_pointparams = tk.StringVar()
-        self._stellar_pointparams.set(NA_TEXT)
-        self._local_pointparams = tk.StringVar()
-        self._local_pointparams.set(NA_TEXT)
+        # self._stellar_pointparams = tk.StringVar()
+        # self._stellar_pointparams.set(NA_TEXT)
+        # self._local_pointparams = tk.StringVar()
+        # self._local_pointparams.set(NA_TEXT)
 
-        angshow = tk.Frame(lpanel)
-        angshow.pack(side="top", fill="both")
-        angshow1 = tk.Label(angshow, textvariable=self._stellar_pointparams, anchor="nw")
-        angshow1.grid(row=0,column=0,sticky="nsew")
-
-        angshow2 = tk.Label(angshow, textvariable=self._local_pointparams, anchor="nw")
-        angshow2.grid(row=0, column=1, sticky="nsew")
-
-        angshow.rowconfigure(0,weight=1)
-        angshow.columnconfigure(0,weight=1)
-        angshow.columnconfigure(1,weight=1)
+        # angshow = tk.Frame(lpanel)
+        # angshow.pack(side="top", fill="both")
+        # angshow1 = tk.Label(angshow, textvariable=self._stellar_pointparams, anchor="nw")
+        # angshow1.grid(row=0,column=0,sticky="nsew")
+        #
+        # angshow2 = tk.Label(angshow, textvariable=self._local_pointparams, anchor="nw")
+        # angshow2.grid(row=0, column=1, sticky="nsew")
+        #
+        # angshow.rowconfigure(0,weight=1)
+        # angshow.columnconfigure(0,weight=1)
+        # angshow.columnconfigure(1,weight=1)
 
         self._show_point_var = tk.IntVar(self)
         self._show_point_var.trace("w", self.on_orientation_update)
@@ -235,10 +236,21 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         bottom_panel = tk.Frame(self)
         bottom_panel.pack(side="bottom", fill="x")
 
+        # bottom_notebook = ttk.Notebook(bottom_panel)
+        # bottom_notebook.pack(fill="both",expand=True)
 
+        # table_frame =  tk.Frame(bottom_notebook)
+        # table_frame.pack(fill="both",expand=True)
+        # bottom_notebook.add(table_frame,text="reco table")
 
         self.result_table = Table(bottom_panel)
         self.result_table.show()
+
+        self.brief_table = DataOutput(lpanel)
+        self.brief_table.pack(side='bottom',fill="both", expand=True)
+        self.brief_table.add_separator(NA_TEXT)
+        #bottom_notebook.add(self.brief_table, text="brief data")
+
         self.on_vars_change()
 
 
@@ -268,6 +280,7 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
         self.redraw_tracks()
 
     def on_orientation_update(self, *args):
+        self.brief_table.clear()
         if self._loaded_ut0 is not None:
             formdata_orient = self.orientation_form.get_values()
             formdata = self.point_form.get_values()
@@ -275,12 +288,13 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             formdata = self.point_parser.get_data()
             formdata["show"] = self._show_point_var.get()
             formdata["orientation"] = formdata_orient
-            stellar, reco = self.track_plotter.set_point_direction(formdata, self._loaded_ut0)
-            self._stellar_pointparams.set(stellar)
-            self._local_pointparams.set(reco)
+            self.track_plotter.set_point_direction(formdata, self._loaded_ut0, writer=self.brief_table)
+            #self._stellar_pointparams.set(stellar)
+            #self._local_pointparams.set(reco)
         else:
-            self._stellar_pointparams.set(NA_TEXT)
-            self._local_pointparams.set(NA_TEXT)
+            self.brief_table.add_separator(NA_TEXT)
+            #self._stellar_pointparams.set(NA_TEXT)
+            #self._local_pointparams.set(NA_TEXT)
 
     def on_vars_change(self, *args):
         self.track_plotter.set_mask_vars(bl=self._pmt_c,

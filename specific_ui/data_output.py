@@ -1,6 +1,11 @@
 import tkinter as tk
 from vtl_common.common_GUI.tk_forms import ScrollView
 
+
+H_STYLE_FMT = "TkDefaultFont {size} bold"
+
+
+
 class DataOutput(tk.Frame):
     def __init__(self,master):
         super().__init__(master)
@@ -19,8 +24,9 @@ class DataOutput(tk.Frame):
         display.grid(row=row,column=1,sticky="nsew")
         self.entries.append((label, display))
 
-    def add_separator(self, label_text):
-        label = tk.Label(self.scrollview.contents, text=label_text, padx=10, anchor="w", font="TkDefaultFont 10 bold")
+    def add_separator(self, label_text, size=10):
+        font = H_STYLE_FMT.format(size=size)
+        label = tk.Label(self.scrollview.contents, text=label_text, padx=10, anchor="w", font=font)
         row = len(self.entries)
         label.grid(row=row, column=0,columnspan=2,sticky="nsew")
         self.entries.append((label, None))
