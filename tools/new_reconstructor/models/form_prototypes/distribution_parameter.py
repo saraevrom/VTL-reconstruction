@@ -1,6 +1,9 @@
+import pymc
+
 from vtl_common.common_GUI.tk_forms_assist import FormNode, IntNode, FloatNode, BoolNode, OptionNode, AlternatingNode
 from vtl_common.common_GUI.tk_forms_assist.factory import kwarg_builder, create_value_field
 import pymc as pm
+import pytensor.tensor as pt
 
 MU = create_value_field(FloatNode,"mu",0.0)
 SIGMA = create_value_field(FloatNode,"sigma",1.0)
@@ -46,9 +49,11 @@ class ConstantDistCreator(DistParameterCreator):
         self.value = value
 
     def __call__(self, name, const_storage=None):
-        if const_storage is not None:
-            const_storage[name] = self.value
-        return self.value
+        # if const_storage is not None:
+        #     const_storage[name] = self.value
+        tensor = pt.constant(self.value)
+        return pymc.Deterministic(name,tensor)
+        #return self.value
 
     def get_dist(self):
         raise RuntimeError("This is constant")
