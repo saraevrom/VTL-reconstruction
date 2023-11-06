@@ -50,8 +50,14 @@ def calculate_dev_vector(x, y, omega, v_dev):
 
 def calculate_dev_vector_bypass(U,R,v_dev):
     #print("BYPASS",U,R,F,v_dev)
-    z_dev_1 = (v_dev.x - v_dev.z*R.x)/U.x
-    z_dev_2 = (v_dev.y - v_dev.z*R.y)/U.y
+    if U.x==0:
+        z_dev_1 = 0
+    else:
+        z_dev_1 = (v_dev.x - v_dev.z*R.x)/U.x
+    if U.y==0:
+        z_dev_2 = 0
+    else:
+        z_dev_2 = (v_dev.y - v_dev.z*R.y)/U.y
     S_0_3d = Vector3(R.x, R.y, 1.0)
     return z_dev_1*S_0_3d, z_dev_2*S_0_3d
 
