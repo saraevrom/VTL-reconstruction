@@ -51,6 +51,22 @@
   "reconstruction.form.split_chains": "Split chains",
   "reconstruction.form.overwrite": "Overwrite sampling",
 
+
+
+  "reconstruction": "Reconstruction",
+  "reconstruction_model": "Reconstruction model",
+  "reconstruction_model.linear": "Linear",
+  "reconstruction_model.linear.threshold": "Threshold",
+  "reconstruction_model.linear.minv": "Lower velocity [pix/t]",
+  "reconstruction_model.linear.maxv": "Upper velocity [pix/t]",
+  "reconstruction_model.linear.min_e": "Lower energy",
+  "reconstruction_model.linear.max_e": "Upper energy",
+
+  "reconstruction_model.linear_alt": "Linear (alternative)",
+  "reconstruction_model.linear_alt.front_mul": "Front steepness",
+  "reconstruction_model.linear_alt.envelope": "Profile",
+  "reconstruction_model.linear_alt.discrete_time": "Discrete time",
+
   "orientation.form.tune": "Prior Tune",
   "orientation.form.tune.lat": "View Latitude",
   "orientation.form.tune.lon": "View Longitude",
@@ -70,26 +86,13 @@
   "orientation.form.tune.range.max": "Max",
 
 
-  "reconstruction": "Reconstruction",
-  "reconstruction_model": "Reconstruction model",
-  "reconstruction_model.linear": "Linear",
-  "reconstruction_model.linear.threshold": "Threshold",
-  "reconstruction_model.linear.minv": "Lower velocity [pix/t]",
-  "reconstruction_model.linear.maxv": "Upper velocity [pix/t]",
-  "reconstruction_model.linear.min_e": "Lower energy",
-  "reconstruction_model.linear.max_e": "Upper energy",
-
-  "reconstruction_model.linear_alt": "Linear (alternative)",
-  "reconstruction_model.linear_alt.front_mul": "Front steepness",
-  "reconstruction_model.linear_alt.envelope": "Profile",
-  "reconstruction_model.linear_alt.discrete_time": "Discrete time",
-
   "orientation.btn.load_data": "Load data file",
   "orientation.btn.align": "Align",
   "orientation.btn.Save": "Save",
   "orientation.btn.Load": "Load",
   "orientation.btn.accept": "Accept",
   "orientation.btn.attach_master": "Attach master coefficients",
+  "orientation.btn.copy_stars": "Copy visible stars",
   "orientation.form.use_ff": "Use flatfielding",
   "orientation.form.tune.final_dist": "Final distribution",
 
@@ -118,6 +121,8 @@
   "orientation.step.minute": "Minute",
   "orientation.step.second": "Second",
 
+  "orientation.message.copystars.title": "Copy stars",
+  "orientation.message.copystars.message": "Visible stars copied to clipboard",
 
   "tools.converter": "Converter",
   "converter.fixed_params": "Fixed parameters",

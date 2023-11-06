@@ -1,13 +1,17 @@
 import json
 from pprint import pprint
-
-from vtl_common.localized_GUI import GridPlotter
-from vtl_common.localized_GUI.signal_plotter.binsearch import binsearch_tgt
 import tkinter as tk
-from vtl_common.workspace_manager import Workspace
+
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
+
+import  tkinter.messagebox as messagebox
+
+from vtl_common.localization import get_locale
+from vtl_common.localized_GUI import GridPlotter
+from vtl_common.localized_GUI.signal_plotter.binsearch import binsearch_tgt
+from vtl_common.workspace_manager import Workspace
 from vtl_common.common_flatfielding.models import FlatFieldingModel
 from .astronomy_display import DETECTOR_SPAN
 from .gui_lists.star_list import StarEntry
@@ -98,6 +102,21 @@ class SourceExplorer(tk.Frame, PopupPlotable):
             if min_len< 2.0:
                 return names[index]
         return ""
+
+    def copy_visible_stars(self):
+        if self._inner_stars is not None:
+            names = np.array(self._inner_stars["star_name"])
+            res = []
+            for name in names:
+                firstname = name.split("(")[0].strip()
+                print("NAME", firstname)
+                res.append(firstname)
+            namestr = "    ".join(res)
+            self.clipboard_clear()
+            self.clipboard_append(namestr)
+            messagebox.showinfo(title=get_locale("orientation.message.copystars.title"),
+                                message=get_locale("orientation.message.copystars.message"))
+
 
     def set_intervals(self,v):
         self._intervals = v

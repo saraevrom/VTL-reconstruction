@@ -90,6 +90,7 @@
   "orientation.btn.align": "Выровнять",
   "orientation.btn.accept": "Принять ориентацию",
   "orientation.btn.attach_master": "Сохранить главные коэффициенты",
+  "orientation.btn.copy_stars": "Скопировать видимые звёзды",
   "orientation.form.use_ff": "Выравнивать пиксели",
   "orientation.form.tune.final_dist": "Финальное распределение",
 
@@ -117,6 +118,9 @@
   "orientation.selection.time.start": "Начало",
   "orientation.selection.time.end": "Конец",
   "orientation.selection.time.stride": "Шаг",
+
+  "orientation.message.copystars.title": "Копирование звёзд",
+  "orientation.message.copystars.message": "Видимые звёзды скопированы в буффер обмена",
 
   "tools.converter": "Конвертер",
   "converter.fixed_params": "Зафиксированные параметры",

@@ -135,8 +135,9 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
             #x_eci, y_eci, z_eci = star.get_eci()
             eci = Vector3(*star.get_eci())
             energy = star.energy_u()
-            eci2ocef = eci_to_ocef(eras, dec=view_latitude * np.pi / 180, gha=view_longitude * np.pi / 180)
-            eci2ocef = Quaternion.rotate_yz(self_rotation * np.pi / 180, backend=pt)*eci2ocef
+            eci2ocef = eci_to_ocef(eras, dec=view_latitude * np.pi / 180, gha=view_longitude * np.pi / 180,
+                                   self_rot=self_rotation * np.pi / 180, backend=pt)
+            #eci2ocef = Quaternion.rotate_yz(self_rotation * np.pi / 180, backend=pt)*eci2ocef
             pdf_vec, v = ocef_to_detector_plane(eci2ocef*eci, focal_distance)
             x_pdf = pt.expand_dims(pdf_vec.x, (1, 2))
             y_pdf = pt.expand_dims(pdf_vec.y, (1, 2))

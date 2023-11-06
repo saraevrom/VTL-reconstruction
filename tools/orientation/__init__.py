@@ -20,7 +20,7 @@ from .gui_lists import StarList, TimeList
 from .gui_lists.time_list import TimeRange
 from vtl_common.localized_GUI.tk_forms import SaveableTkDictForm
 from vtl_common.workspace_manager import Workspace
-from tools.orientation.orientation.model import create_model
+from .orientation.model import create_model
 from specific_ui.data_output import DataOutput
 from fixed_rotator.astro_math_z_aligned import ocef_to_altaz, Vector3
 from common_functions.hor_to_dev import hor_to_dev
@@ -120,6 +120,9 @@ class OrientationTool(ToolBase):
                                       row=1)
         self.control_panel.add_button(text=get_locale("orientation.btn.accept"),
                                       command=self.on_accept,
+                                      row=1)
+        self.control_panel.add_button(text=get_locale("orientation.btn.copy_stars"),
+                                      command=self.on_visible_stars_copy,
                                       row=2)
         self.control_panel.add_button(text=get_locale("orientation.btn.attach_master"),
                                       command=self.on_attach_master,
@@ -160,6 +163,9 @@ class OrientationTool(ToolBase):
         self._formdata = None
         self._sync_form()
         self.on_parameters_change()
+
+    def on_visible_stars_copy(self):
+        self.source_explorer.copy_visible_stars()
 
     def on_stars_changed(self):
         self.source_explorer.set_stars(self.starlist.get_items())
