@@ -5,6 +5,11 @@ from tkinter.simpledialog import askstring
 from vtl_common.localization import get_locale
 from ..orientation.database_reader import StarEntry
 
+
+BAYER_LIST = "Alp Bet Gam Del Eps Zet Eta The Iot Kap Lam Mu Nu Xi Omi Pi Rho Sig Tau Ups Phi Chi Psi Ome".split(" ")
+BAYER_LETTER_PART = "(?:"+"|".join(BAYER_LIST)+")"
+BAYER_REGEX = rf"{BAYER_LETTER_PART}(?:-\d)?"
+
 def match_by_group(database, match, field):
     return database[database[field] == match.group()]
 
@@ -15,13 +20,26 @@ def match_by_first_group(database, match, field, cast_type=int):
     #print(res)
     return res
 
+def match_by_dual(database, match, field1, field2, cast1=str, cast2=str, grp1=0, grp2=1):
+    #print(f"{field1}-{field2} match")
+    grps = match.groups()
+    target1 = cast1(grps[grp1])
+    target2 = cast2(grps[grp2])
+    #print(f"targets {target1}; {target2}")
+    m1 = database[field1] == target1
+    m2 = database[field2] == target2
+    res = database[m1 & m2]
+    return res
+
+
 filters = [
     [r"\s+", None],
     [r"Gliese\s*(\d+)", lambda x, y: match_by_first_group(x, y, "gl")],
     [r"HIP\s*(\d+)", lambda x, y: match_by_first_group(x, y, "hip")],
     [r"HR\s*(\d+)", lambda x, y: match_by_first_group(x, y, "hr")],
     [r"Gl\s*(\d+)", lambda x, y: match_by_first_group(x, y, "gl")],
-    [r"\d+\w+\s+\w+", lambda x, y: match_by_group(x, y, "bf")],
+    [rf'({BAYER_REGEX})\s+(\w+)', lambda x, y: match_by_dual(x,y,"bayer","con")], # Bayer match
+    [r'(\d+)\s+(\w+)', lambda x, y: match_by_dual(x,y,"flam","con", cast1=int)], # Flamsteed match
     [r"\w+", lambda x, y: match_by_group(x, y, "proper")],
 ]
 

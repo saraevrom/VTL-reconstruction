@@ -30,8 +30,13 @@ def name_a_star(row, name_limit=3):
     data = []
     if not pd.isnull(row["proper"]):
         data.append(row["proper"])
-    if not pd.isnull(row["bf"]):
-        data.append(row["bf"])
+    if not pd.isnull(row["con"]):
+        if not pd.isnull(row["bayer"]):
+            data.append(f"{row['bayer']} {row['con']}")
+        if not pd.isnull(row["flam"]):
+            data.append(f"{int(row['flam'])} {row['con']}")
+    # if not pd.isnull(row["bf"]):
+    #     data.append(row["bf"])
     if not pd.isnull(row["hip"]) and row["hip"]!=0:
         data.append(f"HIP {int(row['hip'])}")
     if not pd.isnull(row["hr"]):
