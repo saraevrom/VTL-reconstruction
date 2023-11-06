@@ -51,9 +51,10 @@ def latlon_quaternion(lat,lon, backend=numpy):
     return Quaternion.rotate_zx(lon, backend)*Quaternion.rotate_zy(lat, backend)
 
 
-def eci_to_ocef(era, dec, gha, self_rot=0):
+def eci_to_ocef(era, dec, gha, self_rot=0, backend=numpy):
     '''
     Transform direction from ECI to OCEF cartesian coordinates
+    :param backend: math backend
     :param era: Earth rotation angle
     :param dec: Declination, radians
     :param gha: Greenwich hour angle, radians
@@ -61,19 +62,20 @@ def eci_to_ocef(era, dec, gha, self_rot=0):
     :return:
     '''
     ra = gha+era
-    return Quaternion.rotate_xy(self_rot)*latlon_quaternion(dec, ra).conj()
+    return Quaternion.rotate_xy(self_rot, backend=backend)*latlon_quaternion(dec, ra, backend=backend).conj()
 
 
-def ocef_to_eci(era, dec, gha, self_rot=0):
-    return eci_to_ocef(era, dec, gha, self_rot).conj()
+def ocef_to_eci(era, dec, gha, self_rot=0, backend=numpy):
+    return eci_to_ocef(era, dec, gha, self_rot, backend=backend).conj()
 
 
-def detector_to_local(dec, gha, self_rot, lat,lon):
-    eci = ocef_to_eci(0, dec, gha, self_rot)
-    return eci_to_ocef(0,lat,lon)*eci
+def detector_to_local(dec, gha, self_rot, lat,lon, backend=numpy):
+    eci = ocef_to_eci(0, dec, gha, self_rot, backend=backend)
+    return eci_to_ocef(0,lat,lon, backend=backend)*eci
 
-def local_to_detector(dec, gha, eigen, lat, lon):
-    return detector_to_local(dec, gha, eigen, lat, lon).conj()
+
+def local_to_detector(dec, gha, eigen, lat, lon, backend=numpy):
+    return detector_to_local(dec, gha, eigen, lat, lon, backend=backend).conj()
 
 
 def ocef_to_detector_plane(v_local:Vector3, focal_distance):
@@ -113,10 +115,10 @@ def ocef_to_altaz(v_local:Vector3, backend=None, allow_neg=False):
     return alt, az
 
 
-def altaz_to_ocef(alt, az):
-    z = np.sin(alt)
-    y = np.cos(alt)*np.cos(az)
-    x = np.cos(alt)*np.sin(az)
+def altaz_to_ocef(alt, az, backend=numpy):
+    z = backend.sin(alt)
+    y = backend.cos(alt)*backend.cos(az)
+    x = backend.cos(alt)*backend.sin(az)
     return Vector3(x, y, z)
 
 
@@ -131,18 +133,19 @@ def datetime_to_era(dt:datetime):
     return unixtime_to_era(unixtime)
 
 
-def radec_to_ocef(ra, dec, lat, lon, self_rotation, era) -> Vector3:
+def radec_to_ocef(ra, dec, lat, lon, self_rotation, era, backend=numpy) -> Vector3:
     v_eci = radec_to_eci(ra, dec)
-    q_ocef = eci_to_ocef(era, lat, lon, self_rotation)
+    q_ocef = eci_to_ocef(era, lat, lon, self_rotation, backend=backend)
     return q_ocef*v_eci
 
-def ocef_to_radec(ocef:Vector3,lat,lon,self_rotation,era):
-    q = eci_to_ocef(era, lat, lon, self_rotation)
+
+def ocef_to_radec(ocef:Vector3,lat,lon,self_rotation,era, backend=numpy):
+    q = eci_to_ocef(era, lat, lon, self_rotation, backend=backend)
     q_rev = q.conj()
     v_eci:Vector3 = q_rev*ocef
     return eci_to_radec(v_eci)
 
-def ecef_to_ocef(lat, lon, self_rot=0):
+def ecef_to_ocef(lat, lon, self_rot=0, backend=numpy):
     '''
     Transform direction from ECEF to OCEF cartesian coordinates
     :param lat:
@@ -150,7 +153,7 @@ def ecef_to_ocef(lat, lon, self_rot=0):
     :param self_rot:
     :return:
     '''
-    return eci_to_ocef(0, lat, lon, self_rot=self_rot)
+    return eci_to_ocef(0, lat, lon, self_rot=self_rot, backend=backend)
 
 
 def detector_plane_to_ocef(v_pdf:Vector2, focal_distance):
