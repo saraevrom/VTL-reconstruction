@@ -2,7 +2,7 @@ import numpy as np
 import pymc as pm
 
 from .model_base import ModelWithParameters, ReconstructionModelWrapper
-from .form_prototypes import DistributionField, PassthroughField
+from .form_prototypes import DistributionField, PassthroughField, IntField
 from tools.new_reconstructor.models.light_curves import create_lc_alter
 from vtl_common.parameters import PIXEL_SIZE, HALF_GAP_SIZE, HALF_PIXELS
 from common_functions import create_coord_mesh, ensquared_energy_avg
@@ -48,8 +48,11 @@ class BaseLinearPlanarTrackModel(ReconstructionModelWrapper):
     # accel = DistributionField("const", 0.0)
     #U0 = DistributionField("uniform", lower=0.05, upper=0.5)
     #Phi0 = DistributionField("uniform", lower=-180.0, upper=180.0)
+
     SigmaPSF = DistributionField("exponential", lam={"selection_type": "lambda", "value":1.0})
+    SigmaCoeff = DistributionField("const", 0.0)
     LC = PassthroughField(create_lc_alter)
+    ee_steps = IntField(default_value=5)
 
     def generate_pymc_model(self, observed, cut_start, cut_end, broken, pmt, reconstructor_main) -> ModelWithParameters:
         with pm.Model() as model:
@@ -77,6 +80,7 @@ class BaseLinearPlanarTrackModel(ReconstructionModelWrapper):
 
             # sigmaPSF = pm.HalfNormal('SigmaPSF', 1.) * PIXEL_SIZE
             sigmaPSF = self.SigmaPSF('SigmaPSF',consts) * PIXEL_SIZE
+            sigmaCOEFF = self.SigmaCoeff('SigmaCoeff',consts) 
 
             #u = (u0 + a * delta_k) * PIXEL_SIZE
             #t_params = self.get_track_parameters(consts)
@@ -92,11 +96,17 @@ class BaseLinearPlanarTrackModel(ReconstructionModelWrapper):
 
 
             X,Y,dX,dY = self.get_kinematics(consts,delta_k,x0,y0,orientation)
+
+            centerdist = (X**2+Y**2)**0.5
+            psf = sigmaPSF+sigmaCOEFF*centerdist
+
             # X = x0 + u_int * pm.math.cos(phi0)
             # Y = y0 + u_int * pm.math.sin(phi0)
             # dX = u * pm.math.cos(phi0)
             # dY = u * pm.math.sin(phi0)
-            intensity = lc * ensquared_energy_avg(pixel_xs, pixel_ys, dX, dY, X, Y, sigmaPSF)
+
+            intensity = lc * ensquared_energy_avg(pixel_xs, pixel_ys, dX, dY, X, Y, psf,steps=self.ee_steps)
+            # intensity = lc * ensquared_energy_avg(pixel_xs, pixel_ys, dX, dY, X, Y, sigmaPSF)
             obs = observed[0][k_start:k_end]
             observed_var = self.final_distribution('OBSERVED', mu=intensity,
                                                    observed=obs[:, alive])

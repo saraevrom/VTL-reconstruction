@@ -38,10 +38,15 @@ def ensquared_energy_full(x_mesh, y_mesh, x0, y0, psf):
     a = d_erf(x0 - x_mesh, scale, pixel_size=PIXEL_SIZE) * d_erf(y0 - y_mesh, scale, pixel_size=PIXEL_SIZE)/4
     return a
 
-def ensquared_energy_avg(x, y, dx, dy, x0, y0, psf):
+def ensquared_energy_avg(x, y, dx, dy, x0, y0, psf, steps=5):
+    if steps==1:
+        return ensquared_energy_full(x, y, x0, y0, psf)
     s = 0
     r = 0
-    for d in np.arange(-0.4, 0.5, 0.2):
+
+    ds = np.linspace(-0.5,0.5,steps)
+
+    for d in ds:
         s += ensquared_energy_full(x, y, x0 + d*dx, y0 + d*dy, psf)
         r += 1
     return s/r

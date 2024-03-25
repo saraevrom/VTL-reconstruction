@@ -13,7 +13,7 @@ DETECTOR_SPAN = HALF_PIXELS*PIXEL_SIZE+HALF_GAP_SIZE
 MIN_STAR_MAGNITUDE =-1.5
 
 
-def params_rotate(xs,ys,  params):
+def params_rotate(xs,ys,  params, projection):
     focus = params["FOCAL_DISTANCE"]
     v_ocef = detector_plane_to_ocef(Vector2(xs, ys), focus)
     self_rotation = params["SELF_ROTATION"] * np.pi / 180
@@ -28,8 +28,10 @@ def params_rotate(xs,ys,  params):
     # q2 = Quaternion.rotate_xz(lat * np.pi / 180)
     # q3 = Quaternion.rotate_xy((lon - MAIN_LONGITUDE) * np.pi / 180)
     # q4 = Quaternion.rotate_xz(-MAIN_LATITUDE * np.pi / 180)
-    alt, az = ocef_to_altaz(q2*q1*v_ocef)
-    rs = 90 - alt * 180 / np.pi
+    ocef_in = q2*q1*v_ocef
+    az,rs = projection.polar_projection(ocef_in)
+    #alt, az = ocef_to_altaz(q2*q1*v_ocef)
+    #rs = 90 - alt * 180 / np.pi
     return az, rs
 
 class SkyPlotter(Plotter):
@@ -78,7 +80,8 @@ class SkyPlotter(Plotter):
         self._annot.set_visible(False)
         self.figure.canvas.draw_idle()
 
-    def plot_stars(self, unixtime):
+    def plot_stars(self, unixtime,add_params):
+        projection = add_params["projection"]
         era = unixtime_to_era(unixtime)
         database = get_database()
         eci_x = database["eci_x"].to_numpy()
@@ -86,23 +89,27 @@ class SkyPlotter(Plotter):
         eci_z = database["eci_z"].to_numpy()
         eci = Vector3(eci_x,eci_y,eci_z)
         pos = eci_to_ocef(era, MAIN_LATITUDE*np.pi/180, MAIN_LONGITUDE*np.pi/180)*eci
-        alt, az = ocef_to_altaz(pos)
+        az,rs = projection.polar_projection(pos)
+        # alt, az = ocef_to_altaz(pos)
+        # rs = 90 - 180 * alt / np.pi
+        mag = database["mag"] * 1.0
+        y1 = -2.5
+        y2 = 0.0
+        x1 = MIN_STAR_MAGNITUDE
+        x2 = 5.0
+        k = (y2 - y1) / (x2 - x1)
+        b = y1 - k * x1
         if self._stars is None:
-            mag = database["mag"]*1.0
-            y1 = -2.5
-            y2 = 0.0
-            x1 = MIN_STAR_MAGNITUDE
-            x2 = 5.0
-            k = (y2-y1)/(x2-x1)
-            b = y1 - k*x1
             self._starnames = database["star_name"]
-            self._stars = self.axes.scatter(az, 90 - 180 * alt / np.pi, s=10 ** -(k * mag + b))
+            self._stars = self.axes.scatter(az, rs, s=add_params["scale"]*10 ** -(k * mag + b))
         else:
-            offsets = np.vstack([az,90-180*alt/np.pi]).T
+            offsets = np.vstack([az,rs]).T
             self._stars.set_offsets(offsets)
+            self._stars.set_sizes(add_params["scale"]*10 ** -(k * mag + b))
+        self.axes.set_ylim(projection.radial_range())
         self.draw()
 
-    def draw_fov(self, params):
+    def draw_fov(self, params, projection):
         spanned_range = np.linspace(-DETECTOR_SPAN, DETECTOR_SPAN, 100)
         constant_range = np.full(shape=(100,), fill_value=DETECTOR_SPAN)
 
@@ -115,24 +122,24 @@ class SkyPlotter(Plotter):
         xs = np.concatenate([constant_range, -spanned_range, -constant_range, spanned_range])
         ys = np.concatenate([spanned_range, constant_range, -spanned_range, -constant_range])
 
-        az, rs = params_rotate(xs,ys,params)
+        az, rs = params_rotate(xs,ys,params,projection)
         if self._fov is None:
             self._fov, = self.axes.plot(az, rs, "-", color="black")
         else:
             self._fov.set_xdata(az)
             self._fov.set_ydata(rs)
 
-        azx, rsx = params_rotate(dir_i_x, dir_i_y, params)
-        if self._xarrow is None:
-            self._xarrow = self.axes.arrow(x=azx[0], y=rsx[0], dx=azx[1]-azx[0], dy=rsx[1]-rsx[0], color="red", width=0.1)
-        else:
-            self._xarrow.set_data(x=azx[0], y=rsx[0], dx=azx[1]-azx[0], dy=rsx[1]-rsx[0])
-
-        azy, rsy = params_rotate(dir_j_x, dir_j_y, params)
-        if self._yarrow is None:
-            self._yarrow = self.axes.arrow(x=azy[0], y=rsy[0], dx=azy[1]-azy[0], dy=rsy[1]-rsy[0], color="blue", width=0.1)
-        else:
-            self._yarrow.set_data(x=azy[0], y=rsy[0], dx=azy[1]-azy[0], dy=rsy[1]-rsy[0])
+        #azx, rsx = params_rotate(dir_i_x, dir_i_y, params,projection)
+        # if self._xarrow is None:
+        #     self._xarrow = self.axes.arrow(x=azx[0], y=rsx[0], dx=azx[1]-azx[0], dy=rsx[1]-rsx[0], color="red", width=0.1)
+        # else:
+        #     self._xarrow.set_data(x=azx[0], y=rsx[0], dx=azx[1]-azx[0], dy=rsx[1]-rsx[0])
+        #
+        # azy, rsy = params_rotate(dir_j_x, dir_j_y, params,projection)
+        # if self._yarrow is None:
+        #     self._yarrow = self.axes.arrow(x=azy[0], y=rsy[0], dx=azy[1]-azy[0], dy=rsy[1]-rsy[0], color="blue", width=0.1)
+        # else:
+        #     self._yarrow.set_data(x=azy[0], y=rsy[0], dx=azy[1]-azy[0], dy=rsy[1]-rsy[0])
         self.draw()
 
 

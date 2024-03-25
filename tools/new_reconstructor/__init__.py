@@ -505,14 +505,28 @@ class NewReconstructorTool(ToolBase, PopupPlotable):
             needed_keys = [x for x in needed_keys if not x.endswith("_")]
             selected_vars = CheckListDialog(self, needed_keys)
             if selected_vars.result:
-                print("KEYS:", needed_keys)
+                #print("KEYS:", needed_keys)
                 axs = arviz.plot_pair(trace, group="posterior", var_names=selected_vars.result)
-                print(axs)
+                #print(axs)
                 if isinstance(axs,np.ndarray):
                     fig = axs[0][0].get_figure()
                 else:
                     fig = axs.get_figure()
                 fig.canvas.manager.set_window_title(f'Dual {label}')
+
+                print("-"*80)
+                data = []
+                for k in selected_vars.result:
+                    add = np.array(trace.posterior[k])
+                    #print(add)
+                    data.append(add.flatten())
+                    print(k,end=" ")
+                print("PEARSON CORRCOEFF MATRIX")
+                matrix = np.stack(data,axis=0)
+                cov = np.corrcoef(matrix)
+                print(cov)
+
+                print("-"*80)
                 # for ax in axs:
                 #     fig = ax.get_figure()
                 #     fig.tight_layout()

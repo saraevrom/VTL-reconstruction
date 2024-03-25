@@ -2,6 +2,7 @@ import numpy as np
 import pymc as pm
 import pytensor.tensor as pt
 import h5py
+import numba as nb
 
 # from .stellar_tensor_math import eci_to_ocef_pt, ocef_to_detector_plane_pt, rotate_yz_pt, ecef_to_ocef_pt
 # from .stellar_tensor_math import ocef_to_altaz_pt
@@ -15,7 +16,7 @@ from vtl_common.parameters import PIXEL_SIZE
 from vtl_common.parameters import MAIN_LATITUDE, MAIN_LONGITUDE
 
 from common_functions import create_coord_mesh
-from common_functions import d_erf
+from common_functions import ensquared_energy_full
 
 def get_dual(h5file:h5py.File, primary, secondary):
     if primary in h5file.keys():
@@ -30,10 +31,49 @@ def get_time(h5file):
     return get_dual(h5file,"UT0","unixtime_dbl_global")
 
 
-def ensquared_energy_full(x_mesh, y_mesh, x0, y0, psf):
-    scale = np.sqrt(2)*psf
-    a = d_erf(x0 - x_mesh, scale, pixel_size=PIXEL_SIZE) * d_erf(y0 - y_mesh, scale, pixel_size=PIXEL_SIZE)/2
-    return a
+@nb.njit()
+def mean_axis0(data):
+    res = np.zeros(shape=data.shape[1:])
+    for i in range(data.shape[1]):
+        for j in range(data.shape[2]):
+            res[i,j] = np.mean(data[:,i,j])
+    return res
+
+@nb.njit()
+def collapse(data, stride):
+    src_len = data.shape[0]
+    tgt_len = src_len//stride
+    #print("COLLAPSE", src_len, tgt_len)
+    res = np.zeros(shape=(tgt_len,data.shape[1],data.shape[2]))
+    for i in range(tgt_len):
+        res[i] = mean_axis0(data[i*stride:(i+1)*stride])
+    return res
+
+@nb.njit()
+def get_times(time_src,stride):
+    src_len = time_src.shape[0]
+    tgt_len = src_len//stride
+    res = np.zeros(shape=(tgt_len,))
+    print("TIMES", src_len,tgt_len)
+    for i in range(tgt_len):
+        res[i] = np.mean(time_src[i*stride:(i+1)*stride])
+    return res
+
+
+def mux_error(uniform,constructor,*args,**kwargs):
+    if uniform:
+        return constructor(*args, **kwargs)
+    else:
+        return constructor(*args, shape=(16, 16), **kwargs)
+
+
+ERROR_DICT = {
+    "laplace":"lapl_b",
+    "student":"Sigma0",
+    "gauss":"σ"
+}
+
+
 
 def create_model(datafile, intervals, stars, known_params, unixtime, tuner, broken, ffmodel):
     era = unixtime_to_era(unixtime)
@@ -45,8 +85,12 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         ut_start, ut_end = interval.unixtime_intervals()
         i_start = binsearch_tgt(ut0, ut_start)
         i_end = binsearch_tgt(ut0, ut_end)
-        times.append(ut0[i_start:i_end:interval.stride])
-        observed.append(get_signal(datafile)[i_start:i_end:interval.stride])
+        #times.append(ut0[i_start:i_end:interval.stride])
+        new_time = get_times(ut0[i_start:i_end], stride=interval.stride)
+        #new_time = list(map())
+        times.append(new_time)
+        #observed.append(get_signal(datafile)[i_start:i_end:interval.stride])
+        observed.append(collapse(get_signal(datafile)[i_start:i_end],stride=interval.stride))
         print("INTERVAL SRC", interval.name())
         print(f"INTERVAL {i_start} - {i_end}")
     times = np.concatenate(times)
@@ -78,12 +122,12 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
         tune_psf = tuner["tune_psf"]
         #use_laplace = tuner["use_laplace"]
         final_dist = tuner["final_dist"]
-        tune_a = tuner["tune_a"]
+        tune_kappa = tuner["tune_kappa"]
         tune_b = tuner["tune_b"]
         tune_b_auto_assume = tuner["tune_b_auto_assume"]
 
-        view_latitude = tune_lat("lat", known_params["VIEW_LATITUDE"])
-        view_longitude = tune_lon("lon", known_params["VIEW_LONGITUDE"])
+        view_latitude = tune_lat("lat", known_params["VIEW_LATITUDE"]) #DEC
+        view_longitude = tune_lon("lon", known_params["VIEW_LONGITUDE"]) #HOUR ANGLE
         self_rotation = tune_rot("Ω", known_params["SELF_ROTATION"])
         focal_distance = tune_f("f", known_params["FOCAL_DISTANCE"])
         psf = tune_psf("PSF", known_params["PSF"])*PIXEL_SIZE
@@ -111,7 +155,7 @@ def create_model(datafile, intervals, stars, known_params, unixtime, tuner, brok
 
         #mul = pm.TruncatedNormal("A", mu=mul_mu, sigma=tune_a_std, lower=0.0)
         #mul = pm.HalfNormal("A", sigma=mul_mu*np.sqrt(np.pi/2))
-        mul = tune_a("A", known_params["MULTIPLIER"])
+        mul = tune_kappa("κ", known_params["MULTIPLIER"])
         if tune_b_auto_assume:
             print("OFFSET ~", off_mu, "±", off_sigma)
             off = pm.Normal("B", sigma=off_sigma, mu=off_mu)

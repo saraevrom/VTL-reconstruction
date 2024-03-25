@@ -3,7 +3,7 @@ from vtl_common.common_GUI.tk_forms_assist.factory import create_value_field
 from vtl_common.localization import get_locale
 from common_forms import Sampler
 import pymc as pm
-
+from .projectors import ProjectionSelector
 
 def create_range(name_key, min_value, max_value):
     class Range(FormNode):
@@ -87,9 +87,10 @@ class Tuner(FormNode):
     FIELD__tune_rot = create_tunable_parameter("orientation.form.tune.rot", 10.0, -180.0, 180.0)
     FIELD__tune_f = create_tunable_parameter("orientation.form.tune.f", 10.0, 140.0, 180.0)
     FIELD__tune_psf = create_tunable_parameter("orientation.form.tune.psf", 0.25, 0.1, 3.0)
-    FIELD__tune_a = wrap_in_option(MasterCoeffTuner, "orientation.form.tune.a")
+    FIELD__tune_kappa = wrap_in_option(MasterCoeffTuner, "orientation.form.tune.a")
     FIELD__tune_b = create_tunable_parameter("orientation.form.tune.b", 0.25, 0.1, 3.0)
     FIELD__tune_b_auto_assume = create_value_field(BoolNode, get_locale("orientation.form.tune.b_auto_assume"),True)
+    FIELD__uniform_error = create_value_field(BoolNode, get_locale("orientation.form.tune.uniform_error"), True)
     #FIELD__use_laplace = create_value_field(BoolNode, get_locale("orientation.form.tune.use_laplace"), False)
     FIELD__final_dist = FinalDistSelect
 
@@ -98,3 +99,5 @@ class OrientationForm(FormNode):
     FIELD__use_ff = create_value_field(BoolNode, get_locale("orientation.form.use_ff"), True)
     FIELD__tuner = Tuner
     FIELD__sampler = Sampler
+    FIELD__projection = ProjectionSelector
+    FIELD__scale = create_value_field(FloatNode, "Mag multiplier", 1.0)

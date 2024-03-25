@@ -16,7 +16,7 @@ from vtl_common.common_flatfielding.models import FlatFieldingModel
 from .astronomy_display import DETECTOR_SPAN
 from .gui_lists.star_list import StarEntry
 from fixed_rotator.astro_math_z_aligned import unixtime_to_era
-from .orientation.model import get_time,get_signal
+from .orientation.model import get_time,get_signal, collapse, get_times
 from vtl_common.parameters import PIXEL_SIZE
 from vtl_common.localized_GUI.signal_plotter import PopupPlotable
 from fixed_rotator.astro_math_z_aligned import unixtime_to_era
@@ -213,8 +213,12 @@ class SourceExplorer(tk.Frame, PopupPlotable):
                 ut_start, ut_end = interval.unixtime_intervals()
                 i_start = binsearch_tgt(ut0, ut_start)
                 i_end = binsearch_tgt(ut0, ut_end)
-                times.append(ut0[i_start:i_end:interval.stride])
-                observed.append(get_signal(datafile)[i_start:i_end:interval.stride])
+                #times.append(ut0[i_start:i_end:interval.stride])
+                new_time = get_times(ut0[i_start:i_end], stride=interval.stride)
+                #new_time = list()
+                times.append(new_time)
+                #observed.append(get_signal(datafile)[i_start:i_end:interval.stride])
+                observed.append(collapse(get_signal(datafile)[i_start:i_end],stride=interval.stride))
                 print("INTERVAL SRC", interval.name())
                 print(f"INTERVAL {i_start} - {i_end}")
             times = np.concatenate(times)

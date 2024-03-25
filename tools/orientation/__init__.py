@@ -204,7 +204,10 @@ class OrientationTool(ToolBase):
             self.result_table.model.df = df
             self.result_table.redraw()
 
-            axs = az.plot_trace(self._trace).flatten()
+            keep = [x for x in self._trace.posterior.keys() if not x.endswith("_")]
+            keep.remove("ALT")
+            keep.remove("AZ")
+            axs = az.plot_trace(self._trace,var_names=keep).flatten()
             print(axs)
             fig = axs[0].get_figure()
             fig.tight_layout()
@@ -237,19 +240,19 @@ class OrientationTool(ToolBase):
             param_formdata = self.parameters_form.get_values()
             # No need to ensure target formdata != None. If it is None, this variable will be just float constant
             print("AVAILABLE FORMDATA:", formdata)
-            if "A" in workon.keys():
-                src = formdata["tune_a"]
-                mu, std = get_stats(workon, "A")
+            if "κ" in workon.keys():
+                src = formdata["tune_kappa"]
+                mu, std = get_stats(workon, "κ")
                 if src["selection_type"] != "norm":
                     src["selection_type"] = "norm"
                     src["value"] = {
                         "sigma": std
                     }
-                    print("SW A to normal")
-                print(f"SET A={mu}±{std}")
+                    print("SW κ to normal")
+                print(f"SET κ={mu}±{std}")
                 param_formdata["MULTIPLIER"] = mu  # Set center
             else:
-                print("A is unchanged")
+                print("κ is unchanged")
             modify_parameter(workon, "PSF", "PSF", "tune_psf", param_formdata, formdata)
             modify_parameter(workon, "f", "FOCAL_DISTANCE", "tune_f", param_formdata, formdata)
             modify_parameter(workon, "Ω", "SELF_ROTATION", "tune_rot", param_formdata, formdata)
@@ -284,13 +287,15 @@ class OrientationTool(ToolBase):
     def on_date_select(self):
         self.time_list.reference_time = self.datetime_picker.get_datetime()
         ut = self.datetime_picker.get_unixtime()
-        self.sky_plotter.plot_stars(ut)
+        self.sky_plotter.plot_stars(ut, self._formdata)
+        self.sky_plotter.draw_fov(self._orientation, self._formdata["projection"])
         self.source_explorer.set_unixtime(ut)
 
     def on_parameters_change(self):
         params = self.parameters_form.get_values()
         self._orientation = params
         self._display_brief()
-        self.sky_plotter.draw_fov(params)
+        self._sync_form()
+        #self.sky_plotter.draw_fov(params, self._formdata["projection"])
         self.source_explorer.set_orientation(params)
         self.on_form_commit()
