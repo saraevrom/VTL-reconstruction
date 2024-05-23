@@ -42,7 +42,13 @@ class LinearTrackModelPseudoAcceleration(BaseLinearPlanarTrackModel):
         dY = u0*pm.math.sin(phi0)/(1+u_z*delta_k)**2
         #dX =(u0*pm.math.cos(phi0)-x0*u_z)/(1+u_z*delta_k)**2
         #dY =(u0*pm.math.sin(phi0)-y0*u_z)/(1+u_z*delta_k)**2
-        return X,Y,dX,dY
+        other = {
+            "U0":u0,
+            "phi0":phi0,
+            "nu":nu,
+        }
+        return X,Y,dX,dY, other
+
 
     def get_overlay_two_points(self,model_params: ModelWithParameters):
         params = model_params.parameters

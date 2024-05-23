@@ -23,7 +23,14 @@ class LinearTrackModel(BaseLinearPlanarTrackModel):
         Y = y0 + u_int * pm.math.sin(phi0)
         dX = u * pm.math.cos(phi0)
         dY = u * pm.math.sin(phi0)
-        return X,Y,dX,dY
+        other = {
+            "U0":u0*PIXEL_SIZE,
+            "phi0":phi0,
+            "nu":0.0,
+        }
+        return X,Y,dX,dY, other
+
+
 
     def get_overlay_two_points(self,model_params: ModelWithParameters):
         params = model_params.parameters

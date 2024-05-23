@@ -1,11 +1,14 @@
 import numpy as np
 import pymc as pm
+import pytensor.tensor as pt
 
+from fixed_rotator import Vector2
 from .model_base import ModelWithParameters, ReconstructionModelWrapper
 from .form_prototypes import DistributionField, PassthroughField, IntField
 from tools.new_reconstructor.models.light_curves import create_lc_alter
 from vtl_common.parameters import PIXEL_SIZE, HALF_GAP_SIZE, HALF_PIXELS
 from common_functions import create_coord_mesh, ensquared_energy_avg
+from common_functions.hor_to_dev import hor_to_dev
 
 SPAN = HALF_GAP_SIZE + HALF_PIXELS*PIXEL_SIZE
 
@@ -54,6 +57,13 @@ class BaseLinearPlanarTrackModel(ReconstructionModelWrapper):
     LC = PassthroughField(create_lc_alter)
     ee_steps = IntField(default_value=5)
 
+    def get_U0(self, consts, delta_k, x0, y0, orientation, other):
+        u0 = other["U0"]
+        phi0 = other["phi0"]
+        dX = u0 * pm.math.cos(phi0)
+        dY = u0 * pm.math.sin(phi0)
+        return dX, dY
+
     def generate_pymc_model(self, observed, cut_start, cut_end, broken, pmt, reconstructor_main) -> ModelWithParameters:
         with pm.Model() as model:
             consts = dict()
@@ -94,8 +104,34 @@ class BaseLinearPlanarTrackModel(ReconstructionModelWrapper):
             orientation_form = reconstructor_main.orientation_form
             orientation = orientation_form.get_values()
 
+            X, Y, dX, dY, other = self.get_kinematics(consts,delta_k,x0,y0,orientation)
 
-            X,Y,dX,dY = self.get_kinematics(consts,delta_k,x0,y0,orientation)
+            dX_0, dY_0 = self.get_U0(consts,delta_k,x0,y0,orientation,other)
+            X_0 = x0
+            Y_0 = y0
+
+            phi_big = pt.arctan2(dY_0,dX_0)
+            psi = pt.arctan2(Y_0,X_0)
+            delta_phi = phi_big - psi
+            u = (dX_0**2+dY_0**2)**0.5
+            r_sqr = (X_0**2+Y_0**2)
+
+            omega = pm.Deterministic("Ω",u*(1+r_sqr*pt.sin(delta_phi)**2)**0.5/(1+r_sqr))
+
+            R_quat = hor_to_dev(orientation)
+            R_mat = R_quat.to_matrix()
+            rho_col = R_mat[:, 2]
+            rho = Vector2(rho_col[0], rho_col[1]) / rho_col[2]
+            nu = other["nu"]
+            R_zz = R_mat[2,2]
+
+            F = orientation["FOCAL_DISTANCE"]
+            R0_vec = Vector2(-x0, y0) / F  # In "SSH" notation
+            U0_vec = Vector2(-dX_0, dY_0) / F
+
+            bottom_vec = U0_vec-nu*R0_vec
+
+            hv_ratio = pm.Deterministic("H0/v", R_zz*(1.0+R0_vec.dot(rho))/(nu**2+bottom_vec.dot(bottom_vec))**0.5)
 
             centerdist = (X**2+Y**2)**0.5
             psf = sigmaPSF+sigmaCOEFF*centerdist

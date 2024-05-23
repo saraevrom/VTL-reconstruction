@@ -8,3 +8,4 @@ astropy
 pandas
 pandastable
 tables
+fastprogress
