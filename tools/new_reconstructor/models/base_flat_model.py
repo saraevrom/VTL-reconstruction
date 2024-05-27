@@ -110,13 +110,13 @@ class BaseLinearPlanarTrackModel(ReconstructionModelWrapper):
             X_0 = x0
             Y_0 = y0
 
-            phi_big = pt.arctan2(dY_0,dX_0)
-            psi = pt.arctan2(Y_0,X_0)
-            delta_phi = phi_big - psi
-            u = (dX_0**2+dY_0**2)**0.5
-            r_sqr = (X_0**2+Y_0**2)
+            # phi_big = pt.arctan2(dY_0,dX_0)
+            # psi = pt.arctan2(Y_0,X_0)
+            # delta_phi = phi_big - psi
+            # u = (dX_0**2+dY_0**2)**0.5
+            # r_sqr = (X_0**2+Y_0**2)
 
-            omega = pm.Deterministic("Ω",u*(1+r_sqr*pt.sin(delta_phi)**2)**0.5/(1+r_sqr))
+            # omega = pm.Deterministic("Ω",u*(1+r_sqr*pt.sin(delta_phi)**2)**0.5/(1+r_sqr))
 
             R_quat = hor_to_dev(orientation)
             R_mat = R_quat.to_matrix()
@@ -129,8 +129,16 @@ class BaseLinearPlanarTrackModel(ReconstructionModelWrapper):
             R0_vec = Vector2(-x0, y0) / F  # In "SSH" notation
             U0_vec = Vector2(-dX_0, dY_0) / F
 
+            phi_big = U0_vec.angle(pt)
+            psi = R0_vec.angle(pt)
+            delta_phi = phi_big - psi
+
             bottom_vec = U0_vec-nu*R0_vec
 
+            U0_len = U0_vec.length()
+            R0_sqrlen = R0_vec.dot(R0_vec)
+
+            omega = pm.Deterministic("Ω",U0_len*(1+R0_sqrlen*pt.sin(delta_phi)**2)**0.5/(1+R0_sqrlen))
             hv_ratio = pm.Deterministic("H0/v", R_zz*(1.0+R0_vec.dot(rho))/(nu**2+bottom_vec.dot(bottom_vec))**0.5)
 
             centerdist = (X**2+Y**2)**0.5

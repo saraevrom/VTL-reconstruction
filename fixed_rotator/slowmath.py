@@ -29,6 +29,9 @@ class Vector2(object):
     def unpack(self):
         return self.x, self.y
 
+    def angle(self,backend=np):
+        return backend.arctan2(self.y,self.x)
+
     @staticmethod
     def make_vector(item:Union[list[Union[int, float]], Vector2]):
         if isinstance(item, Vector2):
